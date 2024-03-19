@@ -1,0 +1,38 @@
+telegram bot
+-->send image to recommendations service
+
+recommendations service
+-post api for receiving image
+-->forward image to image recognition service
+-get name from vase catalog
+-->on receive mqtt message ask plant info at openai api(subscribe)
+-->save info in vase catalog
+-->save new plant to thinkspeak
+
+image recognition service
+-post api for receiving image
+-->send image to plantnet api
+-->save plant name in vase catalog
+-->send mqtt plant added to catalog(publish)
+
+watering service
+-receive actuation command from vase control over mqtt(subscribe)
+-check any water left
+-send alert water tank too low to telegram bot over mqtt(publish)
+
+vase control
+-receive sensors data from device connector over mqtt(subscribe water/light)
+-ask vase catalog for threshold (rest)
+-send actuation command to device connector and watering service over mqtt(publish)
+
+device connector
+-send to the Thingspeak adaptor over mqtt(publish)
+-receive pump and light actuation command over mqtt(subscribe)
+
+data analysis
+-retrieve data from thinkspeak(rest)
+-copmute graph and post to telegram bot(rest)
+
+thinkspeak adaptor
+-receive data over mqtt(subscribe)
+-store data into thinkspeak(rest)
