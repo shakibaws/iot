@@ -54,7 +54,15 @@ class API:
         try:
             json_result = json.loads(response.text)
             if 'results' in json_result:
-                return json.dumps(json_result['results'][0])
+                ret ={
+                    "result": {
+                        "species": json_result['results'][0]['species']['scientificNameWithoutAuthor'],
+                        "common_name": json_result['results'][0]['species']['commonNames'][0],
+                        "confidence": json_result['results'][0]['score'],
+                    },
+                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                return json.dumps(ret)
             else:
                 raise cherrypy.HTTPError(500, 'Invalid response from API')
         except json.JSONDecodeError:
