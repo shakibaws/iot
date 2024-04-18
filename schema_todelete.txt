@@ -36,3 +36,7 @@ data analysis
 thinkspeak adaptor
 -receive data over mqtt(subscribe)
 -store data into thinkspeak(rest)
+
+https://discord.com/channels/1090022628946886726/1148268699191623740/1185289679218692206
+https://github.com/Launchers-1/zukiPy/blob/main/main.py
+https://github.com/Launchers-1/zukiPy

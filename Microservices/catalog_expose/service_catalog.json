@@ -1,0 +1,9 @@
+{
+    "broker": {
+        "broker_address": "test.mosquitto.org",
+        "port": 1883
+    },
+    "services":{
+        "resource_catalog_address": "http://localhost:5000"
+    }
+}
