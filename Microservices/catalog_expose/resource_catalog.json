@@ -1,1 +1,135 @@
-{"deviceList": [{"device_id": "1", "device_name": "sensors1", "device_type": "sensor", "device_status": "active", "measureType": ["soil_moisture", "watertank_level", "temperature", "light_level"], "availableServices": ["MQTT", "REST"], "servicesDetails": [{"serviceType": "MQTT", "topic": ["smartPlant/1/sensors"]}, {"serviceType": "REST", "url": ["/sensors"]}], "lastUpdate": 1621764472.704841}, {"device_id": "2", "device_name": "actuators1", "device_type": "actuator", "device_status": "active", "measureType": ["light_status", "pump_status"], "availableServices": ["MQTT", "REST"], "servicesDetails": [{"serviceType": "MQTT", "topic": ["smartPlant/1/actuator/light", "smartPlant/1/actuator/pump"]}, {"serviceType": "REST", "url": ["/actuators/light", "/actuators/pump"]}], "lastUpdate": 1621764472.704841}, {"device_id": "2345", "device_name": "vase_sensors_2345", "device_type": "vase_sensors_build_0.1", "measureType": ["soil_moisture", "watertank_level", "temperature", "light_level"], "availableServices": ["MQTT", "REST"], "servicesDetails": [{"serviceType": "MQTT", "topic": ["smartPlant/2345/sensors"]}], "lastUpdate": "2024-04-18 19:36:11"}], "vaseList": [{"vase_id": "1", "vase_name": "vase1", "vase_status": "active", "plant": {"plant_name": "plant1", "plant_schedule_water": 10, "plant_schedule_light": 10, "soilHumidityMin": 0, "soilHumidityMax": 100, "hourOfSunMin": 0, "temperatureMin": 0, "temperatureMax": 100, "description": "generalComprehensiveDescription in 40 words"}, "deviceList": ["1", "2"], "lastUpdate": 1621764472.704841}, {"vase_name": "vase1", "vase_status": "disabled", "deviceList": ["2345"], "plant": {"plant_name": "plant1", "plant_schedule_water": 10, "plant_schedule_light": 10, "soilHumidityMin": 0, "soilHumidityMax": 100, "hourOfSunMin": 0, "temperatureMin": 0, "temperatureMax": 100, "description": "generalComprehensiveDescription in 40 words"}, "vase_id": "2", "lastUpdate": "2024-04-18 19:48:19"}]}
+{
+    "deviceList": [
+        {
+            "device_id": "1",
+            "device_name": "sensors1",
+            "device_type": "sensor",
+            "device_status": "active",
+            "measureType": [
+                "soil_moisture",
+                "watertank_level",
+                "temperature",
+                "light_level"
+            ],
+            "availableServices": [
+                "MQTT",
+                "REST"
+            ],
+            "servicesDetails": [
+                {
+                    "serviceType": "MQTT",
+                    "topic": [
+                        "smartPlant/sensors/user12345"
+                    ]
+                },
+                {
+                    "serviceType": "REST",
+                    "url": [
+                        "/sensors"
+                    ]
+                }
+            ],
+            "lastUpdate": 1621764472.704841
+        },
+        {
+            "device_id": "2",
+            "device_name": "actuators1",
+            "device_type": "actuator",
+            "device_status": "active",
+            "measureType": [
+                "light_status",
+                "pump_status"
+            ],
+            "availableServices": [
+                "MQTT",
+                "REST"
+            ],
+            "servicesDetails": [
+                {
+                    "serviceType": "MQTT",
+                    "topic": [
+                        "smartPlant/light/user12345",
+                        "smartPlant/pump/user12345"
+                    ]
+                },
+                {
+                    "serviceType": "REST",
+                    "url": [
+                        "/actuators/light",
+                        "/actuators/pump"
+                    ]
+                }
+            ],
+            "lastUpdate": 1621764472.704841
+        },
+        {
+            "device_id": "2345",
+            "device_name": "vase_sensors_2345",
+            "device_type": "vase_sensors_build_0.1",
+            "measureType": [
+                "soil_moisture",
+                "watertank_level",
+                "temperature",
+                "light_level"
+            ],
+            "availableServices": [
+                "MQTT",
+                "REST"
+            ],
+            "servicesDetails": [
+                {
+                    "serviceType": "MQTT",
+                    "topic": [
+                        "smartPlant/sensors"
+                    ]
+                }
+            ],
+            "lastUpdate": "2024-04-18 19:36:11"
+        }
+    ],
+    "vaseList": [
+        {
+            "vase_id": "1",
+            "vase_name": "vase1",
+            "vase_user": "user12345",
+            "vase_status": "active",
+            "plant": {
+                "plant_name": "plant1",
+                "plant_schedule_water": 10,
+                "plant_schedule_light": 10,
+                "soilHumidityMin": 0,
+                "soilHumidityMax": 100,
+                "hourOfSunMin": 0,
+                "temperatureMin": 0,
+                "temperatureMax": 100,
+                "description": "generalComprehensiveDescription in 40 words"
+            },
+            "deviceList": [
+                "1",
+                "2"
+            ],
+            "lastUpdate": 1621764472.704841
+        },
+        {
+            "vase_name": "vase1",
+            "vase_user": "user12345",
+            "vase_status": "disabled",
+            "deviceList": [
+                "2345"
+            ],
+            "plant": {
+                "plant_name": "plant1",
+                "plant_schedule_water": 10,
+                "plant_schedule_light": 10,
+                "soilHumidityMin": 0,
+                "soilHumidityMax": 100,
+                "hourOfSunMin": 0,
+                "temperatureMin": 0,
+                "temperatureMax": 100,
+                "description": "generalComprehensiveDescription in 40 words"
+            },
+            "vase_id": "2",
+            "lastUpdate": "2024-04-18 19:48:19"
+        }
+    ]
+}
