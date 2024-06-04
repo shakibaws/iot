@@ -4,6 +4,11 @@
         "port": 1883
     },
     "services":{
-        "resource_catalog_address": "http://localhost:5000"
+        "resource_catalog_address": "http://192.168.1.113:5000"
+    },
+    "topics": {
+        "topic_sensors": "smartplant/+/sensors",
+        "topic_actuators": "smartplant/device_id/actuators",
+        "topic_telegram_chat": "smartplant/telegram/telegram_chat_id"
     }
 }

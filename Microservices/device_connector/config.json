@@ -1,0 +1,48 @@
+{
+    "device": {
+        "device_id": "very_unique_id",
+        "sensors": [
+            "soil_moisture",
+            "watertank_level",
+            "temperature",
+            "light_level"
+        ],
+        "actuators": [
+            "light_level",
+            "soil_moisture"
+        ],
+        "available_services": [
+            "MQTT"
+        ]
+    },
+    "pinout": {
+        "sensors": [
+            {
+                "name": "soil_moisture",
+                "pin": 34
+            },
+            {
+                "name": "watertank_level",
+                "pin": 32
+            },
+            {
+                "name": "temperature",
+                "pin": 35
+            },
+            {
+                "name": "light_level",
+                "pin": 33
+            }
+        ],
+        "actuators": [
+            {
+                "name": "light_level",
+                "pin": 2
+            },
+            {
+                "name": "soil_moisture",
+                "pin": 2
+            }
+        ]
+    }
+}

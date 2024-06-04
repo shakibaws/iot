@@ -1,9 +1,10 @@
 import json
+import time
 
 import paho.mqtt.client as PahoMQTT
 
 
-class MyMQTT:
+class BaseMQTT:
     def __init__(self, clientID, broker, port, notifier):
         self.broker = broker
         self.port = port
@@ -11,14 +12,19 @@ class MyMQTT:
         self.clientID = clientID
         self._topic = ""
         self._isSubscriber = False
+        self.connected = False
         # create an instance of paho.mqtt.client
-        self._paho_mqtt = PahoMQTT.Client(clientID, True)
+        self._paho_mqtt = PahoMQTT.Client(PahoMQTT.CallbackAPIVersion.VERSION1, clientID, True)
         # register the callback
         self._paho_mqtt.on_connect = self.myOnConnect
         self._paho_mqtt.on_message = self.myOnMessageReceived
 
     def myOnConnect(self, paho_mqtt, userdata, flags, rc):
-        print("Connected to %s with result code: %d" % (self.broker, rc))
+        if rc == 0:
+            print("Connected to %s" % (self.broker))
+            self.connected = True
+        else:
+            print("Connection failed")
 
     def myOnMessageReceived(self, paho_mqtt, userdata, msg):
         # A new message is received
@@ -27,9 +33,21 @@ class MyMQTT:
     def myPublish(self, topic, msg):
         # publish a message with a certain topic
         self._paho_mqtt.publish(topic, json.dumps(msg), 2)
-        print(f"message published: {json.dumps(msg)}")
+        print("Published on topic %s: %s" % (topic, msg))
+
+    def myBytesPublish(self, topic, msg):
+        # publish a message with a certain topic
+        self._paho_mqtt.publish(topic, msg, 2)
+        print("Published on topic %s: %s" % (topic, msg.hex()))
 
     def mySubscribe(self, topic):
+        # check if connection is established
+        if not self.connected:
+            time.sleep(1)
+        
+        if not self.connected:
+            print("Connection not established. Cannot subscribe.")
+            return
         # subscribe for a topic
         self._paho_mqtt.subscribe(topic, 2)
         # just to remember that it works also as a subscriber
