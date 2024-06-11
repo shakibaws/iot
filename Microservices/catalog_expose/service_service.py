@@ -12,11 +12,11 @@ class ServiceCatalogExpose:
     @cherrypy.tools.json_out()
     def GET(self, *args, **kwargs):
         if args:
-            key = args[0]
+            key = args[0].lower()
             if key in self.serviceCatalog:
                 return self.serviceCatalog[key]
             else:
-                if key.lower() == 'all':
+                if key == 'all':
                     return self.serviceCatalog
                 else:
                     raise cherrypy.HTTPError(
