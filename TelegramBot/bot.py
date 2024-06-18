@@ -1,14 +1,71 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 import requests
+import asyncio
+
+resource_catalog_address = ''
+service_expose_endpoint = 'http://0.0.0.0:8082'
+users_list = []
+current_user = None
 
 
 def start(update: Update, context: CallbackContext) -> None:
-    keyboard = [[InlineKeyboardButton(
-        "Let's learn more about your plant!", callback_data='start')]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    handle_endpoints()
+    if not is_logged_in():
+        login(update)
+
+    # keyboard = [
+    #     [InlineKeyboardButton(
+    #         "Let's learn more about your plant!", callback_data='start')],
+    #     [InlineKeyboardButton(
+    #         "Add a vase", callback_data='add_vase')],
+    # ]
+    # reply_markup = InlineKeyboardMarkup(keyboard)
+    # update.message.reply_text(
+    #     "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!", reply_markup=reply_markup)
     update.message.reply_text(
-        "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!", reply_markup=reply_markup)
+        "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!",)
+
+
+def is_logged_in():
+    print(f'is user logged in: {current_user != None}')
+    return current_user != None
+
+
+def login(update: Update):
+    global resource_catalog_address, users_list, current_user
+    users_response = requests.get(f'{resource_catalog_address}/listUser')
+    print(users_response.status_code)
+    if users_response.status_code == 200:
+        users_list = users_response.json()
+        for user in users_list:
+            if user['telegram_chat_id'] == update.message.chat_id:
+                current_user = user
+                print('User found and logged in')
+                break
+        if current_user == None:
+            print('User not found')
+            signup(update)
+
+
+def handle_endpoints():
+    global resource_catalog_address, service_expose_endpoint
+    resource_endpoint_response = requests.get(f'{service_expose_endpoint}/all')
+    if resource_endpoint_response.status_code == 200:
+        resource_catalog_address = resource_endpoint_response.json(
+        )['services']['resource_catalog_address']
+
+
+def signup(update: Update):
+    global current_user
+    print('Signing up')
+    signup_response = requests.post(
+        f'{resource_catalog_address}/user',
+        json={'telegram_chat_id': update.message.chat_id}
+    )
+    if signup_response.status_code == 200:
+        print('User signed up')
 
 
 def button(update: Update, context: CallbackContext) -> None:
