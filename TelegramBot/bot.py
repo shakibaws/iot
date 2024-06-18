@@ -1,16 +1,21 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 import requests
-import asyncio
+import time
 
 resource_catalog_address = ''
 service_expose_endpoint = 'http://0.0.0.0:8082'
 users_list = []
 current_user = None
+current_context = None
+welcome_message = None
 
 
 def start(update: Update, context: CallbackContext) -> None:
-
+    global current_context, welcome_message
+    welcome_message = update.message.reply_text(
+        "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!",)
+    current_context = context
     handle_endpoints()
     if not is_logged_in():
         login(update)
@@ -24,8 +29,6 @@ def start(update: Update, context: CallbackContext) -> None:
     # reply_markup = InlineKeyboardMarkup(keyboard)
     # update.message.reply_text(
     #     "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!", reply_markup=reply_markup)
-    update.message.reply_text(
-        "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!",)
 
 
 def is_logged_in():
@@ -57,8 +60,18 @@ def handle_endpoints():
         )['services']['resource_catalog_address']
 
 
+def remove_message(update: Update, message):
+    global current_context
+    current_context.bot.delete_message(
+        chat_id=update.message.chat_id, message_id=message.message_id)
+
+
 def signup(update: Update):
-    global current_user
+    global current_user, welcome_message
+    time.sleep(1)
+    remove_message(update, welcome_message)
+    signup_message = update.message.reply_text(
+        "It seems like you are new here. We are creating an account for you!.",)
     print('Signing up')
     signup_response = requests.post(
         f'{resource_catalog_address}/user',
@@ -66,6 +79,11 @@ def signup(update: Update):
     )
     if signup_response.status_code == 200:
         print('User signed up')
+        time.sleep(2)
+        remove_message(update, signup_message)
+        signup_confirm_message = update.message.reply_text(
+            "Done 🎉, now let's get started!"
+        )
 
 
 def button(update: Update, context: CallbackContext) -> None:
