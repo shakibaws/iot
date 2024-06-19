@@ -6,6 +6,7 @@ import time
 resource_catalog_address = ''
 service_expose_endpoint = 'http://0.0.0.0:8082'
 users_list = []
+vase_list = []
 current_user = None
 current_context = None
 welcome_message = None
@@ -19,16 +20,8 @@ def start(update: Update, context: CallbackContext) -> None:
     handle_endpoints()
     if not is_logged_in():
         login(update)
-
-    # keyboard = [
-    #     [InlineKeyboardButton(
-    #         "Let's learn more about your plant!", callback_data='start')],
-    #     [InlineKeyboardButton(
-    #         "Add a vase", callback_data='add_vase')],
-    # ]
-    # reply_markup = InlineKeyboardMarkup(keyboard)
-    # update.message.reply_text(
-    #     "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!", reply_markup=reply_markup)
+    else:
+        handle_main_actions(update)
 
 
 def is_logged_in():
@@ -46,6 +39,7 @@ def login(update: Update):
             if user['telegram_chat_id'] == update.message.chat_id:
                 current_user = user
                 print('User found and logged in')
+                handle_main_actions(update)
                 break
         if current_user == None:
             print('User not found')
@@ -71,7 +65,7 @@ def signup(update: Update):
     time.sleep(1)
     remove_message(update, welcome_message)
     signup_message = update.message.reply_text(
-        "It seems like you are new here. We are creating an account for you!.",)
+        "It seems like you are new here. We are creating an account for you!",)
     print('Signing up')
     signup_response = requests.post(
         f'{resource_catalog_address}/user',
@@ -84,6 +78,45 @@ def signup(update: Update):
         signup_confirm_message = update.message.reply_text(
             "Done 🎉, now let's get started!"
         )
+        time.sleep(1)
+        remove_message(update, signup_confirm_message)
+        handle_main_actions(update)
+
+
+def handle_main_actions(update: Update):
+    keyboard = [
+        [InlineKeyboardButton(
+            "Add a new Smart Vase", callback_data='add_vase')],
+        [InlineKeyboardButton(
+            "See the list of connected Smart Vases", callback_data='vase_list')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text(
+        "Let's get started 🚀. How can I help you?", reply_markup=reply_markup)
+
+
+def add_vase():
+    pass
+
+
+def get_user_vase_list(update: Update, context: CallbackContext):
+    global resource_catalog_address, vase_list
+    vase_list_response = requests.get(f'{resource_catalog_address}/listVase')
+    print('Getting list vase')
+    if vase_list_response.status_code == 200:
+        global_vase_list = vase_list_response.json()
+        for vase in global_vase_list:
+            if vase['vase_user'] == current_user['user_id']:
+                vase_list.append(vase)
+
+        if not vase_list:
+            print('User has no active vases')
+            if update.callback_query:
+                message = update.callback_query.message
+            else:
+                message = update.message
+            no_vase_found = message.reply_text(
+                "You have no smart vases connected! Try adding one now!")
 
 
 def button(update: Update, context: CallbackContext) -> None:
@@ -92,6 +125,8 @@ def button(update: Update, context: CallbackContext) -> None:
     if query.data == 'start':
         query.edit_message_text(
             text="First, please send me an image of your plant so that I can identify it!")
+    if query.data == 'vase_list':
+        get_user_vase_list(update, context)
 
 
 def handle_photo(update: Update, context: CallbackContext) -> None:
@@ -120,6 +155,7 @@ def main() -> None:
     updater = Updater("7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE")
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("vase_list", get_user_vase_list))
     dispatcher.add_handler(CallbackQueryHandler(button))
     dispatcher.add_handler(MessageHandler(Filters.photo, handle_photo))
     updater.start_polling()
