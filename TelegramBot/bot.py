@@ -79,8 +79,8 @@ def signup(update: Update):
             "Done 🎉, now let's get started!"
         )
         time.sleep(1)
+        login(update)
         remove_message(update, signup_confirm_message)
-        handle_main_actions(update)
 
 
 def handle_main_actions(update: Update):
@@ -100,7 +100,7 @@ def add_vase():
 
 
 def get_user_vase_list(update: Update, context: CallbackContext):
-    global resource_catalog_address, vase_list
+    global resource_catalog_address, vase_list, current_user
     vase_list_response = requests.get(f'{resource_catalog_address}/listVase')
     print('Getting list vase')
     if vase_list_response.status_code == 200:
