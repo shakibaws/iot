@@ -26,7 +26,7 @@ class ServiceCatalogExpose:
 
 
 if __name__ == '__main__':
-    with open('./service_catalog.json', 'r') as file:
+    with open('Microservices/catalog_expose/service_catalog.json', 'r') as file:
         data = json.load(file)
         serviceCatalog = ServiceCatalogExpose(data)
         conf = {
