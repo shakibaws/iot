@@ -96,7 +96,7 @@ def handle_main_actions(update: Update):
 
 
 def add_vase():
-    pass
+    global resource_catalog_address, current_user
 
 
 def get_user_vase_list(update: Update, context: CallbackContext):
@@ -116,7 +116,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             else:
                 message = update.message
             no_vase_found = message.reply_text(
-                "You have no smart vases connected! Try adding one now!")
+                "You have no smart vases connected! If you already have got one, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on [here](http://192.168.4.1:8080/set_up_vase) \n\n3. After following the steps on the webpage, you will be given an 'Activation Code', please connect to internet again and paste the code here.", parse_mode='Markdown')
 
 
 def button(update: Update, context: CallbackContext) -> None:
