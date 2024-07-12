@@ -71,12 +71,12 @@ if __name__ == "__main__":
 
     #get al service_catalog
     service_catalog = requests.get("http://localhost:8082/all").json()
-    topicSensors = service_catalog.topics.topic_sensors
-    topicActuators = service_catalog.topics.topic_actuators
-    topic_telegram_chat = service_catalog.topics.topic_telegram_chat
-    resource_catalog = service_catalog.reource_catalog_address
-    broker = service_catalog.broker.broker_address
-    port = service_catalog.broker.port
+    topicSensors = service_catalog["topics"]["topic_sensors"]
+    topicActuators = service_catalog["topics"]["topic_actuators"]
+    topic_telegram_chat = service_catalog["topics"]["topic_telegram_chat"]
+    resource_catalog = service_catalog["reource_catalog_address"]
+    broker = service_catalog["broker"]["broker_address"]
+    port = service_catalog["broker"]["port"]
 
     controller = wateringSystem(clientID,broker,port,topicSensors,topicActuators,topic_telegram_chat,resource_catalog)
     controller.startSim()
