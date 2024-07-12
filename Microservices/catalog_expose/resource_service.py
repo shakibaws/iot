@@ -10,7 +10,7 @@ class CatalogExpose:
         self.userList = data['userList']
 
     def save_to_file(self):
-        with open('resource_catalog.json', 'w') as file:
+        with open('Microservices/catalog_expose/resource_catalog.json', 'w') as file:
             json.dump({"deviceList": self.deviceList, "vaseList": self.vaseList, "userList": self.userList}, file)
 
 
@@ -115,7 +115,7 @@ class CatalogExpose:
             return {"message": "Invalid resource"}
 
 if __name__ == '__main__':
-    with open('./resource_catalog.json', 'r') as file:
+    with open('Microservices/catalog_expose/resource_catalog.json', 'r') as file:
         data = json.load(file)
         catalog = CatalogExpose(data)
 
