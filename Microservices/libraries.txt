@@ -1,8 +1,0 @@
-asyncio
-cherrypy
-datetime
-machine
-network
-paho-mqtt
-requests
-git+https://github.com/Launchers-1/zukipy

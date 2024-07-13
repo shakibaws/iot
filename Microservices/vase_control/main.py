@@ -88,7 +88,14 @@ if __name__ == "__main__":
     clientID = "vase_control"
 
     #get al service_catalog
-    service_catalog = requests.get("http://localhost:8082/all").json()
+    go = False
+    while not go:
+        try:
+            service_catalog = requests.get("http://localhost:8082/all").json()
+            go = True
+        except requests.exceptions.RequestException as e:
+            print(f"Error occurred while making the HTTP request: {e}")
+        time.sleep(5)
     topicSensors = service_catalog["topics"]["topic_sensors"]
     topicActuators = service_catalog["topics"]["topic_actuators"]
     topic_telegram_chat = service_catalog["topics"]["topic_telegram_chat"]
