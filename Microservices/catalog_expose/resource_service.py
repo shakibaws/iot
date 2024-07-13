@@ -54,9 +54,10 @@ class CatalogExpose:
                 if i["device_id"] == device["device_id"]:
                     found = True
             if not found:
-                for v in self.vaseList:
-                    if v["temporary_code"] == device["activation_code"]:
-                        device["vase_id"] = v["vase_id"]
+                for u in self.userList:
+                    if u["temporary_code"] == device["activation_code"]:
+                        device["user_id"] = u["vase_id"]
+                        del device["activation_code"]
                 self.deviceList.append(device)
             self.save_to_file()
             return {"message": "Device added successfully"}
