@@ -33,6 +33,9 @@ class WifiManager:
         # The file were the credentials will be stored.
         # There is no encryption, it's just a plain text archive. Be aware of this security problem!
         self.wifi_credentials = 'wifi.dat'
+
+        # The file for temporary activation_code
+        self.activation_code_file = 'activation_code.dat'
         
         # Prevents the device from automatically trying to connect to the last saved network without first going through the steps defined in the code.
         self.wlan_sta.disconnect()
@@ -187,32 +190,43 @@ class WifiManager:
 
 
     def handle_root(self):
-        self.send_header()
-        self.client.sendall("""
-            <!DOCTYPE html>
-            <html lang="en">
-                <head>
-                    <title>WiFi Manager</title>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <link rel="icon" href="data:,">
-                </head>
-                <body>
-                    <h1>WiFi Manager</h1>
-                    <form action="/configure" method="post" accept-charset="utf-8">
-        """.format(self.ap_ssid))
-        for ssid, *_ in self.wlan_sta.scan():
-            ssid = ssid.decode("utf-8")
+        activation_code = re.search('activation_code=(.*)', self.url_decode(self.request))
+        if len(activation_code) == 0:
+                self.send_response("""
+                    <p>Error on activation code</p>
+                    <p>Go back to telegram bot and try again!</p>
+                """, 400)
+        else:
+            # save the activation code for later
+            with open(self.activation_code_file, 'w') as file:
+                file.write(activation_code)
+            file.close()
+            self.send_header()
             self.client.sendall("""
-                        <p><input type="radio" name="ssid" value="{0}" id="{0}"><label for="{0}">&nbsp;{0}</label></p>
-            """.format(ssid))
-        self.client.sendall("""
-                        <p><label for="password">Password:&nbsp;</label><input type="password" id="password" name="password"></p>
-                        <p><input type="submit" value="Connect"></p>
-                    </form>
-                </body>
-            </html>
-        """)
+                <!DOCTYPE html>
+                <html lang="en">
+                    <head>
+                        <title>WiFi Manager</title>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <link rel="icon" href="data:,">
+                    </head>
+                    <body>
+                        <h1>WiFi Manager</h1>
+                        <form action="/configure" method="post" accept-charset="utf-8">
+            """.format(self.ap_ssid))
+            for ssid, *_ in self.wlan_sta.scan():
+                ssid = ssid.decode("utf-8")
+                self.client.sendall("""
+                            <p><input type="radio" name="ssid" value="{0}" id="{0}"><label for="{0}">&nbsp;{0}</label></p>
+                """.format(ssid))
+            self.client.sendall("""
+                            <p><label for="password">Password:&nbsp;</label><input type="password" id="password" name="password"></p>
+                            <p><input type="submit" value="Connect"></p>
+                        </form>
+                    </body>
+                </html>
+            """)
         self.client.close()
 
 

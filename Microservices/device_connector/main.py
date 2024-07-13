@@ -15,6 +15,9 @@ class IoTDevice:
         self.mqqtclient = None
         self.sub_topic = ""
         self.pub_topic = ""
+
+        self.service_catalog_url = "http://192.168.1.113:8082/all"
+
         self.c = Connector()
 
     def actuate(self, topic, msg):
@@ -80,12 +83,12 @@ class IoTDevice:
             status = self.c.connect()
 
     def init(self):
-        # fetch resource catalog
+        # fetch service catalog
         client_id = "device_connector"
         retries = 5
         for attempt in range(retries):
             try:
-                res = urequests.get("http://192.168.1.113:8082/all")
+                res = urequests.get(self.service_catalog_url)
                 service_catalog = ujson.loads(res.text)
                 break
             except OSError as e:
@@ -96,8 +99,13 @@ class IoTDevice:
                     raise
 
         # sub(post) to resource catalog
+        with open("activation_code.bat", "r") as file:
+            activation_code = file.read()
+        file.close()
+
         with open("config.json", "r") as file:
             self.device_cfg = ujson.load(file)
+            self.device_cfg["device"]["activation_code"] = activation_code
             file.close()
             resource_catalog = service_catalog["services"]["resource_catalog_address"]
             print(resource_catalog)
@@ -112,7 +120,7 @@ class IoTDevice:
                         time.sleep(5)
                     else:
                         raise
-        
+        file.close()
         # set pinout
         for i in self.device_cfg["pinout"]["sensors"]:
             self.pin_sensors[i['name']] = ADC(Pin(i['pin']))
