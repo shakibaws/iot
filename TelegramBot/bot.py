@@ -13,20 +13,26 @@ welcome_message = None
 
 
 def start(update: Update, context: CallbackContext) -> None:
-    global current_context, welcome_message
+    global current_context, welcome_message, users_list, vase_list, current_user
     welcome_message = update.message.reply_text(
         "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!",)
+    users_list = []
+    vase_list = []
+    current_user = None
     current_context = context
     handle_endpoints()
-    if not is_logged_in():
+    if not is_logged_in(update):
         login(update)
     else:
         handle_main_actions(update)
 
 
-def is_logged_in():
-    print(f'is user logged in: {current_user != None}')
-    return current_user != None
+def is_logged_in(update: Update):
+    isLoggedIn = current_user != None and current_user['telegram_chat_id'] == update.message.chat_id
+
+    print(
+        f'is user logged in: {isLoggedIn} loggin_user={current_user} \n chat_id={update.message.chat_id}')
+    return isLoggedIn
 
 
 def login(update: Update):
@@ -38,7 +44,7 @@ def login(update: Update):
         for user in users_list:
             if user['telegram_chat_id'] == update.message.chat_id:
                 current_user = user
-                print('User found and logged in')
+                print(f'User found and logged in. User = {current_user}')
                 handle_main_actions(update)
                 break
         if current_user == None:
