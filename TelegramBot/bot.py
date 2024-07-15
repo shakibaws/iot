@@ -10,6 +10,7 @@ vase_list = []
 current_user = None
 current_context = None
 welcome_message = None
+no_vase_found_message = None
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -60,10 +61,10 @@ def handle_endpoints():
         )['services']['resource_catalog_address']
 
 
-def remove_message(update: Update, message):
+def remove_message(update: Update, message, is_query: bool = False):
     global current_context
     current_context.bot.delete_message(
-        chat_id=update.message.chat_id, message_id=message.message_id)
+        chat_id=update.callback_query.message.chat_id if is_query else update.message.chat_id, message_id=message.message_id)
 
 
 def signup(update: Update):
@@ -106,8 +107,12 @@ def add_vase():
 
 
 def get_user_vase_list(update: Update, context: CallbackContext):
-    global resource_catalog_address, vase_list, current_user
+    global resource_catalog_address, vase_list, current_user, no_vase_found_message
+    if no_vase_found_message != None:
+        remove_message(update, no_vase_found_message, True)
+        no_vase_found_message = None
     vase_list_response = requests.get(f'{resource_catalog_address}/listVase')
+    addingVaseInstructions = f" If you already have got a smart vase, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1:8080/set_up_vase?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
     print('Getting list vase')
     if vase_list_response.status_code == 200:
         global_vase_list = vase_list_response.json()
@@ -121,8 +126,14 @@ def get_user_vase_list(update: Update, context: CallbackContext):
                 message = update.callback_query.message
             else:
                 message = update.message
-            no_vase_found = message.reply_text(
-                "You have no smart vases connected! If you already have got one, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on [here](http://192.168.4.1:8080/set_up_vase) \n\n3. After following the steps on the webpage, you will be given an 'Activation Code', please connect to internet again and paste the code here.", parse_mode='Markdown')
+            keyboard = [
+
+                [InlineKeyboardButton(
+                    "Refresh my Vase List", callback_data='vase_list')],
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            no_vase_found_message = message.reply_text(
+                f"You have no smart vases connected! {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
 
 
 def button(update: Update, context: CallbackContext) -> None:
