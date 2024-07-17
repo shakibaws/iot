@@ -112,7 +112,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
         remove_message(update, no_vase_found_message, True)
         no_vase_found_message = None
     vase_list_response = requests.get(f'{resource_catalog_address}/listVase')
-    addingVaseInstructions = f" If you already have got a smart vase, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1:8080/set_up_vase?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
+    addingVaseInstructions = f" If you already have got a smart vase, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1/?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
     print('Getting list vase')
     if vase_list_response.status_code == 200:
         global_vase_list = vase_list_response.json()
