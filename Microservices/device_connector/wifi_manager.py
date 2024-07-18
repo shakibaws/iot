@@ -12,7 +12,7 @@ import time
 
 class WifiManager:
 
-    def __init__(self, ssid = 'WifiManager', password = 'wifimanager', reboot = True, debug = False):
+    def __init__(self, ssid = 'SmartVase', password = 'smartvase', reboot = True, debug = False):
         self.wlan_sta = network.WLAN(network.STA_IF)
         self.wlan_sta.active(True)
         self.wlan_ap = network.WLAN(network.AP_IF)
@@ -34,8 +34,8 @@ class WifiManager:
         # There is no encryption, it's just a plain text archive. Be aware of this security problem!
         self.wifi_credentials = 'wifi.dat'
 
-        # The file for temporary activation_code
-        self.activation_code_file = 'activation_code.dat'
+        # The file for temporary user_id
+        self.user_id_file = 'user_id.dat'
         
         # Prevents the device from automatically trying to connect to the last saved network without first going through the steps defined in the code.
         self.wlan_sta.disconnect()
@@ -115,7 +115,7 @@ class WifiManager:
     
     def web_server(self):
         self.wlan_ap.active(True)
-        self.wlan_ap.config(essid = self.ap_ssid, password = self.ap_password, authmode = self.ap_authmode)
+        self.wlan_ap.config(essid=self.ap_ssid, password=self.ap_password, authmode=self.ap_authmode)
         server_socket = socket.socket()
         server_socket.close()
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -149,9 +149,12 @@ class WifiManager:
                 if self.request:
                     if self.debug:
                         print(self.url_decode(self.request))
-                    url = re.search('(?:GET|POST) /(.*?)(?:\\?.*?)? HTTP', self.request).group(1).decode('utf-8').rstrip('/')
+                    match = re.search('(?:GET|POST) /(.*?)(?:\\?(.*?))? HTTP', self.request)
+                    url = match.group(1).decode('utf-8').rstrip('/')
+                    query_string = match.group(2)
+                    query_params = self.parse_query_string(query_string)
                     if url == '':
-                        self.handle_root()
+                        self.handle_root(query_params)
                     elif url == 'configure':
                         self.handle_configure()
                     else:
@@ -162,45 +165,30 @@ class WifiManager:
                 return
             finally:
                 self.client.close()
+    
+    def parse_query_string(self, query_string):
+        params = {}
+        if query_string:
+            pairs = query_string.decode('utf-8').split('&')
+            for pair in pairs:
+                if '=' in pair:
+                    key, value = pair.split('=', 1)
+                    params[key] = value
+                else:
+                    params[pair] = ''
+        return params
 
-
-    def send_header(self, status_code = 200):
-        self.client.send("""HTTP/1.1 {0} OK\r\n""".format(status_code))
-        self.client.send("""Content-Type: text/html\r\n""")
-        self.client.send("""Connection: close\r\n""")
-
-
-    def send_response(self, payload, status_code = 200):
-        self.send_header(status_code)
-        self.client.sendall("""
-            <!DOCTYPE html>
-            <html lang="en">
-                <head>
-                    <title>WiFi Manager</title>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <link rel="icon" href="data:,">
-                </head>
-                <body>
-                    {0}
-                </body>
-            </html>
-        """.format(payload))
-        self.client.close()
-
-
-    def handle_root(self):
-        activation_code = re.search('activation_code=(.*)', self.url_decode(self.request))
-        if len(activation_code) == 0:
-                self.send_response("""
-                    <p>Error on activation code</p>
-                    <p>Go back to telegram bot and try again!</p>
-                """, 400)
+    def handle_root(self, query_params):
+        user_id = query_params.get('user_id', '')
+        if not user_id:
+            self.send_response("""
+                <p>Error on activation code</p>
+                <p>Go back to telegram bot and try again!</p>
+            """, 400)
         else:
             # save the activation code for later
-            with open(self.activation_code_file, 'w') as file:
-                file.write(activation_code)
-            file.close()
+            with open(self.user_id_file, 'w') as file:
+                file.write(user_id)
             self.send_header()
             self.client.sendall("""
                 <!DOCTYPE html>
@@ -228,7 +216,7 @@ class WifiManager:
                 </html>
             """)
         self.client.close()
-
+       
 
     def handle_configure(self):
         match = re.search('ssid=([^&]*)&password=(.*)', self.url_decode(self.request))

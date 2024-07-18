@@ -1,5 +1,7 @@
 # Documentation schema
 
+## ports
+
 ## service catalog
 - broker
     - broker_address
@@ -21,6 +23,7 @@
     - actuators
     - availableServices
     - lastUpdate
+    - user_id
 - vaseList
     - vase_id
     - vase_name
@@ -95,6 +98,7 @@
     - actuators: The list of actuators available in the device.
     - availableServices: The list of available services for the device.
     - lastUpdate: The timestamp of the last update for the device.
+    - user_id
 - vaseList: Represents a list of vases in the system.
     - vase_id: The unique identifier of the vase.
     - vase_name: The name of the vase.

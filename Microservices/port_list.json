@@ -1,0 +1,8 @@
+{
+  "resource_service": 5000,
+  "service_service": 8082,
+  "image_recognition": 8085,
+  "recommendation_service": 8081,
+  "vase_control": null,
+  "watering_service": null
+}

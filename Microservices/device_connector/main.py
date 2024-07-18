@@ -16,7 +16,7 @@ class IoTDevice:
         self.sub_topic = ""
         self.pub_topic = ""
 
-        self.service_catalog_url = "http://192.168.1.113:8082/all"
+        self.service_catalog_url = "http://172.20.10.2:8082/all"
 
         self.c = Connector()
 
@@ -99,13 +99,14 @@ class IoTDevice:
                     raise
 
         # sub(post) to resource catalog
-        with open("activation_code.bat", "r") as file:
-            activation_code = file.read()
+        user_id = ""
+        with open("user_id.bat", "r") as file:
+            user_id = file.read()
         file.close()
 
         with open("config.json", "r") as file:
             self.device_cfg = ujson.load(file)
-            self.device_cfg["device"]["activation_code"] = activation_code
+            self.device_cfg["device"]["user_id"] = user_id
             file.close()
             resource_catalog = service_catalog["services"]["resource_catalog_address"]
             print(resource_catalog)

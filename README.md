@@ -30,6 +30,8 @@ pkill -9 python
 
 ## TO-DO List
 - [x] add instructions to telegram bot
-- [] add activation code to esp32 micropython
+- [x] add activation code to esp32 micropython
+- [] host mosquitto mqtt public broker
+- [] dockerize everything
 - [] add simple api and topics documentation for each service
 - [] restyle esp32 web page

@@ -84,7 +84,7 @@ if __name__ == '__main__':
     }
     cherrypy.config.update({
        'server.socket_host': '0.0.0.0',
-        'server.socket_port': 8080  # Specify your desired port here
+        'server.socket_port': 8085  # Specify your desired port here
     })
     webService=API()
     cherrypy.tree.mount(webService, '/', conf)

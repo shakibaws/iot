@@ -76,13 +76,6 @@ class vaseControl:
                 if i['value'] < 10:
                     self.control.myPublish(telegram_chat+"/alert", {"watertank_level":"low"})
 
-
-                
-            
-
-
-
-
 if __name__ == "__main__":
 
     clientID = "vase_control"
