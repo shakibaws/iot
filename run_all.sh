@@ -14,11 +14,11 @@ else
   exit 1
 fi
 
-python ./Microservices/catalog_expose/resource_service.py &
+python Microservices/catalog_expose/resource_service.py &
 
-python ./Microservices/catalog_expose/service_service.py &
+python Microservices/catalog_expose/service_service.py &
 
-python ./TelegramBOT/bot.py &
+python TelegramBot/bot.py &
 
 sleep 5
 
