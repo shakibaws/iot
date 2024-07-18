@@ -18,6 +18,8 @@ python ./Microservices/catalog_expose/resource_service.py &
 
 python ./Microservices/catalog_expose/service_service.py &
 
+python ./TelegramBOT/bot.py &
+
 sleep 5
 
 # Traverse the directory and run each Python script
