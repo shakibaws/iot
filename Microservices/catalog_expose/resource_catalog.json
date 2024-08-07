@@ -81,7 +81,7 @@
         {
             "vase_id": "1",
             "vase_name": "vase1",
-            "vase_user": "user12345",
+            "user_id": "3",
             "vase_status": "active",
             "plant": {
                 "plant_name": "plant1",
@@ -104,7 +104,7 @@
         {
             "vase_id": "2",
             "vase_name": "vase2",
-            "vase_user": "user12345",
+            "user_id": "1",
             "vase_status": "disabled",
             "deviceList": [
                 "2345"
@@ -125,7 +125,7 @@
         {
             "vase_id": "3",
             "vase_name": "vase3",
-            "vase_user": "user12345",
+            "user_id": "2",
             "vase_status": "active",
             "deviceList": [
                 "2345"

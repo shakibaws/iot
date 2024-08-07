@@ -120,7 +120,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
     if vase_list_response.status_code == 200:
         global_vase_list = vase_list_response.json()
         for vase in global_vase_list:
-            if vase['vase_user'] == current_user['user_id']:
+            if vase['user_id'] == current_user['user_id']:
                 vase_list.append(vase)
 
         if not vase_list:

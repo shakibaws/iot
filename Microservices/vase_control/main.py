@@ -32,7 +32,7 @@ class vaseControl:
         publisher = self.topic_pub.replace("device_id", device_id)
         resource = requests.get(resource_catalog+'/device/'+device_id).json()
         vase = requests.get(resource_catalog+'/vase/'+resource['vase_id']).json()
-        user_id = vase["vase_user"]
+        user_id = vase["user_id"]
         user = requests.get(resource_catalog+'/user/'+user_id).json()
         telegram_chat = self.topic_telegram_chat.replace("telegram_chat_id", user["telegram_chat_id"])
 
