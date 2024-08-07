@@ -118,6 +118,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
 
     addingVaseInstructions = f" If you already have got a smart vase, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1/?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
     print('Getting list vase')
+    keyboard_list = []
     if device_list_response.status_code == 200:
         global_device_list = device_list_response.json()
         for device in global_device_list:
@@ -126,18 +127,22 @@ def get_user_vase_list(update: Update, context: CallbackContext):
 
         if device_list:
             print('User has some devices')
+            for dev in device_list:
+                for v in vase_list:
+                    name = ""
+                    if dev["vase_id"] == v["vase_id"]:
+                        name = v["vase_name"]
+                    else:
+                        name = "Vase"+dev['device_id']
+                    keyboard_list.append([InlineKeyboardButton(name, callback_data='vase_info')])
+
+
             if update.callback_query:
                 message = update.callback_query.message
             else:
                 message = update.message
-            keyboard = [
-                [InlineKeyboardButton(
-                    "Refresh my Vase List", callback_data='vase_list'), 
-                InlineKeyboardButton(
-                    "Stessa riga my Vase List", callback_data='vase_list')],
-                [InlineKeyboardButton(
-                    "Seconda riga", callback_data='vase_list')]
-            ]
+            
+            keyboard = keyboard_list
             reply_markup = InlineKeyboardMarkup(keyboard)
             no_vase_found_message = message.reply_text(
                 f"List of your vases! {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
