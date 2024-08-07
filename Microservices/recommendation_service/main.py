@@ -8,7 +8,7 @@ import datetime
 
 api_key ="zu-19f3b35168df0e7d15f07e6b4b69338b" #Get your API key from discord.gg/zukijourney
 zukiAI = zukiPy.zukiCall(api_key)
-image_recognition_service = "http://localhost:8085"
+image_recognition_service = "http://imagerecognition.duck.pictures"
 
 
 

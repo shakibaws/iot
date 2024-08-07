@@ -116,12 +116,15 @@ class WifiManager:
     def web_server(self):
         self.wlan_ap.active(True)
         self.wlan_ap.config(essid=self.ap_ssid, password=self.ap_password, authmode=self.ap_authmode)
-        server_socket = socket.socket()
-        server_socket.close()
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_socket.bind(('', 80))
-        server_socket.listen(1)
+        try:
+            server_socket = socket.socket()
+            server_socket.close()
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind(('', 80))
+            server_socket.listen(1)
+        except OSError as e:
+            print("Error socket")
         print('Connect to', self.ap_ssid, 'with the password', self.ap_password, 'and access the captive portal at', self.wlan_ap.ifconfig()[0])
         while True:
             if self.wlan_sta.isconnected():
@@ -132,7 +135,7 @@ class WifiManager:
                     machine.reset()
             self.client, addr = server_socket.accept()
             try:
-                self.client.settimeout(5.0)
+                self.client.settimeout(7.0)
                 self.request = b''
                 try:
                     while True:
@@ -154,6 +157,7 @@ class WifiManager:
                     query_string = match.group(2)
                     query_params = self.parse_query_string(query_string)
                     if url == '':
+                        print("Handle root url")
                         self.handle_root(query_params)
                     elif url == 'configure':
                         self.handle_configure()
@@ -178,18 +182,42 @@ class WifiManager:
                     params[pair] = ''
         return params
 
+    def send_header(self, status_code = 200):
+        self.client.send("""HTTP/1.1 {0} OK\r\n""".format(status_code))
+        self.client.send("""Content-Type: text/html\r\n""")
+        self.client.send("""Connection: close\r\n""")
+
+
+    def send_response(self, payload, status_code = 200):
+        self.send_header(status_code)
+        self.client.sendall("""
+            <!DOCTYPE html>
+            <html lang="en">
+                <head>
+                    <title>WiFi Manager</title>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <link rel="icon" href="data:,">
+                </head>
+                <body>
+                    {0}
+                </body>
+            </html>
+        """.format(payload))
+        self.client.close()
+
     def handle_root(self, query_params):
-        user_id = query_params.get('user_id', '')
+        print("Inside handle root")
+        user_id = query_params['user_id']
+        print(f"User id {user_id}")
         if not user_id:
             self.send_response("""
                 <p>Error on activation code</p>
                 <p>Go back to telegram bot and try again!</p>
             """, 400)
         else:
-            # save the activation code for later
-            with open(self.user_id_file, 'w') as file:
-                file.write(user_id)
             self.send_header()
+            print("Header sent")
             self.client.sendall("""
                 <!DOCTYPE html>
                 <html lang="en">
@@ -204,6 +232,7 @@ class WifiManager:
                         <form action="/configure" method="post" accept-charset="utf-8">
             """.format(self.ap_ssid))
             for ssid, *_ in self.wlan_sta.scan():
+                print(ssid)
                 ssid = ssid.decode("utf-8")
                 self.client.sendall("""
                             <p><input type="radio" name="ssid" value="{0}" id="{0}"><label for="{0}">&nbsp;{0}</label></p>
@@ -215,6 +244,12 @@ class WifiManager:
                     </body>
                 </html>
             """)
+             # save the activation code for later
+            with open(self.user_id_file, 'w') as file:
+                file.write(user_id)
+                print(f"User id {user_id} saved in .dat file")
+                time.sleep(2)
+                file.close()
         self.client.close()
        
 

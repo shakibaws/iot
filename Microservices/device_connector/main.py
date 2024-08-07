@@ -16,7 +16,7 @@ class IoTDevice:
         self.sub_topic = ""
         self.pub_topic = ""
 
-        self.service_catalog_url = "http://172.20.10.2:8082/all"
+        self.service_catalog_url = "http://serviceservice.duck.pictures/all"
 
         self.c = Connector()
 
@@ -100,7 +100,7 @@ class IoTDevice:
 
         # sub(post) to resource catalog
         user_id = ""
-        with open("user_id.bat", "r") as file:
+        with open("user_id.dat", "r") as file:
             user_id = file.read()
         file.close()
 

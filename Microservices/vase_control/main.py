@@ -10,6 +10,7 @@ class vaseControl:
         self.topic_pub = topic_actuators
         self.topic_telegram_chat = topic_telegram_chat
         self.boo = 1
+        
     def notify(self,topic,payload):
         data = json.loads(payload)
         print(f"Message received on topic: {topic}, {data}")
@@ -84,7 +85,7 @@ if __name__ == "__main__":
     go = False
     while not go:
         try:
-            service_catalog = requests.get("http://localhost:8082/all").json()
+            service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
             go = True
         except requests.exceptions.RequestException as e:
             print(f"Error occurred while making the HTTP request: {e}")

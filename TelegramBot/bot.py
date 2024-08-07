@@ -4,7 +4,7 @@ import requests
 import time
 
 resource_catalog_address = ''
-service_expose_endpoint = 'http://0.0.0.0:8082'
+service_expose_endpoint = 'http://serviceservice.duck.pictures'
 users_list = []
 vase_list = []
 current_user = None
