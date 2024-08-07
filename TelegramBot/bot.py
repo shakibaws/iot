@@ -7,6 +7,7 @@ resource_catalog_address = ''
 service_expose_endpoint = 'http://serviceservice.duck.pictures'
 users_list = []
 vase_list = []
+device_list = []
 current_user = None
 current_context = None
 welcome_message = None
@@ -112,6 +113,8 @@ def get_user_vase_list(update: Update, context: CallbackContext):
         remove_message(update, no_vase_found_message, True)
         no_vase_found_message = None
     vase_list_response = requests.get(f'{resource_catalog_address}/listVase')
+    device_list_response = requests.get(f'{resource_catalog_address}/listDevice')
+
     addingVaseInstructions = f" If you already have got a smart vase, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1/?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
     print('Getting list vase')
     if vase_list_response.status_code == 200:
@@ -127,7 +130,6 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             else:
                 message = update.message
             keyboard = [
-
                 [InlineKeyboardButton(
                     "Refresh my Vase List", callback_data='vase_list')],
             ]
@@ -152,10 +154,10 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
     photo_file.download(file_path)
     update.message.reply_text(
         "Image recieved, let's see...")
-    url = ""
+    url = "http://recommendationservice.duck.pictures"
     try:
         with open(file_path, 'rb') as file:
-            files = {'file': (file_path, file, 'image/jpeg')}
+            files = {'images': (file_path, file, 'image/jpeg')}
             response = requests.post(url, files=files)
 
         if response.status_code == 200:

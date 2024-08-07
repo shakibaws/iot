@@ -26,7 +26,7 @@ class API:
     def POST(self, **params):
         print('POST')
         files = []
-        if not  isinstance(params['images'], list):
+        if not isinstance(params['images'], list):
             params['images']=[params['images']]
 
         print(params['images'])
