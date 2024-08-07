@@ -20,6 +20,7 @@ def start(update: Update, context: CallbackContext) -> None:
         "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!",)
     users_list = []
     vase_list = []
+    device_list = []
     current_user = None
     current_context = context
     handle_endpoints()
@@ -117,14 +118,32 @@ def get_user_vase_list(update: Update, context: CallbackContext):
 
     addingVaseInstructions = f" If you already have got a smart vase, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1/?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
     print('Getting list vase')
-    if vase_list_response.status_code == 200:
-        global_vase_list = vase_list_response.json()
-        for vase in global_vase_list:
-            if vase['user_id'] == current_user['user_id']:
-                vase_list.append(vase)
+    if device_list_response.status_code == 200:
+        global_device_list = device_list_response.json()
+        for device in global_device_list:
+            if device['user_id'] == current_user['user_id']:
+                device_list.append(device)
 
-        if not vase_list:
-            print('User has no active vases')
+        if device_list:
+            print('User has some devices')
+            if update.callback_query:
+                message = update.callback_query.message
+            else:
+                message = update.message
+            keyboard = [
+                [InlineKeyboardButton(
+                    "Refresh my Vase List", callback_data='vase_list'), 
+                InlineKeyboardButton(
+                    "Stessa riga my Vase List", callback_data='vase_list')],
+                [InlineKeyboardButton(
+                    "Seconda riga", callback_data='vase_list')]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            no_vase_found_message = message.reply_text(
+                f"List of your vases! {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
+        
+        else:
+            print('User has NO devices')
             if update.callback_query:
                 message = update.callback_query.message
             else:
