@@ -27,7 +27,7 @@
 - vaseList
     - vase_id
     - vase_name
-    - vase_user
+    - user_id
     - vase_status
     - plant
         - plant_name
@@ -102,7 +102,7 @@
 - vaseList: Represents a list of vases in the system.
     - vase_id: The unique identifier of the vase.
     - vase_name: The name of the vase.
-    - vase_user: The user associated with the vase.
+    - user_id: The user associated with the vase.
     - vase_status: The status of the vase (active or disabled).
     - plant: Represents the plant information associated with the vase.
         - plant_name: The name of the plant.
