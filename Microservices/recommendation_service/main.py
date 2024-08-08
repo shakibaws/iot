@@ -54,6 +54,7 @@ class API:
         s = requests.Session()
         response = s.send(prepared)
         if response.status_code != 200:
+            print(response.text)
             raise cherrypy.HTTPError(response.status_code, 'Error in API request')
         try:
             json_result = json.loads(response.text)
@@ -61,6 +62,7 @@ class API:
                 result=json_result['result']
                 print(result)
                 info = asyncio.run(self.call_get_info(result['species']))
+                print(info)
                 # Remove ```json and ``` from the string
                 json_string = info.strip('```json').strip('```').strip()
 

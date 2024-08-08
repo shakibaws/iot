@@ -50,6 +50,7 @@ class API:
         s = requests.Session()
         response = s.send(prepared)
         if response.status_code != 200:
+            print(response.text)
             raise cherrypy.HTTPError(response.status_code, 'Error in API request')
         try:
             json_result = json.loads(response.text)

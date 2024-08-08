@@ -167,7 +167,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             no_vase_found_message = message.reply_text(
                 f"You have no smart vases connected! {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
 
-
+# Callback action dispatcher
 def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
@@ -220,6 +220,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
             update.message.reply_text(
                 'Image uploaded to server successfully!')
         else:
+            print(response.text)
             update.message.reply_text(
                 'Failed to upload the image.')
     except Exception as e:
