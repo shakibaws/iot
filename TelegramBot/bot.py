@@ -119,23 +119,30 @@ def get_user_vase_list(update: Update, context: CallbackContext):
     addingVaseInstructions = f" If you already have got a smart vase, please follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1/?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
     print('Getting list vase')
     keyboard_list = []
+    if vase_list_response.status_code == 200:
+        global_vase_list = vase_list_response.json()
+        for vase in global_vase_list:
+            if vase['user_id'] == current_user['user_id']:
+                vase_list.append(device)
+                print(f"{vase_list}")
+                
     if device_list_response.status_code == 200:
         global_device_list = device_list_response.json()
         for device in global_device_list:
             if device['user_id'] == current_user['user_id']:
                 device_list.append(device)
+                print(f"{device_list}")
 
         if device_list:
             print('User has some devices')
             for dev in device_list:
+                name = "Vase "+dev['device_id']
                 for v in vase_list:
-                    name = ""
-                    if dev["device_id"] == v["device_id"]:
+                    if v["device_id"] == dev["device_id"]:
                         name = v["vase_name"]
-                    else:
-                        name = "Vase "+dev['device_id']
-                    keyboard_list.append([InlineKeyboardButton(name, callback_data='vase_info')])
-
+                        break
+                keyboard_list.append([InlineKeyboardButton(name, callback_data='vase_info')])
+                
             if update.callback_query:
                 message = update.callback_query.message
             else:

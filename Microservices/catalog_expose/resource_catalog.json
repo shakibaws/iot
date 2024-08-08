@@ -39,7 +39,7 @@
             "lastUpdate": 1621764472.704841
         },
         {
-            "device_id": "2345",
+            "device_id": "3",
             "user_id": "3",
             "device_status": "offline",
             "sensors": [
@@ -56,31 +56,12 @@
                 "MQTT"
             ],
             "lastUpdate": 1621764472.704841
-        },
-        {
-            "vase_id": "1",
-            "user_id": "3",
-            "sensors": [
-                "soil_moisture",
-                "watertank_level",
-                "temperature",
-                "light_level"
-            ],
-            "actuators": [
-                "light_level",
-                "soil_moisture"
-            ],
-            "available_services": [
-                "MQTT"
-            ],
-            "device_id": "very_unique_id",
-            "lastUpdate": "2024-06-04 00:26:07",
-            "device_status": "active"
         }
     ],
     "vaseList": [
         {
             "vase_id": "1",
+            "device_id": "1",
             "vase_name": "vase1",
             "user_id": "3",
             "vase_status": "active",
@@ -95,16 +76,15 @@
                 "temperature_max": 100,
                 "description": "generalComprehensiveDescription in 40 words"
             },
-            "device_id": "1"
-            ,
+          
             "lastUpdate": 1621764472.704841
         },
         {
             "vase_id": "2",
+            "device_id": "3",
             "vase_name": "vase2",
             "user_id": "3",
             "vase_status": "disabled",
-            "device_id": "2345",
             "plant": {
                 "plant_name": "plant1",
                 "plant_schedule_water": 10,
@@ -122,25 +102,15 @@
     "userList": [
         {
             "user_id": "1",
-            "vases": [
-                "1",
-                "2"
-            ],
-            "devices": [
-                "1",
-                "2"
-            ],
+            "vases": [],
+            "devices": [],
             "telegram_chat_id": "123456789",
             "temporary_code": "OW5X"
         },
         {
             "user_id": "2",
-            "vases": [
-                "3"
-            ],
-            "devices": [
-                "2345"
-            ],
+            "vases": [],
+            "devices": [],
             "telegram_chat_id": "987654321",
             "temporary_code": "FS9A"
         }
