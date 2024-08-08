@@ -141,7 +141,8 @@ def get_user_vase_list(update: Update, context: CallbackContext):
                     if v["device_id"] == dev["device_id"]:
                         name = v["vase_name"]
                         break
-                keyboard_list.append([InlineKeyboardButton(name, callback_data='vase_info')])
+                callback_data = f'vase_info_{dev["device_id"]}'
+                keyboard_list.append([InlineKeyboardButton(name, callback_data=callback_data)])
                 
             if update.callback_query:
                 message = update.callback_query.message
@@ -174,10 +175,35 @@ def button(update: Update, context: CallbackContext) -> None:
     if query.data == 'start':
         query.edit_message_text(
             text="First, please send me an image of your plant so that I can identify it!")
-    if query.data == 'vase_list':
+    elif query.data == 'vase_list':
         get_user_vase_list(update, context)
+    elif query.data.startswith('vase_info_'):
+        # Extract device_id from callback_data
+        device_id = query.data.split('_')[2]
+        vase_details(update, context, device_id)
+        
+def find_device_in_list_via_device_id(device_id, item_list):
+    for item in item_list:
+        if item['device_id'] == device_id:
+            return item  # Restituisce l'oggetto dispositivo se trovato
+    return None  # Restituisce None se non trovato
 
-
+def vase_details(update: Update, context: CallbackContext, device_id: str):
+    # Implement the logic to display vase details using the device_id
+    vase = find_device_in_list_via_device_id(device_id, vase_list)
+    if vase:
+        update.callback_query.message.reply_text(f"Details for Vase: {vase["name"]}")
+    else:
+        device = find_device_in_list_via_device_id(device_id, vase_list)
+        keyboard = [
+                [InlineKeyboardButton(
+                    "Yes", callback_data='start'), 
+                InlineKeyboardButton(
+                    "No", callback_data='vase_list')],
+            ]
+        update.callback_query.message.reply_text(f"Do you want to setup this vase now?")
+        
+        
 def handle_photo(update: Update, context: CallbackContext) -> None:
     photo_file = update.message.photo[-1].get_file()
     file_path = f"{photo_file.file_id}.jpg"
