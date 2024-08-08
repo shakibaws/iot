@@ -74,8 +74,8 @@ class API:
                 # json_string = info.strip('```json').strip('```').strip()
 
                 # Load the JSON data
-                data = json.loads(content)
-                return json.dumps(data)
+                # data = json.loads(content)
+                return json.dumps(content)
             else:
                 raise cherrypy.HTTPError(500, 'Invalid response from API')
         except json.JSONDecodeError:

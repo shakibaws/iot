@@ -236,7 +236,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
 
         if response.status_code == 200:
             # Parse the response JSON
-            chat_response = response.json()
+            chat_response = response.json()   ### this probably return as a string not a json!!!!!!!!!!
 
             # Construct the new vase dictionary
             new_vase = {
