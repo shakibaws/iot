@@ -2,7 +2,7 @@
     "deviceList": [
         {
             "device_id": "1",
-            "user_id": "1",
+            "user_id": "3",
             "device_status": "online",
             "sensors": [
                 "soil_moisture",
@@ -21,7 +21,7 @@
         },
         {
             "device_id": "2",
-            "user_id": "1",
+            "user_id": "3",
             "device_status": "online",
             "sensors": [
                 "soil_moisture",
@@ -40,7 +40,7 @@
         },
         {
             "device_id": "2345",
-            "user_id": "1",
+            "user_id": "3",
             "device_status": "offline",
             "sensors": [
                 "soil_moisture",
@@ -59,7 +59,7 @@
         },
         {
             "vase_id": "1",
-            "user_id": "2",
+            "user_id": "3",
             "sensors": [
                 "soil_moisture",
                 "watertank_level",
@@ -82,7 +82,7 @@
         {
             "vase_id": "1",
             "vase_name": "vase1",
-            "user_id": "2",
+            "user_id": "3",
             "vase_status": "active",
             "plant": {
                 "plant_name": "plant1",
@@ -95,34 +95,15 @@
                 "temperature_max": 100,
                 "description": "generalComprehensiveDescription in 40 words"
             },
-            "device_id": "very_unique_id"
+            "device_id": "1"
             ,
             "lastUpdate": 1621764472.704841
         },
         {
             "vase_id": "2",
             "vase_name": "vase2",
-            "user_id": "1",
+            "user_id": "3",
             "vase_status": "disabled",
-            "device_id": "2345",
-            "plant": {
-                "plant_name": "plant1",
-                "plant_schedule_water": 10,
-                "plant_schedule_light_level": 10,
-                "soil_moisture_min": 0,
-                "soil_moisture_max": 100,
-                "hours_sun_min": 0,
-                "temperature_min": 0,
-                "temperature_max": 100,
-                "description": "generalComprehensiveDescription in 40 words"
-            },
-            "lastUpdate": "2024-04-18 19:48:19"
-        },
-        {
-            "vase_id": "3",
-            "vase_name": "vase3",
-            "user_id": "2",
-            "vase_status": "active",
             "device_id": "2345",
             "plant": {
                 "plant_name": "plant1",
