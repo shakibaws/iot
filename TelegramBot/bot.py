@@ -123,7 +123,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
         global_vase_list = vase_list_response.json()
         for vase in global_vase_list:
             if vase['user_id'] == current_user['user_id']:
-                vase_list.append(device)
+                vase_list.append(vase)
                 print(f"{vase_list}")
                 
     if device_list_response.status_code == 200:
