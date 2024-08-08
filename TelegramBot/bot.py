@@ -235,43 +235,29 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
             response = requests.post(url, files=files)
 
         if response.status_code == 200:
-            print(response.json)
-            chat_response = json.load(response.json)
-            new_vase = {}
-            new_vase['device_id']=global_device_id
-            new_vase['vase_name']="Vase"+chat_response['plant_name']
-            new_vase['user_id']=current_user['user_id']
-            new_vase['vase_status']='active'
-            new_vase['plant']=chat_response
-            
-            '''
-            {"vase_id": "1", 
-            "device_id": "1", 
-            "vase_name": "vase1", 
-            "user_id": "3", 
-            "vase_status": "active", 
-            "plant": 
-                {"plant_name": "plant1", 
-                "plant_schedule_water": 10, 
-                "plant_schedule_light_level": 10, 
-                "soil_moisture_min": 0, 
-                "soil_moisture_max": 100, 
-                "hours_sun_min": 0, 
-                "temperature_min": 0, 
-                "temperature_max": 100, 
-                "description": "generalComprehensiveDescription in 40 words"}
-            '''
-            '''
-            Chat Response: {
-                "soilHumidityMin": 50,
-                "soilHumidityMax": 70,
-                "hourOfSunMin": 4,
-                "temperatureMin": 18,
-                "temperatureMax": 30,
-                "description": "Epipremnum aureum thrives in well-draining soil with humidity levels between 50-70%. It requires at least 4 hours of indirect sunlight daily and prefers temperatures between 18-30°C for optimal growth."
+            # Parse the response JSON
+            chat_response = response.json()
+
+            # Construct the new vase dictionary
+            new_vase = {
+                'device_id': global_device_id,
+                'vase_name': "Vase" + chat_response['plant_name'],  # Using the first word of the description as the plant name
+                'user_id': current_user['user_id'],
+                'vase_status': 'active',
+                'plant': {
+                    'plant_name': chat_response['plant_name'],  # Same as above
+                    'plant_schedule_water': chat_response['soil_moisture_max']-chat_response['soil_moisture_min']/2+12,
+                    'plant_schedule_light_level': chat_response['hourse_sun_suggested']/2, # +-12 to choose if turn on the light or not
+                    'soil_moisture_min': chat_response['soil_moisture_min'],
+                    'soil_moisture_max': chat_response['soil_moisture_max'],
+                    'hours_sun_min': chat_response['hourse_sun_suggested'],
+                    'temperature_min': chat_response['temperature_min'],
+                    'temperature_max': chat_response['temperature_max'],
+                    'description': chat_response['description']
                 }
-            '''
-            requests.post(resource_catalog_address+'/vase', json=response.json)
+            }
+        
+            requests.post(f"{resource_catalog_address}/vase", json=new_vase)
             update.message.reply_text(
                 'Image uploaded to server successfully!')
         else:
@@ -279,6 +265,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
             update.message.reply_text(
                 'Failed to upload the image.')
     except Exception as e:
+        print(e)
         update.message.reply_text('Somthing went wrong...')
 
 

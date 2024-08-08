@@ -76,7 +76,7 @@ class API:
     
 
     async def call_get_info(self, name):
-        chatresponse = await zukiAI.zuki_chat.sendMessage("S", f"Tell me ideal conditions(specify: ground/enviroment humidity, hours of exposition to sun, temperature) of this plant {name}. Respond in 50 words. Structure the answer as a json with plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_min:number, temperature_min:number, temperature_max:number, description:text(generalComprehensiveDescription in 40 words)")
+        chatresponse = await zukiAI.zuki_chat.sendMessage("S", f"Tell me ideal conditions(specify: ground/enviroment humidity, hours of exposition to sun, temperature) of this plant {name}. Respond in 50 words. Structure the answer as a json with plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_suggested:number, temperature_min:number, temperature_max:number, description:text(generalComprehensiveDescription in 40 words)")
         print("Chat Response:", chatresponse)
         return chatresponse
     
