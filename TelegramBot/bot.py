@@ -2,6 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 import requests
 import time
+import json
 
 resource_catalog_address = ''
 service_expose_endpoint = 'http://serviceservice.duck.pictures'
@@ -12,6 +13,7 @@ current_user = None
 current_context = None
 welcome_message = None
 no_vase_found_message = None
+global_device_id = ""
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -169,12 +171,22 @@ def get_user_vase_list(update: Update, context: CallbackContext):
 
 # Callback action dispatcher
 def button(update: Update, context: CallbackContext) -> None:
+    global global_device_id
     query = update.callback_query
     query.answer()
-    if query.data == 'start':
+
+    '''
+    too many device_id
+    needed global device id for function handle photo
+    '''
+    if query.data.startswith('configure'):
+        # Extract device_id from callback_data
+        device_id = query.data.split('_')[1]
+        global_device_id = device_id
         query.edit_message_text(
             text="First, please send me an image of your plant so that I can identify it!")
     elif query.data == 'vase_list':
+        global_device_id = ""
         get_user_vase_list(update, context)
     elif query.data.startswith('vase_info_'):
         # Extract device_id from callback_data
@@ -194,9 +206,10 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
         update.callback_query.message.reply_text(f"Details for Vase: {vase['vase_name']}")
     else:
         device = find_device_in_list_via_device_id(device_id, vase_list)
+
         keyboard = [
                 [InlineKeyboardButton(
-                    "Yes", callback_data='start'), 
+                    "Yes", callback_data='configure_'+device_id), 
                 InlineKeyboardButton(
                     "No", callback_data='vase_list')],
             ]
@@ -205,11 +218,16 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
         
         
 def handle_photo(update: Update, context: CallbackContext) -> None:
+    global global_device_id
+    if not global_device_id:
+        update.message.reply_text("Make sure to select a vase before trying to upload")
+        return
+    
     photo_file = update.message.photo[-1].get_file()
     file_path = f"{photo_file.file_id}.jpg"
     photo_file.download(file_path)
     update.message.reply_text(
-        "Image recieved, let's see...")
+        "Image received, let's see...")
     url = "http://recommendationservice.duck.pictures"
     try:
         with open(file_path, 'rb') as file:
@@ -217,6 +235,43 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
             response = requests.post(url, files=files)
 
         if response.status_code == 200:
+            print(response.json)
+            chat_response = json.load(response.json)
+            new_vase = {}
+            new_vase['device_id']=global_device_id
+            new_vase['vase_name']="Vase"+chat_response['plant_name']
+            new_vase['user_id']=current_user['user_id']
+            new_vase['vase_status']='active'
+            new_vase['plant']=chat_response
+            
+            '''
+            {"vase_id": "1", 
+            "device_id": "1", 
+            "vase_name": "vase1", 
+            "user_id": "3", 
+            "vase_status": "active", 
+            "plant": 
+                {"plant_name": "plant1", 
+                "plant_schedule_water": 10, 
+                "plant_schedule_light_level": 10, 
+                "soil_moisture_min": 0, 
+                "soil_moisture_max": 100, 
+                "hours_sun_min": 0, 
+                "temperature_min": 0, 
+                "temperature_max": 100, 
+                "description": "generalComprehensiveDescription in 40 words"}
+            '''
+            '''
+            Chat Response: {
+                "soilHumidityMin": 50,
+                "soilHumidityMax": 70,
+                "hourOfSunMin": 4,
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "description": "Epipremnum aureum thrives in well-draining soil with humidity levels between 50-70%. It requires at least 4 hours of indirect sunlight daily and prefers temperatures between 18-30°C for optimal growth."
+                }
+            '''
+            requests.post(resource_catalog_address+'/vase', json=response.json)
             update.message.reply_text(
                 'Image uploaded to server successfully!')
         else:
