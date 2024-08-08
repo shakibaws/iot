@@ -61,13 +61,20 @@ class API:
             if 'result' in json_result:
                 result=json_result['result']
                 print(result)
-                info = asyncio.run(self.call_get_info(result['species']))
-                print(info)
+                # info = asyncio.run(self.call_get_info(result['species']))
+
+                req = {}
+                req['question'] = f"Tell me ideal conditions(specify: ground/enviroment humidity, hours of exposition to sun, temperature) of this plant {result['species']}. Answer everything in a json object. Structure the answer as a json object with the following field(use the same name) -->  plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_min:number, temperature_min:number, temperature_max:number, description:text(general comprehensive description in 40 words. Example of answer format: "
+                response = requests.post('http://ollama.duck.pictures/chat',  json=req)
+                print(response.text)
+                content = response.json()['chat_response']['message']['content']
+
+                print(content)
                 # Remove ```json and ``` from the string
-                json_string = info.strip('```json').strip('```').strip()
+                # json_string = info.strip('```json').strip('```').strip()
 
                 # Load the JSON data
-                data = json.loads(json_string)
+                data = json.loads(content)
                 return json.dumps(data)
             else:
                 raise cherrypy.HTTPError(500, 'Invalid response from API')
