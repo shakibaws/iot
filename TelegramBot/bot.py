@@ -130,12 +130,11 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             for dev in device_list:
                 for v in vase_list:
                     name = ""
-                    if dev["vase_id"] == v["vase_id"]:
+                    if dev["device_id"] == v["device_id"]:
                         name = v["vase_name"]
                     else:
-                        name = "Vase"+dev['device_id']
+                        name = "Vase "+dev['device_id']
                     keyboard_list.append([InlineKeyboardButton(name, callback_data='vase_info')])
-
 
             if update.callback_query:
                 message = update.callback_query.message

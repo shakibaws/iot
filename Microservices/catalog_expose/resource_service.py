@@ -23,17 +23,17 @@ class CatalogExpose:
             return self.vaseList
         elif args[0] == 'listUser':
             return self.userList
-        elif args[0].startswith('device'):
+        elif args[0].startswith('device') and args[1]:
             for device in self.deviceList:
                 if device["device_id"] == args[1]:
                     return device
             return {}
-        elif args[0].startswith('vase'):
+        elif args[0].startswith('vase') and args[1]:
             for vase in self.vaseList:
                 if vase["vase_id"] == args[1]:
                     return vase
             return {}
-        elif args[0].startswith('user'):
+        elif args[0].startswith('user') and args[1]:
             for user in self.userList:
                 if user["user_id"] == args[1]:
                     return user
@@ -65,6 +65,12 @@ class CatalogExpose:
             this_time = datetime.datetime.now()
             vase["vase_id"] = str(this_id)
             vase["lastUpdate"] = this_time.strftime("%Y-%m-%d %H:%M:%S")
+            flag = 0 
+            for device in self.deviceList:
+                if device["device_id"]==vase["device_id"]:
+                    flag = 1
+            if flag == 0:
+                return {"message": "Something went wrong"}
             self.vaseList.append(vase)
             self.save_to_file()
             return {"message": "Vase added successfully",
