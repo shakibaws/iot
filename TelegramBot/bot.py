@@ -192,7 +192,7 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
     # Implement the logic to display vase details using the device_id
     vase = find_device_in_list_via_device_id(device_id, vase_list)
     if vase:
-        update.callback_query.message.reply_text(f"Details for Vase: {vase["name"]}")
+        update.callback_query.message.reply_text(f"Details for Vase: {vase["vase_name"]}")
     else:
         device = find_device_in_list_via_device_id(device_id, vase_list)
         keyboard = [
