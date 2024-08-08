@@ -126,7 +126,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
                 vase_list.append(vase)
                 print(f"{vase_list}")
                 
-    if device_list_response.status_code == 200:
+    if device_list_response.status_code == 200 and vase_list_response.status_code == 200:
         global_device_list = device_list_response.json()
         for device in global_device_list:
             if device['user_id'] == current_user['user_id']:
@@ -136,11 +136,10 @@ def get_user_vase_list(update: Update, context: CallbackContext):
         if device_list:
             print('User has some devices')
             for dev in device_list:
-                name = "Vase "+dev['device_id']
-                for v in vase_list:
-                    if v["device_id"] == dev["device_id"]:
-                        name = v["vase_name"]
-                        break
+                name = "Vase "+ dev['device_id']
+                vase = find_device_in_list_via_device_id(dev['device_id'], vase_list)
+                if vase:
+                     name = vase["vase_name"]
                 callback_data = f'vase_info_{dev["device_id"]}'
                 keyboard_list.append([InlineKeyboardButton(name, callback_data=callback_data)])
                 
@@ -201,7 +200,8 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
                 InlineKeyboardButton(
                     "No", callback_data='vase_list')],
             ]
-        update.callback_query.message.reply_text(f"Do you want to setup this vase now?")
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        update.callback_query.message.reply_text(f"Do you want to setup this vase now?", parse_mode='Markdown', reply_markup=reply_markup)
         
         
 def handle_photo(update: Update, context: CallbackContext) -> None:
