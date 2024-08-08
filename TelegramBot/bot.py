@@ -144,7 +144,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             keyboard = keyboard_list
             reply_markup = InlineKeyboardMarkup(keyboard)
             no_vase_found_message = message.reply_text(
-                f"List of your vases! {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
+                f"Here all your vases!", parse_mode='Markdown', reply_markup=reply_markup)
         
         else:
             print('User has NO devices')
