@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 import requests
 import time
@@ -203,7 +203,7 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
     # Implement the logic to display vase details using the device_id
     vase = find_device_in_list_via_device_id(device_id, vase_list)
     if vase:
-        update.callback_query.message.reply_text(f"Details for Vase: {vase['vase_name']}")
+        update.callback_query.message.reply_text('<b>'+f"Details for Vase:\n {vase['vase_name']}\nSuggested moisture(humidity) of the ground: \n{vase['plant']['soil_moisture_min']*10}-{vase['plant']['soil_moisture_max']*10}\nSuggested temperature range: \n{vase['plant']['temperature_min']}-{vase['plant']['temperature_max']}\nDescription:\n{vase['plant']['description']}"+'</b>', parse_mode=ParseMode.HTML)
     else:
         device = find_device_in_list_via_device_id(device_id, vase_list)
 
