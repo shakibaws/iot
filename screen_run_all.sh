@@ -8,7 +8,9 @@ screen -S service_catalog -dm bash -c 'source venv/bin/activate; python Microser
 
 screen -S telegram_bot -dm bash -c 'source venv/bin/activate; python TelegramBot/bot.py'
 
-sleep 5
+sleep 4
+
+screen -S gemini -dm bash -c 'source venv/bin/activate; python Microservices/gemini/main.py'
 
 screen -S recommendation_service -dm bash -c 'source venv/bin/activate; python Microservices/recommendation_service/main.py'
 

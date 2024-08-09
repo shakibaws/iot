@@ -69,7 +69,7 @@ class API:
 
                 print("Sending request")
                 #req['question'] = f"Tell me ideal conditions(specify: ground/enviroment humidity, hours of exposition to sun, temperature) of this plant {result['species']}. Answer everything in a json object. Structure the answer as a json object with the following field(use the same name) -->  plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_suggested:number, temperature_min:number, temperature_max:number, description:text(general comprehensive description in 40 words. Example of answer format: " + example_res
-                response = requests.post('http://ollama.duck.pictures/chat',  json=req)
+                response = requests.post('http://chat.duck.pictures/chat',  json=req)
                 print(f"Response = {response.text}")
                 # Step 1: Remove the surrounding double quotes
                 response_text = response.text.strip('"')
