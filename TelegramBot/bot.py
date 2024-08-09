@@ -239,7 +239,10 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
             update.message.reply_text('Image uploaded to server successfully!')
 
             # Parse the response JSON
+            #print(chat_response)
             chat_response = response.json()   ### this probably return as a string not a json!!!!!!!!!!
+            print(chat_response)
+
             print("Creating vase")
             # Construct the new vase dictionary
             new_vase = {

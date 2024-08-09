@@ -73,7 +73,7 @@ class API:
                 print(response.text)
                 info = response.text
                 # Remove ```json and ``` from the string
-                json_string = info.strip('```json').strip('```').strip()
+                json_string = info.strip('"```json\n').strip('\n```"').strip()
 
                 # Load the JSON data
                 # data = json.loads(content)
