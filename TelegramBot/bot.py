@@ -264,7 +264,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
             res = requests.post(f"{resource_catalog_address}/vase", json=new_vase)
 
             if res.status_code == 200:
-                update.message.reply_text(f'Vase with {chat_response['plant_name']} added successfully')
+                update.message.reply_text(f"Vase with {chat_response['plant_name']} added successfully")
             else:
                 update.message.reply_text('Vase not added, error')
 
