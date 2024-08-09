@@ -60,7 +60,6 @@ class API:
             json_result = json.loads(response.text)
             if 'result' in json_result:
                 result=json_result['result']
-                print(result)
                 # info = asyncio.run(self.call_get_info(result['species']))
 
                 example_res = "{plant_name: Ocium basilicum, soil_moisture_min: 50, soil_moisture_max: 90, hours_sun_suggested: 10, temperature_min: 20, temperature_max: 30, description: Ocium basilicum is a perennial herb that grows to a height of up to 6 feet. It produces small, flat-tipped flowers with fragrant blue or purple petals. The plant has long, stout rhizomes that can reach down into the soil and spread. Its leaves are round and silvery-grey in color, with serrated edges. It has a pleasant aroma and is commonly used as an ingredient in culinary applications. Ocium basilicum can grow best in USDA Hardiness Zone 9. }"
@@ -68,16 +67,25 @@ class API:
                 req = {}
                 req['question'] = f"Tell me ideal conditions of the plant {result['species']}. Answer everything in a json object. Structure the answer as a json object with the following field(use the same name) -->"+"{ plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_suggested:number, temperature_min:number, temperature_max:number, description:text(general comprehensive description in 40 words)}"
 
+                print("Sending request")
                 #req['question'] = f"Tell me ideal conditions(specify: ground/enviroment humidity, hours of exposition to sun, temperature) of this plant {result['species']}. Answer everything in a json object. Structure the answer as a json object with the following field(use the same name) -->  plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_suggested:number, temperature_min:number, temperature_max:number, description:text(general comprehensive description in 40 words. Example of answer format: " + example_res
                 response = requests.post('http://ollama.duck.pictures/chat',  json=req)
-                print(response.text)
-                info = response.text
-                # Remove ```json and ``` from the string
-                json_string = info.strip('"```json\n').strip('\n```"').strip()
+                print(f"Response = {response.text}")
+                # Step 1: Remove the surrounding double quotes
+                response_text = response.text.strip('"')
+
+                # Step 2: Remove the ```json\n at the beginning and \n``` at the end
+                response_text = response_text.strip('```json\\n').rstrip('\\n```')
+
+                # Step 3: Convert the cleaned string to a Python dictionary
+                #response_dict = json.loads(response_text)
+                #print(response_dict)
+                response_text = response_text.strip()
+                json.loads(response_text)
 
                 # Load the JSON data
                 # data = json.loads(content)
-                return json.dumps(json_string)
+                return json.dump(response_text)
             else:
                 raise cherrypy.HTTPError(500, 'Invalid response from API')
         except json.JSONDecodeError:

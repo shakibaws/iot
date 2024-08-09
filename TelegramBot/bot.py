@@ -239,10 +239,12 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
             update.message.reply_text('Image uploaded to server successfully!')
 
             # Parse the response JSON
-            #print(chat_response)
-            chat_response = response.json()   ### this probably return as a string not a json!!!!!!!!!!
-            print(chat_response)
-
+            print(repr(response.text))
+            # Remove extra backslashes and parse
+            cleaned_json_string = response.text.replace('\\n', '').replace('\\"', '"')
+ 
+            chat_response = json.loads(cleaned_json_string)
+            
             print("Creating vase")
             # Construct the new vase dictionary
             new_vase = {
@@ -253,7 +255,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
                 'plant': {
                     'plant_name': chat_response['plant_name'],  # Same as above
                     'plant_schedule_water': chat_response['soil_moisture_min'],
-                    'plant_schedule_light_level': chat_response['hourse_sun_suggested'], # +-12 to choose if turn on the light or not
+                    'plant_schedule_light_level': chat_response['hours_sun_suggested'], # +-12 to choose if turn on the light or not
                     'soil_moisture_min': chat_response['soil_moisture_min'],
                     'soil_moisture_max': chat_response['soil_moisture_max'],
                     'hours_sun_min': chat_response['hours_sun_suggested'],
