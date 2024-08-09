@@ -235,9 +235,12 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
             response = requests.post(url, files=files)
 
         if response.status_code == 200:
+
+            update.message.reply_text('Image uploaded to server successfully!')
+
             # Parse the response JSON
             chat_response = response.json()   ### this probably return as a string not a json!!!!!!!!!!
-
+            print("Creating vase")
             # Construct the new vase dictionary
             new_vase = {
                 'device_id': global_device_id,
@@ -246,8 +249,8 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
                 'vase_status': 'active',
                 'plant': {
                     'plant_name': chat_response['plant_name'],  # Same as above
-                    'plant_schedule_water': chat_response['soil_moisture_max']-chat_response['soil_moisture_min']/2+12,
-                    'plant_schedule_light_level': chat_response['hourse_sun_suggested']/2, # +-12 to choose if turn on the light or not
+                    'plant_schedule_water': chat_response['soil_moisture_min'],
+                    'plant_schedule_light_level': chat_response['hourse_sun_suggested'], # +-12 to choose if turn on the light or not
                     'soil_moisture_min': chat_response['soil_moisture_min'],
                     'soil_moisture_max': chat_response['soil_moisture_max'],
                     'hours_sun_min': chat_response['hours_sun_suggested'],
@@ -256,10 +259,15 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
                     'description': chat_response['description']
                 }
             }
-        
-            requests.post(f"{resource_catalog_address}/vase", json=new_vase)
-            update.message.reply_text(
-                'Image uploaded to server successfully!')
+
+            print("Post add vase")
+            res = requests.post(f"{resource_catalog_address}/vase", json=new_vase)
+
+            if res.status_code == 200:
+                update.message.reply_text(f'Vase with {chat_response['plant_name']} added successfully')
+            else:
+                update.message.reply_text('Vase not added, error')
+
         else:
             print(response.text)
             update.message.reply_text(

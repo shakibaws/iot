@@ -63,19 +63,21 @@ class API:
                 print(result)
                 # info = asyncio.run(self.call_get_info(result['species']))
 
+                example_res = "{plant_name: Ocium basilicum, soil_moisture_min: 50, soil_moisture_max: 90, hours_sun_suggested: 10, temperature_min: 20, temperature_max: 30, description: Ocium basilicum is a perennial herb that grows to a height of up to 6 feet. It produces small, flat-tipped flowers with fragrant blue or purple petals. The plant has long, stout rhizomes that can reach down into the soil and spread. Its leaves are round and silvery-grey in color, with serrated edges. It has a pleasant aroma and is commonly used as an ingredient in culinary applications. Ocium basilicum can grow best in USDA Hardiness Zone 9. }"
+
                 req = {}
-                req['question'] = f"Tell me ideal conditions(specify: ground/enviroment humidity, hours of exposition to sun, temperature) of this plant {result['species']}. Answer everything in a json object. Structure the answer as a json object with the following field(use the same name) -->  plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_suggested:number, temperature_min:number, temperature_max:number, description:text(general comprehensive description in 40 words. Example of answer format: "
+                req['question'] = f"Tell me ideal conditions of the plant {result['species']}. Answer everything in a json object. Structure the answer as a json object with the following field(use the same name) -->"+"{ plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_suggested:number, temperature_min:number, temperature_max:number, description:text(general comprehensive description in 40 words)}"
+
+                #req['question'] = f"Tell me ideal conditions(specify: ground/enviroment humidity, hours of exposition to sun, temperature) of this plant {result['species']}. Answer everything in a json object. Structure the answer as a json object with the following field(use the same name) -->  plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_suggested:number, temperature_min:number, temperature_max:number, description:text(general comprehensive description in 40 words. Example of answer format: " + example_res
                 response = requests.post('http://ollama.duck.pictures/chat',  json=req)
                 print(response.text)
-                content = response.json()['chat_response']['message']['content']
-
-                print(content)
+                info = response.text
                 # Remove ```json and ``` from the string
-                # json_string = info.strip('```json').strip('```').strip()
+                json_string = info.strip('```json').strip('```').strip()
 
                 # Load the JSON data
                 # data = json.loads(content)
-                return json.dumps(content)
+                return json.dumps(json_string)
             else:
                 raise cherrypy.HTTPError(500, 'Invalid response from API')
         except json.JSONDecodeError:
