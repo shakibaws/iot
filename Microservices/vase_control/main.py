@@ -31,51 +31,60 @@ class vaseControl:
     def controller(self, data, device_id):
         publisher = self.topic_pub.replace("device_id", device_id)
         resource = requests.get(resource_catalog+'/device/'+device_id).json()
-        vase = requests.get(resource_catalog+'/vase/'+resource['vase_id']).json()
-        user_id = vase["user_id"]
-        user = requests.get(resource_catalog+'/user/'+user_id).json()
-        telegram_chat = self.topic_telegram_chat.replace("telegram_chat_id", user["telegram_chat_id"])
+        vase_list = requests.get(resource_catalog+'/listVase').json()
+        vase = {}
+        for v in vase_list:
+            if v['device_id'] == device_id:
+                vase = v
 
-        """ {
-            'bn': device_id,
-            'e':
-            [
-                {'n': 'temperature', 'value': '', 'timestamp': '', 'unit': 'C'},
-                {'n': 'soil_moisture', 'value': '', 'timestamp': '', 'unit': '%'}
-                {'n': 'light_level', 'value': '', 'timestamp': '', 'unit': 'lumen'},
-                {'n': 'watertank_level', 'value': '', 'timestamp': '', 'unit': '%'}
-            ]
-        } """
-        for i in data['e']:    
-            if i['n'] == 'light_level':
-                if i['value'] < 100 and datetime.now().hour < vase["plant"]["plant_schedule_light"]:
-                    """ if "MQTT" in resource["available_services"] and "light" in resource["actuators"]:
+        # If the device is not configured yet (no vase)
+        if not vase:
+            return
+        else:
+            user_id = vase["user_id"]
+            user = requests.get(resource_catalog+'/user/'+user_id).json()
+            telegram_chat = self.topic_telegram_chat.replace("telegram_chat_id", user["telegram_chat_id"])
+
+            """ {
+                'bn': device_id,
+                'e':
+                [
+                    {'n': 'temperature', 'value': '', 'timestamp': '', 'unit': 'C'},
+                    {'n': 'soil_moisture', 'value': '', 'timestamp': '', 'unit': '%'}
+                    {'n': 'light_level', 'value': '', 'timestamp': '', 'unit': 'lumen'},
+                    {'n': 'watertank_level', 'value': '', 'timestamp': '', 'unit': '%'}
+                ]
+            } """
+            for i in data['e']:    
+                if i['n'] == 'light_level':
+                    if i['value'] < 100 and datetime.now().hour < vase["plant"]["plant_schedule_light"]:
+                        """ if "MQTT" in resource["available_services"] and "light" in resource["actuators"]:
+                            # send number of hours to light
+                            self.control.myPublish(publisher+"/light", {"target":1})
+                        else:
+                            self.control.myPublish(telegram_chat/"alert", {"light":"low"}) """
                         # send number of hours to light
-                        self.control.myPublish(publisher+"/light", {"target":1})
-                    else:
-                        self.control.myPublish(telegram_chat/"alert", {"light":"low"}) """
-                    # send number of hours to light
-                    self.control.myPublish(publisher+"/"+i['n'], {"target":1})
-                else: # enough light or past schedule
-                    self.control.myPublish(publisher+"/"+i['n'], {"target":0}) # turn off the light
+                        self.control.myPublish(publisher+"/"+i['n'], {"target":1})
+                    else: # enough light or past schedule
+                        self.control.myPublish(publisher+"/"+i['n'], {"target":0}) # turn off the light
 
-            elif i['n'] == "temperature":
-                if i['value'] < vase["plant"]["temperature_min"]:
-                    self.control.myPublish(telegram_chat+"/alert", {"temperature":"low"})
-                elif i['value'] > vase["plant"]["temperature_max"]:
-                    self.control.myPublish(telegram_chat+"/alert", {"temperature":"high"})
-            
-            elif i['n'] == "soil_moisture":
-                if i['value'] < vase["plant"]["soil_moisture_min"] or i['value'] < 10000:
-                    if self.boo == 1:
-                        self.boo = 0
-                    else:
-                        self.boo = 1
-                    self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
+                elif i['n'] == "temperature":
+                    if i['value'] < vase["plant"]["temperature_min"]:
+                        self.control.myPublish(telegram_chat+"/alert", {"temperature":"low"})
+                    elif i['value'] > vase["plant"]["temperature_max"]:
+                        self.control.myPublish(telegram_chat+"/alert", {"temperature":"high"})
+                
+                elif i['n'] == "soil_moisture":
+                    if i['value'] < vase["plant"]["soil_moisture_min"] or i['value'] < 10000:
+                        if self.boo == 1:
+                            self.boo = 0
+                        else:
+                            self.boo = 1
+                        self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
 
-            elif i['n'] == "watertank_level":
-                if i['value'] < 10:
-                    self.control.myPublish(telegram_chat+"/alert", {"watertank_level":"low"})
+                elif i['n'] == "watertank_level":
+                    if i['value'] < 10:
+                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level":"low"})
 
 if __name__ == "__main__":
 
