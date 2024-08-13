@@ -6,7 +6,7 @@ class Ollama_service:
     exposed = True
     def __init__(self):
         genai.configure(api_key="AIzaSyCmorRbRVa7whMTl7utEyQwo0xCXYWfXlo")
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
 
 
     @cherrypy.tools.json_in()
