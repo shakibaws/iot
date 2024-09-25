@@ -13,6 +13,7 @@ current_user = None
 current_context = None
 welcome_message = None
 no_vase_found_message = None
+vase_found_message = None
 global_device_id = ""
 
 
@@ -152,7 +153,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             
             keyboard = keyboard_list
             reply_markup = InlineKeyboardMarkup(keyboard)
-            no_vase_found_message = message.reply_text(
+            vase_found_message = message.reply_text(
                 f"Here all your vases!", parse_mode='Markdown', reply_markup=reply_markup)
         
         else:
@@ -206,7 +207,7 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
         keyboard = [
             [
             InlineKeyboardButton(
-                "go back", callback_data='vase_list')],
+                "Go back", callback_data='vase_list')],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         update.callback_query.message.reply_text('<b>'+f"Details for Vase:\n {vase['vase_name']}\nSuggested moisture(humidity) of the ground: \n{vase['plant']['soil_moisture_min']*10}-{vase['plant']['soil_moisture_max']*10}\nSuggested temperature range: \n{vase['plant']['temperature_min']}-{vase['plant']['temperature_max']}\nDescription:\n{vase['plant']['description']}"+'</b>', parse_mode=ParseMode.HTML, reply_markup=reply_markup)
