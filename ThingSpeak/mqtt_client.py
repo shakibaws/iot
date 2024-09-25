@@ -36,12 +36,28 @@ class MQTTClient:
             self.client.disconnect()
             self.connected = False
 
-    def publish_data(self, field1, field2, status):
+    def publish_data(self, temperature=None, soil_moisture=None, light_level=None, watertank_level=None, status=None):
         if self.connected:
-            payload = f"field1={field1}&field2={field2}&status={status}"
-            topic = f"channels/{self.channel_id}/publish"
-            self.client.publish(topic, payload)
-            print(f"Published data: {payload} to topic: {topic}")
+            payload_parts = []
+
+            if temperature is not None:
+                payload_parts.append(f"field1={temperature}")
+            if soil_moisture is not None:
+                payload_parts.append(f"field2={soil_moisture}")
+            if light_level is not None:
+                payload_parts.append(f"field3={light_level}")
+            if watertank_level is not None:
+                payload_parts.append(f"field4={watertank_level}")
+            if status is not None:
+                payload_parts.append(f"status={status}")
+
+            payload = "&".join(payload_parts)
+            if payload:
+                topic = f"channels/{self.channel_id}/publish"
+                self.client.publish(topic, payload)
+                print(f"Published data: {payload} to topic: {topic}")
+            else:
+                print("No data to publish.")
         else:
             print("Not connected to MQTT Broker. Please connect first.")
 
