@@ -245,40 +245,57 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
 
             update.message.reply_text('Image uploaded to server successfully!')
 
-            # Parse the response JSON
-            print(repr(response.text))
+            print("Raw response text:", repr(response.text))
+            
             # Remove extra backslashes and parse
             cleaned_json_string = response.text.replace('\\n', '').replace('\\"', '"')
- 
-            chat_response = json.loads(cleaned_json_string)
+
+            print("Cleaned JSON string:", cleaned_json_string)
+            try:
+                chat_response = json.loads(cleaned_json_string)
+            except json.JSONDecodeError as json_err:
+                print(f"Failed to parse JSON: {json_err}")
+                update.message.reply_text('Failed to parse the server response.')
+                return
             
-            print("Creating vase")
-            # Construct the new vase dictionary
-            new_vase = {
-                'device_id': global_device_id,
-                'vase_name': "Vase" + chat_response['plant_name'],  # Using the first word of the description as the plant name
-                'user_id': current_user['user_id'],
-                'vase_status': 'active',
-                'plant': {
-                    'plant_name': chat_response['plant_name'],  # Same as above
-                    'plant_schedule_water': chat_response['soil_moisture_min'],
-                    'plant_schedule_light_level': chat_response['hours_sun_suggested'], # +-12 to choose if turn on the light or not
-                    'soil_moisture_min': chat_response['soil_moisture_min'],
-                    'soil_moisture_max': chat_response['soil_moisture_max'],
-                    'hours_sun_min': chat_response['hours_sun_suggested'],
-                    'temperature_min': chat_response['temperature_min'],
-                    'temperature_max': chat_response['temperature_max'],
-                    'description': chat_response['description']
+            # Ensure that chat_response is a valid dictionary
+            if chat_response and isinstance(chat_response, dict):
+                print("Creating vase")
+                # Check if required keys are present
+                required_keys = ['plant_name', 'soil_moisture_min', 'hours_sun_suggested', 
+                                'soil_moisture_max', 'temperature_min', 'temperature_max', 'description']
+                missing_keys = [key for key in required_keys if key not in chat_response]
+                if missing_keys:
+                    print(f"Missing keys in response: {missing_keys}")
+                    update.message.reply_text(f'Missing data in response: {", ".join(missing_keys)}')
+                    return
+
+                # Construct the new vase dictionary
+                new_vase = {
+                    'device_id': global_device_id,
+                    'vase_name': "Vase" + chat_response['plant_name'],  # Using the plant name from the response
+                    'user_id': current_user['user_id'],
+                    'vase_status': 'active',
+                    'plant': {
+                        'plant_name': chat_response['plant_name'],
+                        'plant_schedule_water': chat_response['soil_moisture_min'],
+                        'plant_schedule_light_level': chat_response['hours_sun_suggested'],  # Use hours of sunlight suggestion
+                        'soil_moisture_min': chat_response['soil_moisture_min'],
+                        'soil_moisture_max': chat_response['soil_moisture_max'],
+                        'hours_sun_min': chat_response['hours_sun_suggested'],
+                        'temperature_min': chat_response['temperature_min'],
+                        'temperature_max': chat_response['temperature_max'],
+                        'description': chat_response['description']
+                    }
                 }
-            }
 
-            print("Post add vase")
-            res = requests.post(f"{resource_catalog_address}/vase", json=new_vase)
+                print("Post add vase")
+                res = requests.post(f"{resource_catalog_address}/vase", json=new_vase)
 
-            if res.status_code == 200:
-                update.message.reply_text(f"Vase with {chat_response['plant_name']} added successfully")
-            else:
-                update.message.reply_text('Vase not added, error')
+                if res.status_code == 200:
+                    update.message.reply_text(f"Vase with {chat_response['plant_name']} added successfully")
+                else:
+                    update.message.reply_text('Vase not added, error')
 
         else:
             print(response.text)
