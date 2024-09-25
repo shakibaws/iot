@@ -1,6 +1,7 @@
 import cherrypy
 import json
 import datetime
+import uuid
 
 class CatalogExpose:
     exposed = True
@@ -61,7 +62,8 @@ class CatalogExpose:
             return {"message": "Device added successfully"}
         elif args[0] == 'vase':
             vase = cherrypy.request.json
-            this_id = int(self.vaseList[-1]["vase_id"]) + 1
+            uuid4 = uuid.uuid4()
+            this_id = uuid4.int
             this_time = datetime.datetime.now()
             vase["vase_id"] = str(this_id)
             vase["lastUpdate"] = this_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -77,7 +79,8 @@ class CatalogExpose:
                     "id": this_id}
         elif args[0] == 'user':
             user = cherrypy.request.json
-            this_id = int(self.userList[-1]["user_id"]) + 1
+            uuid4 = uuid.uuid4()
+            this_id = uuid4.int
             this_time = datetime.datetime.now()
             user["user_id"] = str(this_id)
             user["lastUpdate"] = this_time.strftime("%Y-%m-%d %H:%M:%S")
