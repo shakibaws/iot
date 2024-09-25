@@ -2,6 +2,7 @@ import cherrypy
 import json
 import datetime
 import uuid
+import requests
 
 class CatalogExpose:
     exposed = True
@@ -57,9 +58,27 @@ class CatalogExpose:
             if not found:
                 for u in self.userList:
                     if u["user_id"] == device["user_id"]:
+                        url = "https://api.thingspeak.com/channels.json"
+                        data = {
+                            'api_key': 'G1PY1LU9KSDV5LEB',
+                            'name': 'test_channel3',
+                            'public_flag': 'true',  
+                            'field1': 'temperature',
+                            'field2': 'soil_moisture',
+                            'field3': 'light_level',
+                            'field4': 'watertank_level'
+                        }
+                        # Send the POST request
+                        response = requests.post(url, data=data)
+
+                        # Print the response
+                        if (response.status_code!=200):
+                            return
+                        channelId = response.json()['id']    
+                        device['thingspeak_id']= channelId
                         self.deviceList.append(device)
-            self.save_to_file()
-            return {"message": "Device added successfully"}
+                        self.save_to_file()
+                        return {"message": "Device added successfully"}
         elif args[0] == 'vase':
             vase = cherrypy.request.json
             uuid4 = uuid.uuid4()

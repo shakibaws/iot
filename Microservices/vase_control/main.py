@@ -43,7 +43,7 @@ class vaseControl:
         else:
             user_id = vase["user_id"]
             user = requests.get(resource_catalog+'/user/'+user_id).json()
-            telegram_chat = self.topic_telegram_chat.replace("telegram_chat_id", user["telegram_chat_id"])
+            telegram_chat = self.topic_telegram_chat.replace("telegram_chat_id", str(user["telegram_chat_id"]))
 
             """ {
                 'bn': device_id,

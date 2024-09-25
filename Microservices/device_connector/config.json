@@ -1,6 +1,6 @@
 {
     "device": {
-        "device_id": "very_unique_id",
+        "device_id": "12345432",
         "sensors": [
             "soil_moisture",
             "watertank_level",

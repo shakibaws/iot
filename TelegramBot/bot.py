@@ -107,9 +107,21 @@ def handle_main_actions(update: Update):
         "Let's get started 🚀. How can I help you?", reply_markup=reply_markup)
 
 
-def add_vase():
+def add_vase(update:Update, context: CallbackContext):
     global resource_catalog_address, current_user
-
+    addingVaseInstructions = f"Follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1/?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
+    print('User want to add a new device')
+    if update.callback_query:
+        message = update.callback_query.message
+    else:
+        message = update.message
+    keyboard = [
+        [InlineKeyboardButton(
+            "Refresh my Vase List", callback_data='vase_list')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    no_vase_found_message = message.reply_text(
+        f"{addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
 
 def get_user_vase_list(update: Update, context: CallbackContext):
     global resource_catalog_address, vase_list, current_user, no_vase_found_message
@@ -168,7 +180,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             no_vase_found_message = message.reply_text(
-                f"You have no smart vases connected! {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
+                f"You have no smart vases connected!\n {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
 
 # Callback action dispatcher
 def button(update: Update, context: CallbackContext) -> None:
@@ -186,6 +198,9 @@ def button(update: Update, context: CallbackContext) -> None:
         global_device_id = device_id
         query.edit_message_text(
             text="First, please send me an image of your plant so that I can identify it!")
+    elif query.data == 'add_vase':
+        global_device_id = ""
+        add_vase(update, context)
     elif query.data == 'vase_list':
         global_device_id = ""
         get_user_vase_list(update, context)
@@ -210,7 +225,7 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
                 "Go back", callback_data='vase_list')],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        update.callback_query.message.reply_text('<b>'+f"Details for Vase:\n {vase['vase_name']}\nSuggested moisture(humidity) of the ground: \n{vase['plant']['soil_moisture_min']*10}-{vase['plant']['soil_moisture_max']*10}\nSuggested temperature range: \n{vase['plant']['temperature_min']}-{vase['plant']['temperature_max']}\nDescription:\n{vase['plant']['description']}"+'</b>', parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+        update.callback_query.message.reply_text('<b>'+f"Details for Vase:\n {vase['vase_name']}\nSuggested moisture(humidity) of the ground: \nMin:{int(vase['plant']['soil_moisture_min'])*10}\nMax:{int(vase['plant']['soil_moisture_max'])*10}\nSuggested temperature range: \nMin:\n{vase['plant']['temperature_min']}\nMax:{vase['plant']['temperature_max']}\n\nDescription:\n{vase['plant']['description']}"+'</b>', parse_mode=ParseMode.HTML, reply_markup=reply_markup)
     else:
         device = find_device_in_list_via_device_id(device_id, vase_list)
 
@@ -311,6 +326,7 @@ def main() -> None:
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("vase_list", get_user_vase_list))
+    dispatcher.add_handler(CommandHandler("add_vase", add_vase))
     dispatcher.add_handler(CallbackQueryHandler(button))
     dispatcher.add_handler(MessageHandler(Filters.photo, handle_photo))
     updater.start_polling()
