@@ -63,8 +63,13 @@ class API:
                 # info = asyncio.run(self.call_get_info(result['species']))
 
                 req = {}
-                req['question'] = f"Tell me ideal conditions of the plant {result['species']}. 
-                    Using this JSON schema: Plant =" + " { 'plant_name':str, 'soil_moisture_min':num, 'soil_moisture_max':num, 'hours_sun_suggested':num, 'temperature_min':num, 'temperature_max':num, 'description':str(max 40 words)}."
+                req['question'] = (
+                f"Tell me ideal conditions of the plant {result['species']}. "
+                "Using this JSON schema: Plant = "
+                "{ 'plant_name':str, 'soil_moisture_min':num, 'soil_moisture_max':num, 'hours_sun_suggested':num, "
+                "'temperature_min':num, 'temperature_max':num, 'description':str(max 40 words)}."
+)
+
 
                 print("Sending request")
                 #req['question'] = f"Tell me ideal conditions(specify: ground/enviroment humidity, hours of exposition to sun, temperature) of this plant {result['species']}. Answer everything in a json object. Structure the answer as a json object with the following field(use the same name) -->  plant_name:string, soil_moisture_min:number, soil_moisture_max:number, hours_sun_suggested:number, temperature_min:number, temperature_max:number, description:text(general comprehensive description in 40 words. Example of answer format: " + example_res
