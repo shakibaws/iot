@@ -9,7 +9,6 @@ service_expose_endpoint = 'http://serviceservice.duck.pictures'
 users_list = []
 vase_list = []
 device_list = []
-current_user = None
 current_context = None
 welcome_message = None
 no_vase_found_message = None
@@ -18,22 +17,22 @@ global_device_id = ""
 
 
 def start(update: Update, context: CallbackContext) -> None:
-    global current_context, welcome_message, users_list, vase_list, current_user
+    global welcome_message, users_list
     welcome_message = update.message.reply_text(
         "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!",)
     users_list = []
-    vase_list = []
-    device_list = []
-    current_user = None
-    current_context = context
+    context.user_data["vase_list"]=[]
+    context.user_data["device_list"]=[]
+    context.user_data["current_user"]=None
     handle_endpoints()
-    if not is_logged_in(update):
-        login(update)
+    if not is_logged_in(update, context):
+        login(update, context)
     else:
         handle_main_actions(update)
 
 
-def is_logged_in(update: Update):
+def is_logged_in(update: Update, context: CallbackContext):
+    current_user = context.user_data.get("current_user")
     isLoggedIn = current_user != None and current_user['telegram_chat_id'] == update.message.chat_id
 
     print(
@@ -41,21 +40,21 @@ def is_logged_in(update: Update):
     return isLoggedIn
 
 
-def login(update: Update):
-    global resource_catalog_address, users_list, current_user
+def login(update: Update, context: CallbackContext):
+    global resource_catalog_address, users_list
     users_response = requests.get(f'{resource_catalog_address}/listUser')
     print(users_response.status_code)
     if users_response.status_code == 200:
         users_list = users_response.json()
         for user in users_list:
             if user['telegram_chat_id'] == update.message.chat_id:
-                current_user = user
-                print(f'User found and logged in. User = {current_user}')
+                context.user_data["current_user"]=user
+                print(f'User found and logged in. User = {user}')
                 handle_main_actions(update)
                 break
-        if current_user == None:
+        if context.user_data["current_user"] == None:
             print('User not found')
-            signup(update)
+            signup(update, context)
 
 
 def handle_endpoints():
@@ -66,16 +65,15 @@ def handle_endpoints():
         )['services']['resource_catalog_address']
 
 
-def remove_message(update: Update, message, is_query: bool = False):
-    global current_context
-    current_context.bot.delete_message(
+def remove_message(update: Update, context: CallbackContext,message, is_query: bool = False):
+    context.bot.delete_message(
         chat_id=update.callback_query.message.chat_id if is_query else update.message.chat_id, message_id=message.message_id)
 
 
-def signup(update: Update):
-    global current_user, welcome_message
+def signup(update: Update, context:CallbackContext):
+    global welcome_message
     time.sleep(1)
-    remove_message(update, welcome_message)
+    #remove_message(update, context, welcome_message)
     signup_message = update.message.reply_text(
         "It seems like you are new here. We are creating an account for you!",)
     print('Signing up')
@@ -86,13 +84,13 @@ def signup(update: Update):
     if signup_response.status_code == 200:
         print('User signed up')
         time.sleep(2)
-        remove_message(update, signup_message)
+        #remove_message(update, context, signup_message)
         signup_confirm_message = update.message.reply_text(
             "Done 🎉, now let's get started!"
         )
         time.sleep(1)
-        login(update)
-        remove_message(update, signup_confirm_message)
+        login(update, context)
+        #remove_message(update, context, signup_confirm_message)
 
 
 def handle_main_actions(update: Update):
@@ -108,7 +106,9 @@ def handle_main_actions(update: Update):
 
 
 def add_vase(update:Update, context: CallbackContext):
-    global resource_catalog_address, current_user
+    global resource_catalog_address
+    current_user = context.user_data.get("current_user")
+
     addingVaseInstructions = f"Follow these steps to activate it:\n\n1. Please turn on the vase and WIFI on your phone.\n\n2. You should see a WIFI network called 'SmartVase', please connect to it and then click on **[here](http://192.168.4.1/?user_id={current_user['user_id']})** \n\n3. Once you have completed the steps, please connect to the internet, and check your new list of Smart Vases ⬇️"
     print('User want to add a new device')
     if update.callback_query:
@@ -124,9 +124,13 @@ def add_vase(update:Update, context: CallbackContext):
         f"{addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
 
 def get_user_vase_list(update: Update, context: CallbackContext):
-    global resource_catalog_address, vase_list, current_user, no_vase_found_message
+    global resource_catalog_address, no_vase_found_message
+    current_user = context.user_data.get("current_user")
+    vase_list = context.user_data.get("vase_list")
+    device_list = context.user_data.get("device_list")
+
     if no_vase_found_message != None:
-        remove_message(update, no_vase_found_message, True)
+        #remove_message(update, context, no_vase_found_message, True)
         no_vase_found_message = None
     vase_list_response = requests.get(f'{resource_catalog_address}/listVase')
     device_list_response = requests.get(f'{resource_catalog_address}/listDevice')
@@ -188,10 +192,6 @@ def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
 
-    '''
-    too many device_id
-    needed global device id for function handle photo
-    '''
     if query.data.startswith('configure'):
         # Extract device_id from callback_data
         device_id = query.data.split('_')[1]
@@ -216,7 +216,7 @@ def find_device_in_list_via_device_id(device_id, item_list):
     return None  # Restituisce None se non trovato
 
 def vase_details(update: Update, context: CallbackContext, device_id: str):
-    # Implement the logic to display vase details using the device_id
+    vase_list = context.user_data.get("vase_list")
     vase = find_device_in_list_via_device_id(device_id, vase_list)
     if vase:
         keyboard = [
@@ -289,7 +289,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
                 new_vase = {
                     'device_id': global_device_id,
                     'vase_name': "Vase" + chat_response['plant_name'],  # Using the plant name from the response
-                    'user_id': current_user['user_id'],
+                    'user_id': context.user_data['current_user']['user_id'],
                     'vase_status': 'active',
                     'plant': {
                         'plant_name': chat_response['plant_name'],
