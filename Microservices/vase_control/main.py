@@ -31,12 +31,9 @@ class vaseControl:
     def controller(self, data, device_id):
         publisher = self.topic_pub.replace("device_id", device_id)
         resource = requests.get(resource_catalog+'/device/'+device_id).json()
-        vase_list = requests.get(resource_catalog+'/listVase').json()
-        vase = {}
-        for v in vase_list:
-            if v['device_id'] == device_id:
-                vase = v
-
+        vase = requests.get(resource_catalog+'/vaseByDevice/'+device_id).json()
+       
+    
         # If the device is not configured yet (no vase)
         if not vase:
             return

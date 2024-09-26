@@ -35,6 +35,11 @@ class CatalogExpose:
                 if vase["vase_id"] == args[1]:
                     return vase
             return {}
+        elif args[0].startswith('vaseByDevice') and args[1]:
+            for vase in self.vaseList:
+                if vase["device_id"] == args[1]:
+                    return vase
+            return {}
         elif args[0].startswith('user') and args[1]:
             for user in self.userList:
                 if user["user_id"] == args[1]:
@@ -74,8 +79,18 @@ class CatalogExpose:
                         # Print the response
                         if (response.status_code!=200):
                             return
-                        channelId = response.json()['id']    
-                        device['thingspeak_id']= channelId
+                        channelId = response.json()['id'] 
+                        api_keys = response.json()["api_keys"]
+                        write_key=""
+                        read_key=""
+                        for key in api_keys:
+                            if key["write_flag"]==True:
+                                write_key=key
+                            else:
+                                read_key=key
+                        device['channel_id']= channelId
+                        device['write_key']= write_key
+                        device['read_key']= read_key
                         self.deviceList.append(device)
                         self.save_to_file()
                         return {"message": "Device added successfully"}
