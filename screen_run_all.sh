@@ -18,5 +18,6 @@ screen -S vase_control -dm bash -c 'source venv/bin/activate; python Microservic
 
 screen -S image_recognition -dm bash -c 'source venv/bin/activate; python Microservices/image_recognition/main.py'
 
+screen -S thingspeak_adaptor -dm bash -c 'source venv/bin/activate; python Microservices/ThingSpeak_adaptor/main.py'
 
 wait

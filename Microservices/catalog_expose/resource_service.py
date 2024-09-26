@@ -45,6 +45,14 @@ class CatalogExpose:
                 if user["user_id"] == args[1]:
                     return user
             return {}
+        
+        elif args[0] == 'deleteALL':
+            self.deviceList = []
+            self.vaseList = []
+            self.userList = []
+            self.save_to_file()
+            return {"message": "OK deleted"}
+        
         else:
             return {"message": "Invalid resource"}
 
