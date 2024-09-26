@@ -85,9 +85,9 @@ class CatalogExpose:
                         read_key=""
                         for key in api_keys:
                             if key["write_flag"]==True:
-                                write_key=key
+                                write_key=key["api_key"]
                             else:
-                                read_key=key
+                                read_key=key["api_key"]
                         device['channel_id']= channelId
                         device['write_key']= write_key
                         device['read_key']= read_key
