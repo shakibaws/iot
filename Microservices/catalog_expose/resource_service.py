@@ -30,21 +30,29 @@ class CatalogExpose:
                 if device["device_id"] == args[1]:
                     return device
             return {}
-        elif args[0].startswith('vase') and args[1]:
-            for vase in self.vaseList:
-                if vase["vase_id"] == args[1]:
-                    return vase
-            return {}
         elif args[0].startswith('vaseByDevice') and args[1]:
             for vase in self.vaseList:
                 if vase["device_id"] == args[1]:
                     return vase
             return {}
+        elif args[0].startswith('vase') and args[1]:
+            for vase in self.vaseList:
+                if vase["vase_id"] == args[1]:
+                    return vase
+            return {} 
         elif args[0].startswith('user') and args[1]:
             for user in self.userList:
                 if user["user_id"] == args[1]:
                     return user
             return {}
+        
+        elif args[0] == 'deleteALL':
+            self.deviceList = []
+            self.vaseList = []
+            self.userList = []
+            self.save_to_file()
+            return {"message": "OK deleted"}
+        
         else:
             return {"message": "Invalid resource"}
 
