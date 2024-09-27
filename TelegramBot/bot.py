@@ -1,8 +1,10 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Bot
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 import requests
 import time
 import json
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 resource_catalog_address = ''
 service_expose_endpoint = 'http://serviceservice.duck.pictures'
@@ -185,7 +187,44 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             reply_markup = InlineKeyboardMarkup(keyboard)
             no_vase_found_message = message.reply_text(
                 f"You have no smart vases connected!\n {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
+            
+def show_graph(name: str, field_number: int, channel_id: str, context: CallbackContext) -> None:
+    # chart_url points to your microservice
+    chart_url = f"http://thingspeak.duck.pictures/{channel_id}/{field_number}?title={name}%20chart"
+    current_user = context.user_data.get("current_user")
+    chat_id = current_user['telegram_chat_id']
+    
+    # Send feedback to the user that the chart is being generated
+    bot = Bot(token="7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE")
+    bot.send_message(chat_id=chat_id, text=f"Plotting the {name} chart, please wait...")
 
+    # Set up retries and timeouts
+    session = requests.Session()
+    retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+
+    try:
+        # Increase the timeout to 60 seconds
+        response = session.get(chart_url, timeout=60)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Send the chart image to the Telegram chat
+            bot.send_photo(chat_id=chat_id, photo=response.content, caption=f"{name} chart")
+        else:
+            bot.send_message(chat_id=chat_id, text=f"Failed to generate {name} chart. Please try again later.")
+            print(f"Failed to get chart: {response.status_code}")
+
+    except requests.exceptions.Timeout:
+        # Handle timeout errors and notify the user
+        bot.send_message(chat_id=chat_id, text=f"Timeout while generating {name} chart. Please try again later.")
+        print(f"Request timed out for {chart_url}")
+
+    except requests.exceptions.RequestException as e:
+        # Handle other possible exceptions and notify the user
+        bot.send_message(chat_id=chat_id, text=f"Error while generating {name} chart. Please try again later.")
+        print(f"Error occurred: {e}")
+        
 # Callback action dispatcher
 def button(update: Update, context: CallbackContext) -> None:
     global global_device_id
@@ -198,6 +237,18 @@ def button(update: Update, context: CallbackContext) -> None:
         global_device_id = device_id
         query.edit_message_text(
             text="First, please send me an image of your plant so that I can identify it!")
+    elif query.data.startswith('details_'):
+        parameter_type = query.data.split('_')[1]
+        channel_id = query.data.split('_')[2]
+        # Handle different behaviors based on the parameter type
+        if parameter_type == 'temperature':
+            show_graph("temperature", 1, channel_id, context)
+        elif parameter_type == 'light':
+            show_graph("light", 3, channel_id, context)
+        elif parameter_type == 'watertank':
+            show_graph("watertank", 4, channel_id, context)
+        elif parameter_type == 'soil':
+            show_graph("soil_mosture", 2, channel_id, context)
     elif query.data == 'add_vase':
         global_device_id = ""
         add_vase(update, context)
@@ -232,14 +283,14 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
         keyboard = [
             [
             InlineKeyboardButton(
-                f"Temperature = {temperature}", callback_data='vase_list'), 
+                f"Temperature = {temperature}", callback_data='details_temperature_'+str(channel_id)), 
             InlineKeyboardButton(
-                f"Light = {light_level}", callback_data='vase_list')],   
+                f"Light = {light_level}", callback_data='details_light_'+str(channel_id))],   
             [
             InlineKeyboardButton(
-                f"Watertank = {watertank_level}", callback_data='vase_list'), 
+                f"Watertank = {watertank_level}", callback_data='details_watertank_'+str(channel_id)), 
             InlineKeyboardButton(
-                f"Soil = {soil_moisture}", callback_data='vase_list')],
+                f"Soil = {soil_moisture}", callback_data='soil_soil_'+str(channel_id))],
             [
             InlineKeyboardButton(
                 "Go back", callback_data='vase_list')]     
