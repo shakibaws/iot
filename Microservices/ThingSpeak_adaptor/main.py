@@ -28,7 +28,9 @@ class vaseControl:
     def speaker(self, data, device_id):
         device = requests.get(resource_catalog+'/device/'+device_id).json()
         vase = requests.get(resource_catalog+'/vaseByDevice/'+device_id).json()
-       
+        print("in speaker")
+        print(device)
+        print(vase)
     
         # If the device is not configured yet (no vase)
         if not vase:
@@ -64,7 +66,7 @@ class vaseControl:
                     
             # Send the POST request
             response = requests.post(url, data=send_data)
-
+            print(response)
 if __name__ == "__main__":
 
     clientID = "thingspeak_adaptor"
