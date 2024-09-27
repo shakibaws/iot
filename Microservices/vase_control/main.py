@@ -54,31 +54,23 @@ class vaseControl:
             } """
             for i in data['e']:    
                 if i['n'] == 'light_level':
-                    if i['value'] < 100 and datetime.now().hour < vase["plant"]["plant_schedule_light"]:
-                        """ if "MQTT" in resource["available_services"] and "light" in resource["actuators"]:
-                            # send number of hours to light
-                            self.control.myPublish(publisher+"/light", {"target":1})
-                        else:
-                            self.control.myPublish(telegram_chat/"alert", {"light":"low"}) """
-                        # send number of hours to light
-                        self.control.myPublish(publisher+"/"+i['n'], {"target":1})
-                    else: # enough light or past schedule
-                        self.control.myPublish(publisher+"/"+i['n'], {"target":0}) # turn off the light
-
+                    # to be analyze later with thingspeak data
+                    pass
                 elif i['n'] == "temperature":
-                    if i['value'] < vase["plant"]["temperature_min"]:
+                    # to be analyze later with thingspeak data
+                    pass
+                    """ if i['value'] < vase["plant"]["temperature_min"]:
                         self.control.myPublish(telegram_chat+"/alert", {"temperature":"low"})
                     elif i['value'] > vase["plant"]["temperature_max"]:
-                        self.control.myPublish(telegram_chat+"/alert", {"temperature":"high"})
-                
+                        self.control.myPublish(telegram_chat+"/alert", {"temperature":"high"}) """
                 elif i['n'] == "soil_moisture":
                     if i['value'] < vase["plant"]["soil_moisture_min"] or i['value'] < 10000:
+                        # wrong cause boo is global trough all the devices
                         if self.boo == 1:
+                            self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
+                        elif self.boo > 6:
                             self.boo = 0
-                        else:
-                            self.boo = 1
-                        self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
-
+                        self.boo +=1
                 elif i['n'] == "watertank_level":
                     if i['value'] < 10:
                         self.control.myPublish(telegram_chat+"/alert", {"watertank_level":"low"})

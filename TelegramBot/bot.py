@@ -217,12 +217,32 @@ def find_device_in_list_via_device_id(device_id, item_list):
 
 def vase_details(update: Update, context: CallbackContext, device_id: str):
     vase_list = context.user_data.get("vase_list")
+    device_list = context.user_data.get("device_list")
     vase = find_device_in_list_via_device_id(device_id, vase_list)
+    dev = find_device_in_list_via_device_id(device_id, device_list)
+    channel_id = dev['channel_id']
+    res = requests.get(f"https://api.thingspeak.com/channels/{str(channel_id)}/feeds.json?results=1").json()
+    data = res['feeds'][0]
+    temperature = data['field1']
+    light_level = data['field3']
+    watertank_level = data['field4']
+    soil_moisture = data['field2']
+
     if vase:
         keyboard = [
             [
             InlineKeyboardButton(
-                "Go back", callback_data='vase_list')],
+                f"Temperature = {temperature}", callback_data='vase_list'), 
+            InlineKeyboardButton(
+                f"Light = {light_level}", callback_data='vase_list')],   
+            [
+            InlineKeyboardButton(
+                f"Watertank = {watertank_level}", callback_data='vase_list'), 
+            InlineKeyboardButton(
+                f"Soil = {soil_moisture}", callback_data='vase_list')],
+            [
+            InlineKeyboardButton(
+                "Go back", callback_data='vase_list')]     
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         update.callback_query.message.reply_text('<b>'+f"Details for Vase:\n {vase['vase_name']}\nSuggested moisture(humidity) of the ground: \nMin:{int(vase['plant']['soil_moisture_min'])*10}\nMax:{int(vase['plant']['soil_moisture_max'])*10}\nSuggested temperature range: \nMin:\n{vase['plant']['temperature_min']}\nMax:{vase['plant']['temperature_max']}\n\nDescription:\n{vase['plant']['description']}"+'</b>', parse_mode=ParseMode.HTML, reply_markup=reply_markup)
