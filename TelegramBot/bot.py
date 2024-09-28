@@ -249,6 +249,9 @@ def button(update: Update, context: CallbackContext) -> None:
             show_graph("watertank", 4, channel_id, context)
         elif parameter_type == 'soil':
             show_graph("soil_mosture", 2, channel_id, context)
+    elif query.data.startswith('no_details_'):
+        parameter_type = query.data.split('_')[2]
+        update.callback_query.message.reply_text(text=f"Sorry, still no data for {parameter_type}")    
     elif query.data == 'add_vase':
         global_device_id = ""
         add_vase(update, context)
@@ -272,29 +275,46 @@ def vase_details(update: Update, context: CallbackContext, device_id: str):
     vase = find_device_in_list_via_device_id(device_id, vase_list)
     dev = find_device_in_list_via_device_id(device_id, device_list)
     channel_id = dev['channel_id']
-    res = requests.get(f"https://api.thingspeak.com/channels/{str(channel_id)}/feeds.json?results=1").json()
-    data = res['feeds'][0]
-    temperature = data['field1']
-    light_level = data['field3']
-    watertank_level = data['field4']
-    soil_moisture = data['field2']
-
+    print(channel_id)
     if vase:
-        keyboard = [
-            [
-            InlineKeyboardButton(
-                f"Temperature = {temperature}", callback_data='details_temperature_'+str(channel_id)), 
-            InlineKeyboardButton(
-                f"Light = {light_level}", callback_data='details_light_'+str(channel_id))],   
-            [
-            InlineKeyboardButton(
-                f"Watertank = {watertank_level}", callback_data='details_watertank_'+str(channel_id)), 
-            InlineKeyboardButton(
-                f"Soil = {soil_moisture}", callback_data='soil_soil_'+str(channel_id))],
-            [
-            InlineKeyboardButton(
-                "Go back", callback_data='vase_list')]     
-        ]
+        res = requests.get(f"https://api.thingspeak.com/channels/{str(channel_id)}/feeds.json?results=1").json()
+        if len(res["feeds"])>0:
+            data = res['feeds'][0]
+            temperature = data['field1']
+            light_level = data['field3']
+            watertank_level = data['field4']
+            soil_moisture = data['field2']
+            keyboard = [
+                [
+                InlineKeyboardButton(
+                    f"Temperature = {temperature}", callback_data='details_temperature_'+str(channel_id)), 
+                InlineKeyboardButton(
+                    f"Light = {light_level}", callback_data='details_light_'+str(channel_id))],   
+                [
+                InlineKeyboardButton(
+                    f"Watertank = {watertank_level}", callback_data='details_watertank_'+str(channel_id)), 
+                InlineKeyboardButton(
+                    f"Soil = {soil_moisture}", callback_data='details_soil_'+str(channel_id))],
+                [
+                InlineKeyboardButton(
+                    "Go back", callback_data='vase_list')]     
+            ]
+        else:
+            keyboard = [
+                [
+                InlineKeyboardButton(
+                    f"Temperature", callback_data='no_details_temperature'), 
+                InlineKeyboardButton(
+                    f"Light", callback_data='no_details_light')],   
+                [
+                InlineKeyboardButton(
+                    f"Watertank", callback_data='no_details_watertank'), 
+                InlineKeyboardButton(
+                    f"Soil", callback_data='no_details_soil')],
+                [
+                InlineKeyboardButton(
+                    "Go back", callback_data='vase_list')]     
+            ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         update.callback_query.message.reply_text('<b>'+f"Details for Vase:\n {vase['vase_name']}\nSuggested moisture(humidity) of the ground: \nMin:{int(vase['plant']['soil_moisture_min'])*10}\nMax:{int(vase['plant']['soil_moisture_max'])*10}\nSuggested temperature range: \nMin:\n{vase['plant']['temperature_min']}\nMax:{vase['plant']['temperature_max']}\n\nDescription:\n{vase['plant']['description']}"+'</b>', parse_mode=ParseMode.HTML, reply_markup=reply_markup)
     else:
