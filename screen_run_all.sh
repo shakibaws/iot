@@ -20,6 +20,6 @@ screen -S image_recognition -dm bash -c 'source venv/bin/activate; python Micros
 
 screen -S thingspeak_adaptor -dm bash -c 'source venv/bin/activate; python Microservices/ThingSpeak_adaptor/main.py'
 
-screen -S chart_service -dm bash -c 'source venv/bin/activate; python Microservices/chart_service/main.py'
+screen -S chart_service -dm bash -c 'source venv/bin/activate; python Microservices/chart_service/main_plot.py'
 
 wait
