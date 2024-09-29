@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use('Agg')  # Non-interactive backen
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
 from io import BytesIO
 from PIL import Image
 from datetime import datetime 
@@ -20,26 +21,19 @@ class ThingspeakChart:
 
     def GET(self, *args, **kwargs):
         details = ""
-       
+
         if "days" in kwargs:
-            details = "days=" + str(kwargs["days"])
+            days = int(kwargs["days"])
+            details = "days=" + str(days)
         else:
-            details = "results=60"
+            days = 1
+            details = "days=1"
             
-        """  if "title" in kwargs:
-            details = details + "&title=" + str(kwargs["title"])
-        if "color" in kwargs:
-            details = details + "&color=" + str(kwargs["color"])
-        else:
-            details = details + "&color=%23d62020"
-        if "bgcolor" in kwargs:
-            details = details + "&bgcolor=" + str(kwargs["bgcolor"])
-        else:
-            details = details + "&bgcolor=%23ffffff" """
+        print(str(details))
 
         if args[0] and args[1]:
             url = f"https://api.thingspeak.com/channels/{args[0]}/fields/{args[1]}.json?" + details
-            
+
             response = requests.get(url)
             data = response.json()
 
@@ -53,17 +47,49 @@ class ThingspeakChart:
             values = [float(feed[f"field{args[1]}"]) for feed in feeds]
 
             times = [datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%SZ') for time_str in times]
-   
+
             plt.figure(figsize=(8, 6))
             plt.plot(times, values, marker="o", linestyle="-")
             plt.xlabel("Time")
             plt.ylabel(str(field_name).capitalize())
             plt.title(f"{str(field_name).capitalize()} chart")
 
-            locator = mdates.MinuteLocator(interval=5)
-            plt.gca().xaxis.set_major_locator(locator)
+            # Custom tick locator and formatter based on days
+            if days == 1:
+                locator = mdates.HourLocator(interval=1)  # Tick every hour
+                plt.gca().xaxis.set_major_locator(locator)
 
-            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                def custom_date_formatter(x, pos):
+                    current_time = mdates.num2date(x)  # Convert the timestamp to datetime object
+
+                    # First and last ticks
+                    if pos == 0:  # First tick
+                        return current_time.strftime('%d/%m/%y %H:%M')
+                    elif pos == len(times) - 1:  # Last tick
+                        return current_time.strftime('%d/%m/%y %H:%M')
+
+                    # Format intermediate ticks as HH:MM
+                    return current_time.strftime('%H:%M')
+
+                # Apply the custom formatter using ticker.FuncFormatter
+                plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(custom_date_formatter))
+
+            elif days == 7:
+                # Custom locator to set ticks at 10:00 and 17:00
+                locator = mdates.HourLocator(byhour=[7, 19])  # Tick at 10:00 and 17:00
+                plt.gca().xaxis.set_major_locator(locator)
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
+
+            elif days == 30:
+                locator = mdates.DayLocator(interval=1)  # One tick per day
+                plt.gca().xaxis.set_major_locator(locator)
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
+
+            elif days == 365:
+                locator = mdates.MonthLocator(interval=1)  # One tick per month
+                plt.gca().xaxis.set_major_locator(locator)
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
+
             plt.xticks(rotation=45, ha='right')
 
             img_buf = BytesIO()
@@ -72,7 +98,7 @@ class ThingspeakChart:
             img_buf.seek(0)
             
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
-        
+
             return img_buf.getvalue()
         else:
             return {"message": "error"}

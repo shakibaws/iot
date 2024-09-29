@@ -188,12 +188,17 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             no_vase_found_message = message.reply_text(
                 f"You have no smart vases connected!\n {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
             
-def show_graph(name: str, field_number: int, channel_id: str, context: CallbackContext) -> None:
-    # chart_url points to your microservice
-    chart_url = f"http://thingspeak.duck.pictures/{channel_id}/{field_number}?title={name}%20chart"
+def show_graph(name: str, field_number: int, channel_id: str, days: int, context: CallbackContext) -> None:
+    
+    #chart_url = f"http://thingspeak.duck.pictures/{channel_id}/{field_number}?title={name}%20chart&days={days}"
+    
+    # Local
+    print(days)
+    chart_url = f"http://localhost:5300/{channel_id}/{field_number}?title={name}%20chart&days={str(days)}"
+
     current_user = context.user_data.get("current_user")
     chat_id = current_user['telegram_chat_id']
-    
+    live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?bgcolor=%23ffffff&color=%23d62020&dynamic=true&days=1&type=line&update=15"
     # Send feedback to the user that the chart is being generated
     bot = Bot(token="7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE")
     bot.send_message(chat_id=chat_id, text=f"Plotting the {name} chart, please wait...")
@@ -206,13 +211,13 @@ def show_graph(name: str, field_number: int, channel_id: str, context: CallbackC
     try:
         # Increase the timeout to 60 seconds
         response = session.get(chart_url, timeout=60)
-
+        
         # Check if the request was successful
         if response.status_code == 200:
             # Send the chart image to the Telegram chat
-            bot.send_photo(chat_id=chat_id, photo=response.content, caption=f"{name} chart")
+            bot.send_photo(chat_id=chat_id, photo=response.content, caption=f"{name} chart\nYou can see the {name} chart here:\n {live_chart}")
         else:
-            bot.send_message(chat_id=chat_id, text=f"Failed to generate {name} chart. Please try again later.")
+            bot.send_message(chat_id=chat_id, text=f"Failed to generate {name} chart. Please try again later. You can see the {name} chart here: {live_chart}")
             print(f"Failed to get chart: {response.status_code}")
 
     except requests.exceptions.Timeout:
@@ -237,18 +242,47 @@ def button(update: Update, context: CallbackContext) -> None:
         global_device_id = device_id
         query.edit_message_text(
             text="First, please send me an image of your plant so that I can identify it!")
+    elif query.data.startswith('chart_'):
+        parameter_type = query.data.split('_')[1]
+        channel_id = query.data.split('_')[2]
+        x = query.data.split('_')[3]
+        days=1
+        if x=="month":
+            days=30
+        if x=="year":
+            days=365
+        if x=="week":
+            days=7
+
+        if parameter_type == 'temperature':
+            show_graph("temperature", 1, channel_id, days, context)
+        elif parameter_type == 'light':
+            show_graph("light", 3, channel_id, days, context)
+        elif parameter_type == 'watertank':
+            show_graph("watertank", 4, channel_id, days, context)
+        elif parameter_type == 'soil':
+            show_graph("soil_mosture", 2, channel_id, days, context)
+        
+            
     elif query.data.startswith('details_'):
         parameter_type = query.data.split('_')[1]
         channel_id = query.data.split('_')[2]
-        # Handle different behaviors based on the parameter type
-        if parameter_type == 'temperature':
-            show_graph("temperature", 1, channel_id, context)
-        elif parameter_type == 'light':
-            show_graph("light", 3, channel_id, context)
-        elif parameter_type == 'watertank':
-            show_graph("watertank", 4, channel_id, context)
-        elif parameter_type == 'soil':
-            show_graph("soil_mosture", 2, channel_id, context)
+        keyboard = [
+                [
+                InlineKeyboardButton(
+                    f"1 day", callback_data='chart_temperature_'+str(channel_id)+"_day"), 
+                InlineKeyboardButton(
+                    f"1 week", callback_data='chart_light_'+str(channel_id)+"_week"),   
+                InlineKeyboardButton(
+                    f"1 month", callback_data='chart_watertank_'+str(channel_id)+"_month"), 
+                InlineKeyboardButton(
+                    f"1 year", callback_data='chart_soil_'+str(channel_id)+"_year")
+                ]
+            ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        update.callback_query.message.reply_text(text=f"Select the time range for the chart", reply_markup=reply_markup) 
+
+       
     elif query.data.startswith('no_details_'):
         parameter_type = query.data.split('_')[2]
         update.callback_query.message.reply_text(text=f"Sorry, still no data for {parameter_type}")    
