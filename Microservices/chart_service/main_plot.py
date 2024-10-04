@@ -28,7 +28,7 @@ class ThingspeakChart:
         else:
             days = 1
             details = "days=1"
-            
+        
         print(str(details))
 
         if args[0] and args[1]:
@@ -48,6 +48,18 @@ class ThingspeakChart:
 
             times = [datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%SZ') for time_str in times]
 
+            # Downsampling function: taking every nth point
+            def downsample_data(times, values, step=10):
+                return times[::step], values[::step]
+
+            # Downsample the data (for example, every 10th point)
+            
+   
+            l=len(values)
+            interval=int(l/60)
+            times, values = downsample_data(times, values, step=interval)
+         
+
             plt.figure(figsize=(8, 6))
             plt.plot(times, values, marker="o", linestyle="-")
             plt.xlabel("Time")
@@ -60,9 +72,8 @@ class ThingspeakChart:
                 plt.gca().xaxis.set_major_locator(locator)
 
                 def custom_date_formatter(x, pos):
-                    current_time = mdates.num2date(x)  # Convert the timestamp to datetime object
+                    current_time = mdates.num2date(x)
 
-                    # First and last ticks
                     if pos == 0:  # First tick
                         return current_time.strftime('%d/%m/%y %H:%M')
                     elif pos == len(times) - 1:  # Last tick
@@ -71,12 +82,10 @@ class ThingspeakChart:
                     # Format intermediate ticks as HH:MM
                     return current_time.strftime('%H:%M')
 
-                # Apply the custom formatter using ticker.FuncFormatter
                 plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(custom_date_formatter))
 
             elif days == 7:
-                # Custom locator to set ticks at 10:00 and 17:00
-                locator = mdates.HourLocator(byhour=[7, 19])  # Tick at 10:00 and 17:00
+                locator = mdates.HourLocator(byhour=[8, 20])  # Tick at 10:00 and 17:00
                 plt.gca().xaxis.set_major_locator(locator)
                 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
 
@@ -96,12 +105,13 @@ class ThingspeakChart:
             plt.tight_layout()
             plt.savefig(img_buf, format="jpeg")
             img_buf.seek(0)
-            
+
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
 
             return img_buf.getvalue()
         else:
             return {"message": "error"}
+
 
 if __name__ == '__main__':
     chart = ThingspeakChart()

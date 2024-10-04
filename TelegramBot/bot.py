@@ -190,15 +190,13 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             
 def show_graph(name: str, field_number: int, channel_id: str, days: int, context: CallbackContext) -> None:
     
-    #chart_url = f"http://thingspeak.duck.pictures/{channel_id}/{field_number}?title={name}%20chart&days={days}"
-    
+    chart_url = f"http://thingspeak.duck.pictures/{channel_id}/{field_number}?title={name}%20chart&days={str(days)}"
+    #chart_url = f"http://localhost:5300/{channel_id}/{field_number}?title={name}%20chart&days={str(days)}"
     # Local
-    print(days)
-    chart_url = f"http://localhost:5300/{channel_id}/{field_number}?title={name}%20chart&days={str(days)}"
 
     current_user = context.user_data.get("current_user")
     chat_id = current_user['telegram_chat_id']
-    live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?bgcolor=%23ffffff&color=%23d62020&dynamic=true&days=1&type=line&update=15"
+    live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?bgcolor=%23ffffff&color=%23d62020&dynamic=true&days={days}&type=line&update=15&title={str(name).capitalize}%20chart"
     # Send feedback to the user that the chart is being generated
     bot = Bot(token="7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE")
     bot.send_message(chat_id=chat_id, text=f"Plotting the {name} chart, please wait...")
@@ -272,11 +270,11 @@ def button(update: Update, context: CallbackContext) -> None:
                 InlineKeyboardButton(
                     f"1 day", callback_data='chart_temperature_'+str(channel_id)+"_day"), 
                 InlineKeyboardButton(
-                    f"1 week", callback_data='chart_light_'+str(channel_id)+"_week"),   
+                    f"last 7 days", callback_data='chart_light_'+str(channel_id)+"_week")],   
+                [InlineKeyboardButton(
+                    f"last 30 days", callback_data='chart_watertank_'+str(channel_id)+"_month"), 
                 InlineKeyboardButton(
-                    f"1 month", callback_data='chart_watertank_'+str(channel_id)+"_month"), 
-                InlineKeyboardButton(
-                    f"1 year", callback_data='chart_soil_'+str(channel_id)+"_year")
+                    f"last year", callback_data='chart_soil_'+str(channel_id)+"_year")
                 ]
             ]
         reply_markup = InlineKeyboardMarkup(keyboard)
