@@ -55,10 +55,10 @@ class ThingspeakChart:
             # Downsample the data (for example, every 10th point)
         
             l=len(values)
+            interval=1
             if l>60:
                 interval=int(l/60)
-            else:
-                l=1
+         
             times, values = downsample_data(times, values, step=interval)
          
 
