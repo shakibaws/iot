@@ -411,7 +411,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
                 # Construct the new vase dictionary
                 new_vase = {
                     'device_id': global_device_id,
-                    'vase_name': "Vase" + chat_response['plant_name'],  # Using the plant name from the response
+                    'vase_name': chat_response['plant_name'],  # Using the plant name from the response
                     'user_id': context.user_data['current_user']['user_id'],
                     'vase_status': 'active',
                     'plant': {
