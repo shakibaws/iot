@@ -124,16 +124,21 @@ async def get_user_vase_list(update: Update, context):
             for device in global_device_list:
                 if device['user_id'] == current_user['user_id'] and device not in device_list:
                     device_list.append(device)
+                    
+            if update.callback_query:
+                message = update.callback_query.message
+            else:
+                message = update.message
 
         # Generate response based on the retrieved devices
         if device_list:
             keyboard_list = [[InlineKeyboardButton(f"Vase {dev['device_id']}", callback_data=f'vase_info_{dev["device_id"]}') for dev in device_list]]
             reply_markup = InlineKeyboardMarkup(keyboard_list)
-            await update.callback_query.message.reply_text("Here are all your vases:", reply_markup=reply_markup)
+            await message.reply_text("Here are all your vases:", reply_markup=reply_markup)
         else:
             keyboard = [[InlineKeyboardButton("Refresh my Vase List", callback_data='vase_list')]]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await update.callback_query.message.reply_text("You have no smart vases connected!", reply_markup=reply_markup)
+            await message.reply_text("You have no smart vases connected!", reply_markup=reply_markup)
    
 # Show graph for a vase
 async def show_graph(name: str, field_number: int, channel_id: str, days: int, context):

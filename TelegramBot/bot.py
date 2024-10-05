@@ -196,7 +196,7 @@ def show_graph(name: str, field_number: int, channel_id: str, days: int, context
 
     current_user = context.user_data.get("current_user")
     chat_id = current_user['telegram_chat_id']
-    live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?bgcolor=%23ffffff&color=%23d62020&dynamic=true&days={days}&type=line&update=15&title={str(name).capitalize()}%20chart"
+    live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?bgcolor=%23ffffff&color=%23d62020&dynamic=true&days={days}&type=line&update=15&title={str(name).capitalize}%20chart"
     # Send feedback to the user that the chart is being generated
     bot = Bot(token="7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE")
     bot.send_message(chat_id=chat_id, text=f"Plotting the {name} chart, please wait...")
@@ -411,7 +411,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
                 # Construct the new vase dictionary
                 new_vase = {
                     'device_id': global_device_id,
-                    'vase_name': chat_response['plant_name'],  # Using the plant name from the response
+                    'vase_name': "Vase" + chat_response['plant_name'],  # Using the plant name from the response
                     'user_id': context.user_data['current_user']['user_id'],
                     'vase_status': 'active',
                     'plant': {
