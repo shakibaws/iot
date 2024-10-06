@@ -48,7 +48,7 @@ async def login(update: Update, context: CallbackContext):
         async with session.get(f'{resource_catalog_address}/listUser') as response:
             if response.status == 200:
                 
-                users_list = await response.json()
+                users_list =json.loads(await response.text())
                 for user in users_list:
                     if user['telegram_chat_id'] == update.message.chat_id:
                         context.user_data["current_user"]=user
@@ -65,7 +65,7 @@ async def handle_endpoints():
     async with aiohttp.ClientSession() as session:
         async with session.get(f'{service_expose_endpoint}/all') as response:
             if response.status == 200:
-                json_response = await response.json()
+                json_response =json.loads(await response.text())
                 resource_catalog_address = json_response['services']['resource_catalog_address']
 
 
@@ -260,7 +260,7 @@ async def vase_details(update: Update, context, device_id: str):
     if vase:
         async with aiohttp.ClientSession() as session:
             response = await session.get(f"https://api.thingspeak.com/channels/{str(channel_id)}/feeds.json?results=1")
-            res = await response.json()
+            res =json.loads(await response.text())
             if len(res["feeds"]) > 0:
                 data = res['feeds'][0]
                 temperature = data['field1']
@@ -325,7 +325,7 @@ async def handle_photo(update: Update, context):
 
                         # Parse the response JSON
                         try:
-                            chat_response = await response.json()
+                            chat_response =json.loads(await response.text())
                         except json.JSONDecodeError as json_err:
                             print(f"Failed to parse JSON: {json_err}")
                             await update.message.reply_text('Failed to parse the server response.')

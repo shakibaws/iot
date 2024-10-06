@@ -7,6 +7,7 @@ import asyncio
 import time
 import os
 import matplotlib
+from concurrent.futures import ThreadPoolExecutor
 matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -14,7 +15,9 @@ import matplotlib.ticker as ticker
 from io import BytesIO
 from PIL import Image
 from datetime import datetime
-from random import randint
+from random import *
+# Thread pool per eseguire operazioni sincrone in thread separati
+executor = ThreadPoolExecutor(max_workers=4)
 
 class ThingspeakChart:
     exposed = True
@@ -29,16 +32,63 @@ class ThingspeakChart:
                     raise cherrypy.HTTPError(400, f"Error fetching data: {response.status}")
                 return await response.json()
 
-    def GET(self, *args, **kwargs):
-        return asyncio.run(self.get_chart(args, kwargs))
-
-    async def get_chart(self, args, kwargs):
+    async def generate_chart(self, times, values, field_name, days):
         i = randint(1,2)
         if i == 1:
             print ("sleep")
             time.sleep(5000)
         else:
             print("io non dormo")
+        """Funzione per generare il grafico in un thread separato"""
+        def _generate_chart():
+            plt.figure(figsize=(8, 6))
+            plt.plot(times, values, marker="o", linestyle="-")
+            plt.xlabel("Time")
+            plt.ylabel(str(field_name).capitalize())
+            plt.title(f"{str(field_name).capitalize()} chart")
+
+            if days == 1:
+                locator = mdates.HourLocator(interval=1)
+                plt.gca().xaxis.set_major_locator(locator)
+
+                def custom_date_formatter(x, pos):
+                    current_time = mdates.num2date(x)
+                    if pos == 0 or pos == len(times) - 1:
+                        return current_time.strftime('%d/%m/%y %H:%M')
+                    return current_time.strftime('%H:%M')
+
+                plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(custom_date_formatter))
+
+            elif days == 7:
+                locator = mdates.HourLocator(byhour=[8, 20])
+                plt.gca().xaxis.set_major_locator(locator)
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
+
+            elif days == 30:
+                locator = mdates.DayLocator(interval=1)
+                plt.gca().xaxis.set_major_locator(locator)
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
+
+            elif days == 365:
+                locator = mdates.MonthLocator(interval=1)
+                plt.gca().xaxis.set_major_locator(locator)
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
+
+            plt.xticks(rotation=45, ha='right')
+
+            img_buf = BytesIO()
+            plt.tight_layout()
+            plt.savefig(img_buf, format="jpeg")
+            img_buf.seek(0)
+            return img_buf
+
+        # Eseguire la generazione del grafico in un thread separato
+        return await asyncio.get_event_loop().run_in_executor(executor, _generate_chart)
+
+    def GET(self, *args, **kwargs):
+        return asyncio.run(self.get_chart(args, kwargs))
+
+    async def get_chart(self, args, kwargs):
         details = ""
 
         if "days" in kwargs:
@@ -77,47 +127,8 @@ class ThingspeakChart:
          
             times, values = downsample_data(times, values, step=interval)
          
-            # Generazione del grafico
-            plt.figure(figsize=(8, 6))
-            plt.plot(times, values, marker="o", linestyle="-")
-            plt.xlabel("Time")
-            plt.ylabel(str(field_name).capitalize())
-            plt.title(f"{str(field_name).capitalize()} chart")
-
-            # Formattazione personalizzata degli assi
-            if days == 1:
-                locator = mdates.HourLocator(interval=1)
-                plt.gca().xaxis.set_major_locator(locator)
-
-                def custom_date_formatter(x, pos):
-                    current_time = mdates.num2date(x)
-                    if pos == 0 or pos == len(times) - 1:
-                        return current_time.strftime('%d/%m/%y %H:%M')
-                    return current_time.strftime('%H:%M')
-
-                plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(custom_date_formatter))
-
-            elif days == 7:
-                locator = mdates.HourLocator(byhour=[8, 20])
-                plt.gca().xaxis.set_major_locator(locator)
-                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
-
-            elif days == 30:
-                locator = mdates.DayLocator(interval=1)
-                plt.gca().xaxis.set_major_locator(locator)
-                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
-
-            elif days == 365:
-                locator = mdates.MonthLocator(interval=1)
-                plt.gca().xaxis.set_major_locator(locator)
-                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
-
-            plt.xticks(rotation=45, ha='right')
-
-            img_buf = BytesIO()
-            plt.tight_layout()
-            plt.savefig(img_buf, format="jpeg")
-            img_buf.seek(0)
+            # Genera il grafico in un thread separato
+            img_buf = await self.generate_chart(times, values, field_name, days)
 
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
             return img_buf.getvalue()
