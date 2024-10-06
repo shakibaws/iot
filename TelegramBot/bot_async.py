@@ -18,7 +18,6 @@ current_context = None
 welcome_message = None
 no_vase_found_message = None
 vase_found_message = None
-global_device_id = ""
 
 
 async def start(update: Update, context: CallbackContext) -> None:
@@ -101,7 +100,11 @@ async def add_vase(update: Update, context):
     2. Connect to the 'SmartVase' network and click [here](http://192.168.4.1/?user_id={current_user['user_id']})
     3. Reconnect to the internet and check your vase list.
     """
-    await update.callback_query.message.reply_text(instructions, parse_mode='Markdown')
+    if update.callback_query:
+        message = update.callback_query.message
+    else:
+        message = update.message
+    await message.reply_text(instructions, parse_mode='Markdown')
 
 async def get_user_vase_list(update: Update, context):
     global resource_catalog_address
@@ -170,7 +173,7 @@ async def button(update: Update, context):
     if query.data.startswith('configure'):
         # Extract device_id from callback_data
         device_id = query.data.split('_')[1]
-        global_device_id = device_id
+        context.user_data["global_device_id"] = device_id
         await query.edit_message_text(
             text="First, please send me an image of your plant so that I can identify it!")
     elif query.data.startswith('chart_'):
@@ -218,10 +221,10 @@ async def button(update: Update, context):
         parameter_type = query.data.split('_')[2]
         await update.callback_query.message.reply_text(text=f"Sorry, still no data for {parameter_type}")    
     elif query.data == 'add_vase':
-        global_device_id = ""
+        context.user_data["global_device_id"] = ""
         await add_vase(update, context)
     elif query.data == 'vase_list':
-        global_device_id = ""
+        context.user_data["global_device_id"] = ""
         await get_user_vase_list(update, context)
     elif query.data.startswith('vase_info_'):
         # Extract device_id from callback_data
@@ -270,9 +273,8 @@ async def vase_details(update: Update, context, device_id: str):
         await update.callback_query.message.reply_text(f"Details for Vase: {vase['vase_name']}", reply_markup=reply_markup)
      
 async def handle_photo(update: Update, context):
-    global global_device_id
 
-    if not global_device_id:
+    if not context.user_data["global_device_id"]:
         await update.message.reply_text("Make sure to select a vase before trying to upload.")
         return
     
@@ -321,7 +323,7 @@ async def handle_photo(update: Update, context):
 
                             # Construct the new vase dictionary
                             new_vase = {
-                                'device_id': global_device_id,
+                                'device_id': context.user_data["global_device_id"],
                                 'vase_name': chat_response['plant_name'],  # Using the plant name from the response
                                 'user_id': context.user_data['current_user']['user_id'],
                                 'vase_status': 'active',
