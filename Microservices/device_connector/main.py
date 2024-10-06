@@ -5,6 +5,7 @@ import time
 import urequests
 import ujson
 from machine import Pin, ADC
+import random
 
 class IoTDevice:
     def __init__(self):
@@ -59,15 +60,19 @@ class IoTDevice:
             'e': []
         }
         for name, p in self.pin_sensors.items():
-            value = p.read()
+            value = p.read() # real sensor data
             stock = {'n': name, 'value': value, 'timestamp': '', 'unit': ''}
             if name == "temperature":
+                stock["value"] = random.randint(15,30)
                 stock["unit"] = 'C'
             elif name == "soil_moisture":
+                stock["value"] = random.randint(10,90)
                 stock["unit"] = '%'
             elif name == "light_level":
-                stock["unit"] = 'lumen'
+                stock["value"] = random.randint(100,1000)
+                stock["unit"] = 'lux'
             elif name == "watertank_level":
+                stock["value"] = random.randint(0,100)
                 stock["unit"] = '%'
             else:
                 stock["unit"] = 'N/D'
