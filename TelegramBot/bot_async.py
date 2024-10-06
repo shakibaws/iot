@@ -135,7 +135,20 @@ async def get_user_vase_list(update: Update, context):
 
         # Generate response based on the retrieved devices
         if device_list:
-            keyboard_list = [[InlineKeyboardButton(f"Vase {dev['device_id']}", callback_data=f'vase_info_{dev["device_id"]}') for dev in device_list]]
+            keyboard_list = []
+            print('User has some devices')
+            for dev in device_list:
+                name = "Vase "+ dev['device_id']
+                vase = find_device_in_list_via_device_id(dev['device_id'], vase_list)
+                if vase:
+                     name = vase["vase_name"]
+                callback_data = f'vase_info_{dev["device_id"]}'
+                keyboard_list.append([InlineKeyboardButton(name, callback_data=callback_data)])
+            
+            if update.callback_query:
+                message = update.callback_query.message
+            else:
+                message = update.message           
             reply_markup = InlineKeyboardMarkup(keyboard_list)
             await message.reply_text("Here are all your vases:", reply_markup=reply_markup)
         else:
@@ -271,7 +284,18 @@ async def vase_details(update: Update, context, device_id: str):
                 ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.callback_query.message.reply_text(f"Details for Vase: {vase['vase_name']}", reply_markup=reply_markup)
-     
+    else:
+        device = find_device_in_list_via_device_id(device_id, vase_list)
+
+        keyboard = [
+                [InlineKeyboardButton(
+                    "Yes", callback_data='configure_'+device_id), 
+                InlineKeyboardButton(
+                    "No", callback_data='vase_list')],
+            ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.callback_query.message.reply_text(f"Do you want to setup this vase now?", parse_mode='Markdown', reply_markup=reply_markup)
+        
 async def handle_photo(update: Update, context):
 
     if not context.user_data["global_device_id"]:
@@ -281,9 +305,10 @@ async def handle_photo(update: Update, context):
     # Download the photo
     photo_file = await update.message.photo[-1].get_file()
     file_path = f"{photo_file.file_id}.jpg"
-    await photo_file.download(file_path)
+    await photo_file.download_to_drive(file_path)
 
     await update.message.reply_text("Image received, let's see...")
+    
     url = "http://recommendationservice.duck.pictures"
 
     try:

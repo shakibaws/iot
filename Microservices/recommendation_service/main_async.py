@@ -20,23 +20,22 @@ class API:
         return 'GET successfully'
     
     async def process_images(self, images):
-        files = []
+        form_data = aiohttp.FormData()
         for image in images:
             if not image.file:
                 raise cherrypy.HTTPError(400, 'Immagine non fornita')
             image_data = image.file.read()
-            files.append(('images', ("image.jpg", image_data)))
-
-        # Assicurati di avere almeno un file da inviare
-        if not files:
-            raise cherrypy.HTTPError(400, 'No images provided')
+            # Aggiungi l'immagine al form-data
+            form_data.add_field('images', image_data, filename="image.jpg", content_type='image/jpeg')
 
         # Effettua la richiesta POST asincrona
         async with aiohttp.ClientSession() as session:
-            async with session.post(image_recognition_service, data=files) as response:
+            async with session.post(image_recognition_service, data=form_data) as response:
                 if response.status != 200:
+                    print(response.text)
                     raise cherrypy.HTTPError(response.status, 'Errore nella richiesta API')
-                json_result = await response.json()
+                
+                json_result = json.loads(await response.text())
                 
                 if 'result' in json_result:
                     result = json_result['result']
