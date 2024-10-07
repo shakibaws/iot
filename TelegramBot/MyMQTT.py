@@ -1,4 +1,5 @@
 import json
+
 import paho.mqtt.client as PahoMQTT
 
 
@@ -11,7 +12,7 @@ class MyMQTT:
         self._topic = ""
         self._isSubscriber = False
         # create an instance of paho.mqtt.client
-        self._paho_mqtt = PahoMQTT.Client(clientID, True)
+        self._paho_mqtt = PahoMQTT.Client(PahoMQTT.CallbackAPIVersion.VERSION1, clientID, True)
         # register the callback
         self._paho_mqtt.on_connect = self.myOnConnect
         self._paho_mqtt.on_message = self.myOnMessageReceived
@@ -26,7 +27,7 @@ class MyMQTT:
     def myPublish(self, topic, msg):
         # publish a message with a certain topic
         self._paho_mqtt.publish(topic, json.dumps(msg), 2)
-        print(f"message published: {json.dumps(msg)}")
+        print(f"message published on topic: {topic}, {json.dumps(msg)}")
 
     def mySubscribe(self, topic):
         # subscribe for a topic

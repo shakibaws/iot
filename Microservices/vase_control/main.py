@@ -73,7 +73,7 @@ class vaseControl:
                         self.boo +=1
                 elif i['n'] == "watertank_level":
                     if int(i['value']) < 20:
-                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level":"low"})
+                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level": f"{vase['name']}"})
 
 if __name__ == "__main__":
 
