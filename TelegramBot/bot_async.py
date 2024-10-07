@@ -172,7 +172,7 @@ async def show_graph(name: str, field_number: int, channel_id: str, days: int, c
             async with session.get(chart_url, timeout=60) as response:
                 if response.status == 200:
                     image_data = await response.read()
-                    await bot.send_photo(chat_id=chat_id, photo=image_data, caption=f"{name} chart\nYou can view it [here]({live_chart})")
+                    await bot.send_photo(chat_id=chat_id, photo=image_data, caption=f"{name} chart\nYou can see the {name} chart here:\n {live_chart})")
                 else:
                     await bot.send_message(chat_id=chat_id, text=f"Failed to generate {name} chart.")
         except asyncio.TimeoutError:
@@ -397,6 +397,5 @@ def main():
     #application.idle()
 
 if __name__ == '__main__':
-    import asyncio
     #asyncio.run(main())
     main()

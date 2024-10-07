@@ -188,7 +188,7 @@ def get_user_vase_list(update: Update, context: CallbackContext):
             no_vase_found_message = message.reply_text(
                 f"You have no smart vases connected!\n {addingVaseInstructions}", parse_mode='Markdown', reply_markup=reply_markup)
             
-def show_graph(name: str, field_number: int, channel_id: str, days: int, context: CallbackContext) -> None:
+def show_graph(name: str, field_number: int, channel_id: str, days: int, context: CallbackContext, update: Update) -> None:
     
     chart_url = f"http://thingspeak.duck.pictures/{channel_id}/{field_number}?title={name}%20chart&days={str(days)}"
     #chart_url = f"http://localhost:5300/{channel_id}/{field_number}?title={name}%20chart&days={str(days)}"
@@ -198,8 +198,7 @@ def show_graph(name: str, field_number: int, channel_id: str, days: int, context
     chat_id = current_user['telegram_chat_id']
     live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?bgcolor=%23ffffff&color=%23d62020&dynamic=true&days={days}&type=line&update=15&title={str(name).capitalize}%20chart"
     # Send feedback to the user that the chart is being generated
-    bot = Bot(token="7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE")
-    bot.send_message(chat_id=chat_id, text=f"Plotting the {name} chart, please wait...")
+    update.callback_query.message.reply_text.send_message(text=f"Plotting the {name} chart, please wait...")
 
     # Set up retries and timeouts
     session = requests.Session()
@@ -213,19 +212,19 @@ def show_graph(name: str, field_number: int, channel_id: str, days: int, context
         # Check if the request was successful
         if response.status_code == 200:
             # Send the chart image to the Telegram chat
-            bot.send_photo(chat_id=chat_id, photo=response.content, caption=f"{name} chart\nYou can see the {name} chart here:\n {live_chart}")
+            update.callback_query.message.reply_photo(photo=response.content, caption=f"{name} chart\nYou can see the {name} chart here:\n {live_chart}")
         else:
-            bot.send_message(chat_id=chat_id, text=f"Failed to generate {name} chart. Please try again later. You can see the {name} chart here: {live_chart}")
+            update.callback_query.message.reply_text(text=f"Failed to generate {name} chart. Please try again later. You can see the {name} chart here: {live_chart}")
             print(f"Failed to get chart: {response.status_code}")
 
     except requests.exceptions.Timeout:
         # Handle timeout errors and notify the user
-        bot.send_message(chat_id=chat_id, text=f"Timeout while generating {name} chart. Please try again later.")
+        update.callback_query.message.reply_text(text=f"Timeout while generating {name} chart. Please try again later.")
         print(f"Request timed out for {chart_url}")
 
     except requests.exceptions.RequestException as e:
         # Handle other possible exceptions and notify the user
-        bot.send_message(chat_id=chat_id, text=f"Error while generating {name} chart. Please try again later.")
+        update.callback_query.message.reply_text(text=f"Error while generating {name} chart. Please try again later.")
         print(f"Error occurred: {e}")
         
 # Callback action dispatcher
@@ -253,13 +252,13 @@ def button(update: Update, context: CallbackContext) -> None:
             days=7
 
         if parameter_type == 'temperature':
-            show_graph("temperature", 1, channel_id, days, context)
+            show_graph("temperature", 1, channel_id, days, context, update)
         elif parameter_type == 'light':
-            show_graph("light", 3, channel_id, days, context)
+            show_graph("light", 3, channel_id, days, context, update)
         elif parameter_type == 'watertank':
-            show_graph("watertank", 4, channel_id, days, context)
+            show_graph("watertank", 4, channel_id, days, context, update)
         elif parameter_type == 'soil':
-            show_graph("soil_mosture", 2, channel_id, days, context)
+            show_graph("soil_mosture", 2, channel_id, days, context, update)
         
             
     elif query.data.startswith('details_'):

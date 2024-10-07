@@ -33,12 +33,6 @@ class ThingspeakChart:
                 return await response.json()
 
     async def generate_chart(self, times, values, field_name, days):
-        i = randint(1,2)
-        if i == 1:
-            print ("sleep")
-            time.sleep(5000)
-        else:
-            print("io non dormo")
         """Funzione per generare il grafico in un thread separato"""
         def _generate_chart():
             plt.figure(figsize=(8, 6))

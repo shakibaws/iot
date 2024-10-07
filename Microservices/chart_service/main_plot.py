@@ -33,14 +33,6 @@ class ThingspeakChart:
         return asyncio.run(self.get_chart(args, kwargs))
 
     async def get_chart(self, args, kwargs):
-        i = randint(1,2)
-        if i == 1:
-            print ("sleep")
-            time.sleep(5000)
-        else:
-            print("io non dormo")
-        details = ""
-
         if "days" in kwargs:
             days = int(kwargs["days"])
             details = "days=" + str(days)
