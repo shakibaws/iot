@@ -74,7 +74,7 @@ class ThingspeakChart:
             plt.plot(times, values, marker="o", linestyle="-")
             plt.xlabel("Time")
             plt.ylabel(str(field_name).capitalize())
-            plt.title(f"{str(field_name).capitalize()} chart")
+            plt.title(f"{str(field_name).split('_')[0].capitalize()} chart")
 
             # Formattazione personalizzata degli assi
             if days == 1:

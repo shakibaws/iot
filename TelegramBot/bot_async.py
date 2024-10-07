@@ -157,26 +157,22 @@ async def get_user_vase_list(update: Update, context):
             await message.reply_text("You have no smart vases connected!", reply_markup=reply_markup)
    
 # Show graph for a vase
-async def show_graph(name: str, field_number: int, channel_id: str, days: int, context):
+async def show_graph(name: str, field_number: int, channel_id: str, days: int, context, update: Update):
     chart_url = f"http://thingspeak.duck.pictures/{channel_id}/{field_number}?title={name}%20chart&days={str(days)}"
     live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?dynamic=true&days={days}"
 
-    current_user = context.user_data.get("current_user")
-    chat_id = current_user['telegram_chat_id']
-    bot = Bot(token="7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE")
-
-    await bot.send_message(chat_id=chat_id, text=f"Plotting the {name} chart, please wait...")
+    await update.callback_query.message.reply_text(text=f"Plotting the {name} chart, please wait...")
 
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(chart_url, timeout=60) as response:
                 if response.status == 200:
                     image_data = await response.read()
-                    await bot.send_photo(chat_id=chat_id, photo=image_data, caption=f"{name} chart\nYou can see the {name} chart here:\n {live_chart})")
+                    await update.callback_query.message.reply_photo(photo=image_data, caption=f"{name} chart\nYou can see the {name} chart here:\n {live_chart})")
                 else:
-                    await bot.send_message(chat_id=chat_id, text=f"Failed to generate {name} chart.")
+                    await update.callback_query.message.reply_text(text=f"Failed to generate {name} chart.")
         except asyncio.TimeoutError:
-            await bot.send_message(chat_id=chat_id, text="Timeout while generating chart.")
+            await update.callback_query.message.reply_text(text="Timeout while generating chart.")
 
 # Handle button presses
 async def button(update: Update, context):
@@ -202,28 +198,29 @@ async def button(update: Update, context):
             days=7
 
         if parameter_type == 'temperature':
-            await show_graph("temperature", 1, channel_id, days, context)
+            await show_graph("temperature", 1, channel_id, days, context, update)
         elif parameter_type == 'light':
-            await show_graph("light", 3, channel_id, days, context)
+            await show_graph("light", 3, channel_id, days, context, update)
         elif parameter_type == 'watertank':
-            await show_graph("watertank", 4, channel_id, days, context)
+            await show_graph("watertank", 4, channel_id, days, context, update)
         elif parameter_type == 'soil':
-            await show_graph("soil_mosture", 2, channel_id, days, context)
+            await show_graph("soil_mosture", 2, channel_id, days, context, update)
         
             
     elif query.data.startswith('details_'):
         parameter_type = query.data.split('_')[1]
         channel_id = query.data.split('_')[2]
+        print(parameter_type)
         keyboard = [
                 [
                 InlineKeyboardButton(
-                    f"1 day", callback_data='chart_temperature_'+str(channel_id)+"_day"), 
+                    f"1 day", callback_data=f'chart_{parameter_type}_'+str(channel_id)+"_day"), 
                 InlineKeyboardButton(
-                    f"last 7 days", callback_data='chart_light_'+str(channel_id)+"_week")],   
+                    f"last 7 days", callback_data=f'chart_{parameter_type}_'+str(channel_id)+"_week")],   
                 [InlineKeyboardButton(
-                    f"last 30 days", callback_data='chart_watertank_'+str(channel_id)+"_month"), 
+                    f"last 30 days", callback_data=f'chart_{parameter_type}_'+str(channel_id)+"_month"), 
                 InlineKeyboardButton(
-                    f"last year", callback_data='chart_soil_'+str(channel_id)+"_year")
+                    f"last year", callback_data=f'chart_{parameter_type}_'+str(channel_id)+"_year")
                 ]
             ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -382,7 +379,12 @@ async def handle_photo(update: Update, context):
         
 def main():
     # Creiamo l'istanza dell'applicazione del bot
-    application = Application.builder().token("7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE").concurrent_updates(True).build()
+
+    #get al service_catalog
+    service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
+    token = service_catalog['telegram_bot']['token']
+
+    application = Application.builder().token(token).concurrent_updates(True).build()
 
     # Aggiungiamo i gestori per i comandi e i callback
     application.add_handler(CommandHandler("start", start))

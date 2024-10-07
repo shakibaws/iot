@@ -80,14 +80,8 @@ if __name__ == "__main__":
     clientID = "vase_control"
 
     #get al service_catalog
-    go = False
-    while not go:
-        try:
-            service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
-            go = True
-        except requests.exceptions.RequestException as e:
-            print(f"Error occurred while making the HTTP request: {e}")
-        time.sleep(5)
+    service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
+
     topicSensors = service_catalog["topics"]["topic_sensors"]
     topicActuators = service_catalog["topics"]["topic_actuators"]
     topic_telegram_chat = service_catalog["topics"]["topic_telegram_chat"]

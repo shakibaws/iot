@@ -10,5 +10,8 @@
         "topic_sensors": "smartplant/+/sensors",
         "topic_actuators": "smartplant/device_id/actuators",
         "topic_telegram_chat": "smartplant/telegram/telegram_chat_id"
+    },
+    "telegram_bot":{
+        "token": "7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE"
     }
 }

@@ -198,7 +198,7 @@ def show_graph(name: str, field_number: int, channel_id: str, days: int, context
     chat_id = current_user['telegram_chat_id']
     live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?bgcolor=%23ffffff&color=%23d62020&dynamic=true&days={days}&type=line&update=15&title={str(name).capitalize}%20chart"
     # Send feedback to the user that the chart is being generated
-    update.callback_query.message.reply_text.send_message(text=f"Plotting the {name} chart, please wait...")
+    update.callback_query.message.reply_text(text=f"Plotting the {name} chart, please wait...")
 
     # Set up retries and timeouts
     session = requests.Session()
