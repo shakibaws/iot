@@ -355,7 +355,7 @@ async def handle_photo(update: Update, context):
                                     'plant_schedule_light_level': chat_response['hours_sun_suggested'],  # Use hours of sunlight suggestion
                                     'soil_moisture_min': chat_response['soil_moisture_min'],
                                     'soil_moisture_max': chat_response['soil_moisture_max'],
-                                    'hours_sun_min': chat_response['hours_sun_suggested'],
+                                    'hours_sun_min': chat_response['hours_sun_suggested'], # duplicated data
                                     'temperature_min': chat_response['temperature_min'],
                                     'temperature_max': chat_response['temperature_max'],
                                     'description': chat_response['description']

@@ -44,8 +44,8 @@ class API:
                         'question': (
                             f"Tell me ideal conditions of the plant {result['species']}. "
                             "Using this JSON schema: Plant = "
-                            "{ 'plant_name':str, 'soil_moisture_min':num, 'soil_moisture_max':num, 'hours_sun_suggested':num, "
-                            "'temperature_min':num, 'temperature_max':num, 'description':str(max 40 words)}."
+                            "{ 'plant_name':string, 'soil_moisture_min':double_digits_integer, 'soil_moisture_max':double_digits_integer, 'hours_sun_suggested':single_digit_integer, "
+                            "'temperature_min':double_digits_integer(in Celsius), 'temperature_max':double_digits_integer(in Celsius), 'description':string(max 40 words)}."
                         )
                     }
 

@@ -65,12 +65,7 @@ class vaseControl:
                         self.control.myPublish(telegram_chat+"/alert", {"temperature":"high"}) """
                 elif i['n'] == "soil_moisture":
                     if int(i['value']) < int(vase["plant"]["soil_moisture_min"]):
-                        # wrong cause boo is global trough all the devices
-                        if self.boo == 1:
-                            self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
-                        elif self.boo > 6:
-                            self.boo = 0
-                        self.boo +=1
+                        self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
                 elif i['n'] == "watertank_level":
                     if int(i['value']) < 20:
                         self.control.myPublish(telegram_chat+"/alert", {"watertank_level": f"{vase['name']}"})

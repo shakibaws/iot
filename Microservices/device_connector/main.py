@@ -38,7 +38,7 @@ class IoTDevice:
             self.pin_actuators[actuator].value(command)  # activate pump for 2 seconds
             time.sleep(2)
             self.pin_actuators[actuator].value(0)
-            time.sleep(10)  # wait for water to flow
+            time.sleep(30)  # wait for water to flow
         else:
             self.pin_actuators[actuator].value(command)
 
@@ -63,16 +63,16 @@ class IoTDevice:
             value = p.read() # real sensor data
             stock = {'n': name, 'value': value, 'timestamp': '', 'unit': ''}
             if name == "temperature":
-                stock["value"] = random.randint(15,30)
+                stock["value"] = random.randint(15,30) # random value(to be removed)
                 stock["unit"] = 'C'
             elif name == "soil_moisture":
-                stock["value"] = random.randint(10,90)
+                stock["value"] = random.randint(10,90) # random value(to be removed)
                 stock["unit"] = '%'
             elif name == "light_level":
-                stock["value"] = random.randint(100,1000)
+                stock["value"] = random.randint(100,1000) # random value(to be removed)
                 stock["unit"] = 'lux'
             elif name == "watertank_level":
-                stock["value"] = random.randint(0,100)
+                stock["value"] = random.randint(0,100) # random value(to be removed)
                 stock["unit"] = '%'
             else:
                 stock["unit"] = 'N/D'
