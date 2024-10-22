@@ -24,7 +24,7 @@ class BaseMQTT:
             print("Connected to %s" % (self.broker))
             self.connected = True
         else:
-            print("Connection failed")
+            print(f"Connection failed with error: {rc}")
 
     def myOnMessageReceived(self, paho_mqtt, userdata, msg):
         # A new message is received

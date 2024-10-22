@@ -1,6 +1,6 @@
 {
     "device": {
-        "device_id": "12345432",
+        "device_id": "567890987",
         "sensors": [
             "soil_moisture",
             "watertank_level",
@@ -23,25 +23,21 @@
             },
             {
                 "name": "watertank_level",
-                "pin": 32
-            },
-            {
-                "name": "temperature",
                 "pin": 35
             },
             {
-                "name": "light_level",
+                "name": "temperature",
                 "pin": 33
+            },
+            {
+                "name": "light_level",
+                "pin": 32
             }
         ],
         "actuators": [
             {
-                "name": "light_level",
-                "pin": 2
-            },
-            {
                 "name": "soil_moisture",
-                "pin": 2
+                "pin": 26
             }
         ]
     }

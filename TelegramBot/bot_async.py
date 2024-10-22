@@ -256,31 +256,27 @@ async def vase_details(update: Update, context, device_id: str):
     
     if vase:
         async with aiohttp.ClientSession() as session:
-            response = await session.get(f"https://api.thingspeak.com/channels/{str(channel_id)}/feeds.json?results=1")
+            response = await session.get(f"https://dataanalysis.duck.pictures/{str(device_id)}")
             res =json.loads(await response.text())
-            if len(res["feeds"]) > 0:
-                data = res['feeds'][0]
-                temperature = data['field1']
-                light_level = data['field3']
-                watertank_level = data['field4']
-                soil_moisture = data['field2']
-                keyboard = [
-                    [
-                    InlineKeyboardButton(f"Temperature = {temperature}", callback_data='details_temperature_'+str(channel_id)),
-                    InlineKeyboardButton(f"Light = {light_level}", callback_data='details_light_'+str(channel_id))
-                    ],
-                    [
-                    InlineKeyboardButton(f"Watertank = {watertank_level}", callback_data='details_watertank_'+str(channel_id)),
-                    InlineKeyboardButton(f"Soil = {soil_moisture}", callback_data='details_soil_'+str(channel_id))
-                    ],
-                    [InlineKeyboardButton("Go back", callback_data='vase_list')]
-                ]
-            else:
-                keyboard = [
-                    [InlineKeyboardButton("Go back", callback_data='vase_list')]
-                ]
+            temperature = res['temperature']
+            light_level = res['light_level']
+            watertank_level = res['watertank_level']
+            soil_moisture = res['soil_moisture']
+            keyboard = [
+                [
+                InlineKeyboardButton(f"Temperature = {temperature}", callback_data='details_temperature_'+str(channel_id)),
+                InlineKeyboardButton(f"Light = {light_level}", callback_data='details_light_'+str(channel_id))
+                ],
+                [
+                InlineKeyboardButton(f"Watertank = {watertank_level}", callback_data='details_watertank_'+str(channel_id)),
+                InlineKeyboardButton(f"Soil = {soil_moisture}", callback_data='details_soil_'+str(channel_id))
+                ],
+                [InlineKeyboardButton("Go back", callback_data='vase_list')]
+            ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.callback_query.message.reply_text(f"Details for Vase: {vase['vase_name']}", reply_markup=reply_markup)
+        if res['temperature_alert']:
+            pass
     else:
         device = find_device_in_list_via_device_id(device_id, vase_list)
 

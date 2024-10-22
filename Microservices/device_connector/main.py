@@ -5,7 +5,9 @@ import time
 import urequests
 import ujson
 from machine import Pin, ADC
+import onewire, ds18x20
 import random
+import dht
 
 class IoTDevice:
     def __init__(self):
@@ -60,22 +62,31 @@ class IoTDevice:
             'e': []
         }
         for name, p in self.pin_sensors.items():
-            value = p.read() # real sensor data
-            stock = {'n': name, 'value': value, 'timestamp': '', 'unit': ''}
+            stock = {'n': name, 'value': 0, 'timestamp': '', 'unit': ''}
+            value = 0
             if name == "temperature":
-                stock["value"] = random.randint(15,30) # random value(to be removed)
+                #stock["value"] = random.randint(15,30) # random value(to be removed)
                 stock["unit"] = 'C'
+                p['ds_sensor'].convert_temp()
+                time.sleep(1)
+                value = p['ds_sensor'].read_temp(p['rom'])
             elif name == "soil_moisture":
-                stock["value"] = random.randint(10,90) # random value(to be removed)
+                #stock["value"] = random.randint(10,90) # random value(to be removed)
+                #lower is the value wetter is the soil
                 stock["unit"] = '%'
+                value = (1-(p.read()/4095))*100
             elif name == "light_level":
-                stock["value"] = random.randint(100,1000) # random value(to be removed)
+                #stock["value"] = random.randint(100,1000) # random value(to be removed)
                 stock["unit"] = 'lux'
+                value = p.read()/4095*1000
             elif name == "watertank_level":
-                stock["value"] = random.randint(0,100) # random value(to be removed)
+                #stock["value"] = random.randint(0,100) # random value(to be removed)
                 stock["unit"] = '%'
+                value = p.read()/4095*100
             else:
                 stock["unit"] = 'N/D'
+                value = p.read()
+            stock['value']=value
             message["e"].append(stock)
 
         self.mqqtclient.publishJson(self.pub_topic, message)
@@ -129,7 +140,18 @@ class IoTDevice:
         file.close()
         # set pinout
         for i in self.device_cfg["pinout"]["sensors"]:
-            self.pin_sensors[i['name']] = ADC(Pin(i['pin']))
+            if i['name'] == 'temperature':
+                # DS18B20 dallas sensor
+                ds_pin = Pin(i['pin'])
+                ds_sensor = ds18x20.DS18X20(onewire.OneWire(ds_pin))
+                roms = ds_sensor.scan()
+                print('Found DS devices: ', roms)
+                if roms:
+                    self.pin_sensors[i['name']] = {'rom': roms[0], 'ds_sensor': ds_sensor}
+            else:
+                adc = ADC(Pin(i['pin']))
+                adc.atten(ADC.ATTN_11DB)
+                self.pin_sensors[i['name']] = adc
         
         for i in self.device_cfg["pinout"]["actuators"]:
             self.pin_actuators[i['name']] = Pin(i['pin'], Pin.OUT)

@@ -68,7 +68,7 @@ class vaseControl:
                         self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
                 elif i['n'] == "watertank_level":
                     if int(i['value']) < 20:
-                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level": f"{vase['name']}"})
+                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level": f"{vase['vase_name']}"})
 
 if __name__ == "__main__":
 

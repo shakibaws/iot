@@ -1,6 +1,6 @@
 {
     "broker": {
-        "broker_address": "test.mosquitto.org",
+        "broker_address": "broker.emqx.io",
         "port": 1883
     },
     "services":{
