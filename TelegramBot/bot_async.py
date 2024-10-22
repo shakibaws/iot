@@ -274,9 +274,27 @@ async def vase_details(update: Update, context, device_id: str):
                 [InlineKeyboardButton("Go back", callback_data='vase_list')]
             ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.callback_query.message.reply_text(f"Details for Vase: {vase['vase_name']}", reply_markup=reply_markup)
-        if res['temperature_alert']:
-            pass
+        message = f"Details for Vase: {vase['vase_name']}"
+        alert = res['temperature_alert']
+        if alert:
+            if alert == "low":
+                message += "\nWarning! Based on past 7 days it is suggested to move the plant in a warmer place!"
+            elif alert == "high":
+                message += "\nWarning! Based on past 7 days it is suggested to move the plant in a cooler place!"
+        alert = res['soil_moisture_alert']
+        if alert:
+            if alert == "low":
+                message += "\nWarning! In the past 7 days your plant has got not enough water!"
+            elif alert == "high":
+                message += "\nWarning! In the past 7 days your plant has got too much water!"
+        alert = res['light_level_alert']
+        if alert:
+            if alert == "low":
+                message += "\nWarning! Based on past 7 days it is suggested to move the plant in a brighter place!"
+            elif alert == "high":
+                message += "\nWarning! Based on past 7 days it is suggested to move the plant in a darker place!"
+        
+        await update.callback_query.message.reply_text(message, reply_markup=reply_markup)
     else:
         device = find_device_in_list_via_device_id(device_id, vase_list)
 
