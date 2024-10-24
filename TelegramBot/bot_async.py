@@ -22,7 +22,10 @@ vase_found_message = None
 
 async def start(update: Update, context: CallbackContext) -> None:
     welcome_message = await update.message.reply_text(
-        "Welcome to the Smart Vase bot assitance, where you can indentify your plan, get suggestions and so much more!",)
+        "*Welcome to the Smart Vase bot assistance!*\n"
+        "🌱 *Identify your plant*, get suggestions, and so much more! Let's get started 🚀.",
+        parse_mode='Markdown'
+    )
     context.user_data["vase_list"]=[]
     context.user_data["device_list"]=[]
     context.user_data["current_user"]=None
@@ -53,6 +56,11 @@ async def login(update: Update, context: CallbackContext):
                     if user['telegram_chat_id'] == update.message.chat_id:
                         context.user_data["current_user"]=user
                         print(f'User found and logged in. User = {user}')
+                        await update.message.reply_text(
+                            "✅ *Login successful!*\n"
+                            "You're now logged in and ready to manage your Smart Vases.",
+                            parse_mode='Markdown'
+                        )
                         await handle_main_actions(update)
                         break
                 if context.user_data["current_user"] == None:
@@ -84,22 +92,22 @@ async def signup(update: Update, context):
 
 async def handle_main_actions(update: Update):
     keyboard = [
-        [InlineKeyboardButton(
-            "Add a new Smart Vase", callback_data='add_vase')],
-        [InlineKeyboardButton(
-            "See the list of connected Smart Vases", callback_data='vase_list')],
+    [InlineKeyboardButton("🌱 Add a new Smart Vase", callback_data='add_vase')],
+    [InlineKeyboardButton("📜 See the list of connected Smart Vases", callback_data='vase_list')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "Let's get started 🚀. How can I help you?", reply_markup=reply_markup)
+        "💡 *What would you like to do?*", reply_markup=reply_markup, parse_mode='Markdown'
+    )
 
 async def add_vase(update: Update, context):
     current_user = context.user_data.get("current_user")
-    instructions = f"""
-    1. Turn on the vase and your phone's WIFI.
-    2. Connect to the 'SmartVase' network and click [here](http://192.168.4.1/?user_id={current_user['user_id']})
-    3. Reconnect to the internet and check your vase list.
-    """
+    instructions = (
+        "🛠️ *Follow these steps to add a new Smart Vase:*\n\n"
+        "1️⃣ *Turn on* the vase and your phone's Wi-Fi.\n"
+        "2️⃣ *Connect* to the 'SmartVase' network and click [here](http://192.168.4.1/?user_id={current_user['user_id']}).\n"
+        "3️⃣ *Reconnect* to the internet and check your vase list."
+    )
     if update.callback_query:
         message = update.callback_query.message
     else:
@@ -138,30 +146,32 @@ async def get_user_vase_list(update: Update, context):
             keyboard_list = []
             print('User has some devices')
             for dev in device_list:
-                name = "Vase "+ dev['device_id']
+                name = "🌸 Vase " + dev['device_id']
                 vase = find_device_in_list_via_device_id(dev['device_id'], vase_list)
                 if vase:
-                     name = vase["vase_name"]
+                     name = f"🌿 {vase['vase_name']}"
                 callback_data = f'vase_info_{dev["device_id"]}'
-                keyboard_list.append([InlineKeyboardButton(name, callback_data=callback_data)])
-            
+                keyboard_list.append([InlineKeyboardButton(name, callback_data=callback_data)])            
             if update.callback_query:
                 message = update.callback_query.message
             else:
                 message = update.message           
             reply_markup = InlineKeyboardMarkup(keyboard_list)
-            await message.reply_text("Here are all your vases:", reply_markup=reply_markup)
+            await message.reply_text("*Here are your connected vases:*", reply_markup=reply_markup, parse_mode='Markdown')
         else:
-            keyboard = [[InlineKeyboardButton("Refresh my Vase List", callback_data='vase_list')]]
+            keyboard = [[InlineKeyboardButton("🔄 Refresh my Vase List", callback_data='vase_list')]]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await message.reply_text("You have no smart vases connected!", reply_markup=reply_markup)
-   
+            await message.reply_text(
+                "⚠️ *No smart vases connected!*",
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )   
 # Show graph for a vase
 async def show_graph(name: str, field_number: int, channel_id: str, days: int, context, update: Update):
     chart_url = f"http://thingspeak.duck.pictures/{channel_id}/{field_number}?title={name}%20chart&days={str(days)}"
     live_chart = f"https://thingspeak.com/channels/{channel_id}/charts/{field_number}?dynamic=true&days={days}"
 
-    await update.callback_query.message.reply_text(text=f"Plotting the {name} chart, please wait...")
+    await update.callback_query.message.reply_text(text=f"📊 *Plotting the {name} chart*, please wait...", parse_mode='Markdown')
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -257,56 +267,70 @@ async def vase_details(update: Update, context, device_id: str):
     if vase:
         async with aiohttp.ClientSession() as session:
             response = await session.get(f"https://dataanalysis.duck.pictures/{str(device_id)}")
-            res =json.loads(await response.text())
+            res = json.loads(await response.text())
             temperature = res['temperature']
             light_level = res['light_level']
             watertank_level = res['watertank_level']
             soil_moisture = res['soil_moisture']
+
+            # Update the buttons with emojis and improve formatting
             keyboard = [
                 [
-                InlineKeyboardButton(f"Temperature = {temperature}", callback_data='details_temperature_'+str(channel_id)),
-                InlineKeyboardButton(f"Light = {light_level}", callback_data='details_light_'+str(channel_id))
+                    InlineKeyboardButton(f"🌡️ Temperature: {temperature}°C", callback_data=f'details_temperature_{channel_id}')],
+                [
+                    InlineKeyboardButton(f"☀️ Light: {light_level}%", callback_data=f'details_light_{channel_id}')
                 ],
                 [
-                InlineKeyboardButton(f"Watertank = {watertank_level}", callback_data='details_watertank_'+str(channel_id)),
-                InlineKeyboardButton(f"Soil = {soil_moisture}", callback_data='details_soil_'+str(channel_id))
+                    InlineKeyboardButton(f"💧 Watertank: {watertank_level}%", callback_data=f'details_watertank_{channel_id}')],
+                [
+                    InlineKeyboardButton(f"🌱 Soil Moisture: {soil_moisture}%", callback_data=f'details_soil_{channel_id}')
                 ],
-                [InlineKeyboardButton("Go back", callback_data='vase_list')]
+                [InlineKeyboardButton("🔙 Go Back", callback_data='vase_list')]
             ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        message = f"Details for Vase: {vase['vase_name']}"
-        alert = res['temperature_alert']
-        if alert:
-            if alert == "low":
-                message += "\nWarning! Based on past 7 days it is suggested to move the plant in a warmer place!"
-            elif alert == "high":
-                message += "\nWarning! Based on past 7 days it is suggested to move the plant in a cooler place!"
-        alert = res['soil_moisture_alert']
-        if alert:
-            if alert == "low":
-                message += "\nWarning! In the past 7 days your plant has got not enough water!"
-            elif alert == "high":
-                message += "\nWarning! In the past 7 days your plant has got too much water!"
-        alert = res['light_level_alert']
-        if alert:
-            if alert == "low":
-                message += "\nWarning! Based on past 7 days it is suggested to move the plant in a brighter place!"
-            elif alert == "high":
-                message += "\nWarning! Based on past 7 days it is suggested to move the plant in a darker place!"
-        
-        await update.callback_query.message.reply_text(message, reply_markup=reply_markup)
-    else:
-        device = find_device_in_list_via_device_id(device_id, vase_list)
 
-        keyboard = [
-                [InlineKeyboardButton(
-                    "Yes", callback_data='configure_'+device_id), 
-                InlineKeyboardButton(
-                    "No", callback_data='vase_list')],
-            ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.callback_query.message.reply_text(f"Do you want to setup this vase now?", parse_mode='Markdown', reply_markup=reply_markup)
-        
+
+        # Build a beautiful message with proper Markdown formatting
+        message = f"**🌿 Details for Vase: {vase['vase_name']}**\n\n"
+
+        # Add alerts with emojis and warnings
+        alert = res.get('temperature_alert')
+        if alert:
+            if alert == "low":
+                message += "⚠️ _Warning: The temperature is too low! Consider moving the plant to a warmer place._\n"
+            elif alert == "high":
+                message += "⚠️ _Warning: The temperature is too high! Consider moving the plant to a cooler place._\n"
+
+        alert = res.get('soil_moisture_alert')
+        if alert:
+            if alert == "low":
+                message += "💧 _Warning: The soil moisture is too low! Your plant might not be getting enough water._\n"
+            elif alert == "high":
+                message += "💧 _Warning: The soil moisture is too high! Your plant might be getting too much water._\n"
+
+        alert = res.get('light_level_alert')
+        if alert:
+            if alert == "low":
+                message += "☀️ _Warning: The light level is too low! Consider moving the plant to a brighter area._\n"
+            elif alert == "high":
+                message += "☀️ _Warning: The light level is too high! Consider moving the plant to a darker place._\n"
+
+        # Send the beautified message
+        await update.callback_query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+    
+    else:
+        # Beautify the setup prompt with Markdown and emojis
+        keyboard = [
+            [InlineKeyboardButton("✅ Yes", callback_data=f'configure_{device_id}'), 
+             InlineKeyboardButton("❌ No", callback_data='vase_list')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.callback_query.message.reply_text(
+            "🌿 _It looks like this vase is not yet configured._\n\n"
+            "**Would you like to set it up now?**", 
+            parse_mode='Markdown', reply_markup=reply_markup
+        )
+
 async def handle_photo(update: Update, context):
 
     if not context.user_data["global_device_id"]:
