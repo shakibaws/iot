@@ -278,7 +278,7 @@ async def vase_details(update: Update, context, device_id: str):
                 [
                     InlineKeyboardButton(f"🌡️ Temperature: {temperature}°C", callback_data=f'details_temperature_{channel_id}')],
                 [
-                    InlineKeyboardButton(f"☀️ Light: {light_level}%", callback_data=f'details_light_{channel_id}')
+                    InlineKeyboardButton(f"☀️ Light: {light_level}lx", callback_data=f'details_light_{channel_id}')
                 ],
                 [
                     InlineKeyboardButton(f"💧 Watertank: {watertank_level}%", callback_data=f'details_watertank_{channel_id}')],

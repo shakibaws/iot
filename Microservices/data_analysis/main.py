@@ -90,7 +90,7 @@ class DataAnalysis:
 
                     # Light level alerts
                     num_light = num_feeds * int(vase["plant"]["hours_sun_min"]) / 24
-                    if np.average(light_level[:int(num_light)]) < 500:  # Assume less than 500 lux is "low"
+                    if np.average(light_level[:int(num_light)]) < 50:  # Assume less than 50 lux is "very low"
                         vase_data["light_level_alert"] = "low"
 
         return vase_data
