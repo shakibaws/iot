@@ -22,4 +22,10 @@ screen -S thingspeak_adaptor -dm bash -c 'source venv/bin/activate; python Micro
 
 screen -S chart_service -dm bash -c 'source venv/bin/activate; python Microservices/chart_service/main_plot.py > log.txt'
 
+screen -S data_analysis -dm bash -c 'source venv/bin/activate; python Microservices/data_analysis/main.py > log.txt'
+
+screen -S telegram_bot_notifier -dm bash -c 'source venv/bin/activate; python TelegramBot/bot_notifier.py > log.txt'
+
+screen -S log_esp32 -dm bash -c 'stty -F /dev/ttyUSB0 raw 115200; cat /dev/ttyUSB0 > log_esp32.txt'
+
 wait
