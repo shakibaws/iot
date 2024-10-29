@@ -41,17 +41,19 @@ class ThingspeakChart:
             days = 1
             details = "days=1"
         
-        if "name" in kwargs:
-            name = str(kwargs["name"])
-            if name.startswith("temperature"):
+        if "title" in kwargs:
+            title = str(kwargs["title"])
+            print(title)
+            if title.startswith("temperature"):
                 y_max = 40
-            elif name.startswith("light"):
+            elif title.startswith("light"):
                 y_max = 1000
-            elif name.startswith("soil"):
+            elif title.startswith("soil"):
                 y_max = 100
-            elif name.startswith("watertank"):
+            elif title.startswith("watertank"):
                 y_max = 100
-                
+        else:
+            print("Nome non trovato")
         
         
         if args[0] and args[1]:
@@ -136,7 +138,7 @@ class ThingspeakChart:
             plt.close()
 
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
-            return img_buf.getvalue()
+            return image_data
         else:
             return {"message": "error"}
 
