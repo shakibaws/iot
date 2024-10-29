@@ -15,6 +15,7 @@ from io import BytesIO
 from PIL import Image
 from datetime import datetime
 from random import randint
+import gc #garbage collector
 
 class ThingspeakChart:
     exposed = True
@@ -39,6 +40,19 @@ class ThingspeakChart:
         else:
             days = 1
             details = "days=1"
+        
+        if "name" in kwargs:
+            name = str(kwargs["name"])
+            if name.startswith("temperature"):
+                y_max = 40
+            elif name.startswith("light"):
+                y_max = 1000
+            elif name.startswith("soil"):
+                y_max = 100
+            elif name.startswith("watertank"):
+                y_max = 100
+                
+        
         
         if args[0] and args[1]:
             url = f"https://api.thingspeak.com/channels/{args[0]}/fields/{args[1]}.json?" + details
@@ -75,6 +89,7 @@ class ThingspeakChart:
             plt.xlabel("Time")
             plt.ylabel(str(field_name).capitalize())
             plt.title(f"{str(field_name).split('_')[0].capitalize()} chart")
+            plt.ylim(0, y_max)
 
             # Formattazione personalizzata degli assi
             if days == 1:
@@ -110,6 +125,15 @@ class ThingspeakChart:
             plt.tight_layout()
             plt.savefig(img_buf, format="jpeg")
             img_buf.seek(0)
+
+            plt.clf()
+            plt.close()
+            gc.collect()
+            
+            image_data = img_buf.getvalue()
+            img_buf.close()
+
+            plt.close()
 
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
             return img_buf.getvalue()
