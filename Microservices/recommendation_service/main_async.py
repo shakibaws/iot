@@ -53,7 +53,8 @@ class API:
 
                     # Richiesta al servizio di chat
                     async with session.post('http://chat.duck.pictures/chat', json=req) as chat_response:
-                        self.logger.info("API failed: impossible to find 'result' in the recognition service repsonse")                        chat_result = await chat_response.json()
+                        self.logger.info("API failed: impossible to find 'result' in the recognition service repsonse")                        
+                        chat_result = await chat_response.json()
                         return chat_result
                 else:
                     self.logger.error("API failed: impossible to find 'result' in the recognition service repsonse")
