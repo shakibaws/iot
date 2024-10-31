@@ -6,6 +6,7 @@ import time
 import datetime
 
 image_recognition_service = "http://imagerecognition.duck.pictures"
+service_name = "recommendation_service"
 
 class API:
     exposed=True
@@ -23,17 +24,17 @@ class API:
         form_data = aiohttp.FormData()
         for image in images:
             if not image.file:
+                log_to_loki("error", "No images provided", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
                 raise cherrypy.HTTPError(400, 'Immagine non fornita')
             image_data = image.file.read()
-            # Aggiungi l'immagine al form-data
             form_data.add_field('images', image_data, filename="image.jpg", content_type='image/jpeg')
 
         # Effettua la richiesta POST asincrona
         async with aiohttp.ClientSession() as session:
             async with session.post(image_recognition_service, data=form_data) as response:
                 if response.status != 200:
-                    print(response.text)
-                    raise cherrypy.HTTPError(response.status, 'Errore nella richiesta API')
+                    log_to_loki("error", f"API request failed with response {response}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+                    raise cherrypy.HTTPError(response.status, 'Error in the API request')
                 
                 json_result = json.loads(await response.text())
                 
@@ -51,17 +52,21 @@ class API:
 
                     # Richiesta al servizio di chat
                     async with session.post('http://chat.duck.pictures/chat', json=req) as chat_response:
+                        log_to_loki("info", f"Request sended to Gemini", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
                         chat_result = await chat_response.json()
                         return chat_result
                 else:
-                    raise cherrypy.HTTPError(500, 'Risposta non valida dalla API')
+                    log_to_loki("error", f"API failed: impossible to find 'result' in the recognition service repsonse", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+                    raise cherrypy.HTTPError(500, 'Invalid API response')
 
     def POST(self, **params):
-        # Esegui l'operazione asincrona
+        log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+        
         if not isinstance(params['images'], list):
             params['images'] = [params['images']]
 
         if len(params['images']) == 0:
+            log_to_loki("error", "No images provided", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
             raise cherrypy.HTTPError(400, 'No images provided')
 
         # Esegui il codice asincrono

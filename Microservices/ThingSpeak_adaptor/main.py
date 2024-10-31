@@ -3,6 +3,8 @@ from MyMQTT import *
 import time
 import requests
 
+service_name = "thingspeak_adaptor"
+
 class vaseControl:
     def __init__(self,clientID,broker,port,topic_sensors, resource_catalog):
         self.control = MyMQTT(clientID,broker,port,self)
@@ -10,7 +12,6 @@ class vaseControl:
         
     def notify(self,topic,payload):
         data = json.loads(payload)
-        print(f"Message received on topic: {topic}, {data}")
         # "topic_sensors": "smartplant/+/sensors",
         # "topic_actuators": "smartplant/device_id/actuators"
         device_id = topic.split('/')[1]
@@ -20,6 +21,7 @@ class vaseControl:
     def startSim(self):
         self.control.start()
         self.control.mySubscribe(self.topic_sub)
+
     
     def stopSim(self):
         self.control.unsubscribe()
@@ -28,28 +30,16 @@ class vaseControl:
     def speaker(self, data, device_id):
         device = requests.get(resource_catalog+'/device/'+device_id).json()
         vase = requests.get(resource_catalog+'/vaseByDevice/'+device_id).json()
-        print("in speaker")
-        print(device)
-        print(vase)
+        #print("in speaker")
+        #print(device)
+        #print(vase)
     
         # If the device is not configured yet (no vase)
         if not vase:
+            log_to_loki("info", f"no vase found for the user", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
             return
         else:
-            
-            """ {
-                'bn': device_id,
-                'e':
-                [
-                    {'n': 'temperature', 'value': '', 'timestamp': '', 'unit': 'C'},
-                    {'n': 'soil_moisture', 'value': '', 'timestamp': '', 'unit': '%'}
-                    {'n': 'light_level', 'value': '', 'timestamp': '', 'unit': 'lumen'},
-                    {'n': 'watertank_level', 'value': '', 'timestamp': '', 'unit': '%'}
-                ]
-            } """
-            channel_id = device["channel_id"]
             write_key = device["write_key"]
-            
             url = "https://api.thingspeak.com/update.json"
             
             send_data = {}
@@ -63,14 +53,18 @@ class vaseControl:
                     send_data["field2"]=i['value']
                 elif i['n'] == "watertank_level":
                     send_data["field4"]=i['value']
-                    
+
+            log_to_loki("info", f"Data sent to ThingSpeak", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)      
             # Send the POST request
             response = requests.post(url, data=send_data)
-            print(response)
+                    
+
+            #print(response)
 if __name__ == "__main__":
 
     clientID = "thingspeak_adaptor"
 
+    #TODO get from firebase. then add loki logging
     #get al service_catalog
     go = False
     while not go:
