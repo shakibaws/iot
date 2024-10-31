@@ -92,4 +92,3 @@ websocket-client==1.8.0
 wsproto==1.2.0
 yarl==1.13.1
 zc.lockfile==3.0.post1
-zukiPy @ git+https://github.com/Launchers-1/zukipy@46674179fa20293d6541739b6cfbd09d4b3252a1

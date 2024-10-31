@@ -9,7 +9,7 @@ API_KEY = os.getenv("API_KEY")
 service_name = "image_recognition"
 
 if not API_KEY:
-    log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+    #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
     raise ValueError("API_KEY is missing from environment variables")
 
 PROJECT = "all" # try "weurope" or "canada"
@@ -28,18 +28,18 @@ class API:
         return 'GET successfully'
     
     def POST(self, **params):
-        log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+        #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
         files = []
         if not  isinstance(params['images'], list):
             params['images']=[params['images']]
 
         if len(params['images']) == 0:
-            log_to_loki("error", "No images provided", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+            #log_to_loki("error", "No images provided", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
             raise cherrypy.HTTPError(400, 'No images provided')
                 
         for image in params['images']:
             if not image.file:
-                log_to_loki("error", "No images provided", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+                #log_to_loki("error", "No images provided", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
                 raise cherrypy.HTTPError(400, 'Immagine non fornita')
 
             # Read the image data from form-data
@@ -49,7 +49,7 @@ class API:
 
         # Ensure files list is not empty
         if not files:
-            log_to_loki("error", "Image not provided or invalid object", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+            #log_to_loki("error", "Image not provided or invalid object", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
             raise cherrypy.HTTPError(400, 'No images provided')
 
         req = requests.Request('POST', url=api_endpoint, files=files)
@@ -57,10 +57,10 @@ class API:
 
         s = requests.Session()
         response = s.send(prepared)
-        log_to_loki("info", f"Identification request sent", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+        #log_to_loki("info", f"Identification request sent", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
 
         if response.status_code != 200:
-            log_to_loki("error", f"API request failed with response {response}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+            #log_to_loki("error", f"API request failed with response {response}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
             raise cherrypy.HTTPError(response.status_code, 'Error in API request')
         try:
             json_result = json.loads(response.text)
@@ -73,13 +73,13 @@ class API:
                     },
                     "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
-                log_to_loki("info", f"Plant identified correctly", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+                #log_to_loki("info", f"Plant identified correctly", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
                 return json.dumps(ret)
             else:
-                log_to_loki("error", "failed to process Plantnet data", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+                #log_to_loki("error", "failed to process Plantnet data", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
                 raise cherrypy.HTTPError(500, 'Invalid response from API')
         except json.JSONDecodeError:
-            log_to_loki("error", "Failed to parse JSON response", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+            #log_to_loki("error", "Failed to parse JSON response", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
             raise cherrypy.HTTPError(500, 'Invalid JSON response from API')
     
 

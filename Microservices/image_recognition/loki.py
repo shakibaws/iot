@@ -5,7 +5,7 @@ import requests
 
 LOKI_ENDPOINT = "http://loki:3100/loki/api/v1/push"
 
-def log_to_loki(level, message, service_name="plant_api_service", user_id=None, request_id=None):
+def #log_to_loki(level, message, service_name="plant_api_service", user_id=None, request_id=None):
     headers = {
         'Content-Type': 'application/json'
     }
