@@ -59,9 +59,9 @@ if __name__ == "__main__":
     #get al service_catalog
     service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
 
-    broker = service_catalog["broker"]["broker_address"]
-    port = service_catalog["broker"]["port"]
-    topic_sub = service_catalog['topics']['topic_telegram_chat']
+    broker = service_catalog["mqtt_broker"]["broker_address"]
+    port = service_catalog["mqtt_broker"]["port"]
+    topic_sub = service_catalog['mqtt_topics']['topic_telegram_chat']
     token = service_catalog['telegram_bot']['token']
 
     bot_notification = TelegramNotifier(clientID,broker,port,str(topic_sub).replace('telegram_chat_id', '+')+'/alert', token)

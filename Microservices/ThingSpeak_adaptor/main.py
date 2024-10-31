@@ -75,10 +75,10 @@ if __name__ == "__main__":
             print(f"Error occurred while making the HTTP request: {e}")
         time.sleep(5)
         
-    topicSensors = service_catalog["topics"]["topic_sensors"]
+    topicSensors = service_catalog["mqtt_topics"]["topic_sensors"]
     resource_catalog = service_catalog["services"]["resource_catalog_address"]
-    broker = service_catalog["broker"]["broker_address"]
-    port = service_catalog["broker"]["port"]
+    broker = service_catalog["mqtt_broker"]["broker_address"]
+    port = service_catalog["mqtt_broker"]["port"]
 
     controller = vaseControl(clientID,broker,port,topicSensors,resource_catalog)
     controller.startSim()

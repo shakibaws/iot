@@ -21,7 +21,8 @@ class MyMQTT:
     def myOnConnect(self, paho_mqtt, userdata, flags, rc):
         #print("Connected to %s with result code: %d" % (self.broker, rc))
         #log_to_loki("info", f"connected to {self.broker}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
-
+        pass
+    
     def myOnMessageReceived(self, paho_mqtt, userdata, msg):
         #log_to_loki("info", f"message received from topic {self.topic}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
         self.notifier.notify(msg.topic, msg.payload)

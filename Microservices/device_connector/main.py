@@ -157,16 +157,16 @@ class IoTDevice:
             self.pin_actuators[i['name']] = Pin(i['pin'], Pin.OUT)
         
         # connect to mqtt
-        broker = service_catalog["broker"]["broker_address"]
-        port = service_catalog["broker"]["port"]
+        broker = service_catalog["mqtt_broker"]["broker_address"]
+        port = service_catalog["mqtt_broker"]["port"]
 
-        self.pub_topic = service_catalog["topics"]["topic_sensors"]
+        self.pub_topic = service_catalog["mqtt_topics"]["topic_sensors"]
         self.pub_topic = self.pub_topic.replace("+", self.device_cfg["device"]["device_id"])
         
-        self.sub_topic = service_catalog["topics"]["topic_actuators"]
+        self.sub_topic = service_catalog["mqtt_topics"]["topic_actuators"]
         self.sub_topic = self.sub_topic.replace("device_id", self.device_cfg["device"]["device_id"]) + "/+"
 
-        topic_telegram_chat = service_catalog["topics"]["topic_telegram_chat"]
+        topic_telegram_chat = service_catalog["mqtt_topics"]["topic_telegram_chat"]
 
         self.mqqtclient = myMqtt(client_id, broker, port, self.actuate)
         self.mqqtclient.connect()
