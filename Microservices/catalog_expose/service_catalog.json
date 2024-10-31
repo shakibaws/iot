@@ -1,12 +1,17 @@
 {
-    "broker": {
+    "mqtt_broker": {
         "broker_address": "broker.emqx.io",
         "port": 1883
     },
     "services":{
-        "resource_catalog_address": "http://resourceservice.duck.pictures"
+        "resource_catalog_address": "https://resourceservice.duck.pictures",
+        "chart_service": "https://thingspeak.duck.pictures",
+        "data_analysis": "https://dataanalysis.duck.pictures",
+        "gemini": "https://chat.duck.pictures",
+        "image_recognition": "https://imagerecognition.duck.pictures",
+        "recommendation_service": "https://recommendationservice.duck.pictures"
     },
-    "topics": {
+    "mqtt_topics": {
         "topic_sensors": "smartplant/+/sensors",
         "topic_actuators": "smartplant/device_id/actuators",
         "topic_telegram_chat": "smartplant/telegram/telegram_chat_id"
