@@ -36,7 +36,7 @@ class vaseControl:
     
         # If the device is not configured yet (no vase)
         if not vase:
-            log_to_loki("info", f"no vase found for the user", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+            #log_to_loki("info", f"no vase found for the user", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
             return
         else:
             write_key = device["write_key"]
@@ -54,7 +54,7 @@ class vaseControl:
                 elif i['n'] == "watertank_level":
                     send_data["field4"]=i['value']
 
-            log_to_loki("info", f"Data sent to ThingSpeak", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)      
+            #log_to_loki("info", f"Data sent to ThingSpeak", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)      
             # Send the POST request
             response = requests.post(url, data=send_data)
                     
