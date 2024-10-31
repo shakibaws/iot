@@ -20,11 +20,11 @@ class CatalogExpose:
     def GET(self, *args, **kwargs):
         print(args)
         if args[0] == 'listDevice':
-            return self.firebase_ref.child('deviceList').get()
+            return self.listDevice()
         elif args[0] == 'listVase':
-            return self.firebase_ref.child('vaseList').get()
+            return self.listVase()
         elif args[0] == 'listUser':
-            return self.firebase_ref.child('userList').get()
+            return self.listUser()
         
         elif args[0].startswith('device') and args[1]:
             d_id = args[1]
@@ -46,16 +46,20 @@ class CatalogExpose:
     @cherrypy.tools.json_out()
     def POST(self, *args, **kwargs):
         if args[0] == 'device':
+            print('Post on device')
             device = cherrypy.request.json
             this_time = datetime.datetime.now()
             device["lastUpdate"] = this_time.strftime("%Y-%m-%d %H:%M:%S")
             device["device_status"] = "active"
             found = False
-            if self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(device['device_id']).get():
-                found = True
+            print(self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(device['device_id']).get())
+
+            """ if self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(device['device_id']).get():
+                print("Device already exist")
+                found = True """
             if not found:
                 if self.firebase_ref.child('userList').order_by_child("user_id").equal_to(device["user_id"]).get():
-
+                    print("User exist")
                     url = "https://api.thingspeak.com/channels.json"
                     data = {
                         'api_key': 'G1PY1LU9KSDV5LEB',
@@ -112,6 +116,7 @@ class CatalogExpose:
             return {"message": "User added successfully",
                     "id": this_id}
         else:
+            print("Post invalid")
             return {"message": "Invalid resource"}
 
 
@@ -138,6 +143,13 @@ class CatalogExpose:
             return {"message": "User not found"}
         else:
             return {"message": "Invalid resource"}
+
+    def listDevice(self):
+        return list(self.firebase_ref.child('deviceList').get().values())
+    def listUser(self):
+        return list(self.firebase_ref.child('userList').get().values())
+    def listVase(self):
+        return list(self.firebase_ref.child('vaseList').get().values())
 
 if __name__ == '__main__':
     catalog = CatalogExpose()

@@ -123,10 +123,11 @@ async def get_user_vase_list(update: Update, context):
     async with aiohttp.ClientSession() as session:
         vase_list_response = await session.get(f'{resource_catalog_address}/listVase')
         device_list_response = await session.get(f'{resource_catalog_address}/listDevice')
-
+        print(vase_list)
         if vase_list_response.status == 200:
             global_vase_list = await vase_list_response.json()
             for vase in global_vase_list:
+                print(vase_list)
                 if vase['user_id'] == current_user['user_id'] and vase not in vase_list:
                     vase_list.append(vase)
 
