@@ -4,9 +4,10 @@ import cherrypy
 import aiohttp
 import time
 import datetime
+import CustomerLogger
 
 image_recognition_service = "http://imagerecognition.duck.pictures"
-service_name = "recommendation_service"
+
 
 class API:
     exposed=True
@@ -15,7 +16,7 @@ class API:
                                                 ('Access-Control-Allow-Methods', 'POST, OPTIONS, GET'),
                                                 ('Access-Control-Allow-Headers', 'Content-Type')])
     def __init__(self):
-        pass
+        self.logger = CustomerLogger.CustomLogger("recommendation_service", "user_id_test")
 
     def GET(self):
         return 'GET successfully'
@@ -24,7 +25,7 @@ class API:
         form_data = aiohttp.FormData()
         for image in images:
             if not image.file:
-                log_to_loki("error", "No images provided", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+                self.logger.error("No images provided")
                 raise cherrypy.HTTPError(400, 'Immagine non fornita')
             image_data = image.file.read()
             form_data.add_field('images', image_data, filename="image.jpg", content_type='image/jpeg')
@@ -33,7 +34,7 @@ class API:
         async with aiohttp.ClientSession() as session:
             async with session.post(image_recognition_service, data=form_data) as response:
                 if response.status != 200:
-                    log_to_loki("error", f"API request failed with response {response}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+                    self.logger.error("No images provided")
                     raise cherrypy.HTTPError(response.status, 'Error in the API request')
                 
                 json_result = json.loads(await response.text())
@@ -52,21 +53,20 @@ class API:
 
                     # Richiesta al servizio di chat
                     async with session.post('http://chat.duck.pictures/chat', json=req) as chat_response:
-                        log_to_loki("info", f"Request sended to Gemini", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
-                        chat_result = await chat_response.json()
+                        self.logger.info("API failed: impossible to find 'result' in the recognition service repsonse")                        chat_result = await chat_response.json()
                         return chat_result
                 else:
-                    log_to_loki("error", f"API failed: impossible to find 'result' in the recognition service repsonse", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+                    self.logger.error("API failed: impossible to find 'result' in the recognition service repsonse")
                     raise cherrypy.HTTPError(500, 'Invalid API response')
 
     def POST(self, **params):
-        log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+        self.logger.info("POST request received")
         
         if not isinstance(params['images'], list):
             params['images'] = [params['images']]
 
         if len(params['images']) == 0:
-            log_to_loki("error", "No images provided", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
+            self.logger.error("No images provided")
             raise cherrypy.HTTPError(400, 'No images provided')
 
         # Esegui il codice asincrono

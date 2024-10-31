@@ -1,0 +1,25 @@
+services:
+  loki:
+    image: grafana/loki:2.8.2
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./logs/loki:/etc/loki
+    command: -config.file=/etc/loki/config.yml
+    networks:
+      - tjp-net
+
+  promtail:
+    image: grafana/promtail:2.8.2
+    container_name: promtail
+    volumes:
+      - ./recomendationService/logs:/var/log/recomendationService
+      - ./logs/promtail:/etc/promtail
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - tjp-net
+
+networks:
+  tjp-net:
+    driver: bridge
