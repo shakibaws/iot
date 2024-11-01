@@ -162,6 +162,10 @@ async def get_user_vase_list(update: Update, context):
         else:
             keyboard = [[InlineKeyboardButton("🔄 Refresh my Vase List", callback_data='vase_list')]]
             reply_markup = InlineKeyboardMarkup(keyboard)
+            if update.callback_query:
+                message = update.callback_query.message
+            else:
+                message = update.message
             await message.reply_text(
                 "⚠️ *No smart vases connected!*",
                 reply_markup=reply_markup,
