@@ -103,9 +103,9 @@ async def handle_main_actions(update: Update):
 async def add_vase(update: Update, context):
     current_user = context.user_data.get("current_user")
     instructions = (
-        "🛠️ *Follow these steps to add a new Smart Vase:*\n\n"
-        "1️⃣ *Turn on* the vase and your phone's Wi-Fi.\n"
-        "2️⃣ *Connect* to the 'SmartVase' network and click [here](http://192.168.4.1/?user_id={current_user['user_id']}).\n"
+        "🛠️ *Follow these steps to add a new Smart Vase:*\n\n" +
+        "1️⃣ *Turn on* the vase and your phone's Wi-Fi.\n" +
+        f"2️⃣ *Connect* to the 'SmartVase' network and click [here](http://192.168.4.1/?user_id={current_user['user_id']}).\n" +
         "3️⃣ *Reconnect* to the internet and check your vase list."
     )
     if update.callback_query:

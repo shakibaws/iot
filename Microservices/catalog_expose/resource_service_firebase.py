@@ -28,16 +28,20 @@ class CatalogExpose:
         
         elif args[0].startswith('device') and args[1]:
             d_id = args[1]
-            return self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(d_id).get()
+            result = self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(d_id).get().values()
+            return next(iter(result), None)
         elif args[0].startswith('vaseByDevice') and args[1]:
             d_id = args[1]
-            return self.firebase_ref.child('vaseList').order_by_child("device_id").equal_to(d_id).get()
+            result = self.firebase_ref.child('vaseList').order_by_child("device_id").equal_to(d_id).get().values()
+            return next(iter(result), None)
         elif args[0].startswith('vase') and args[1]:
             v_id = args[1]
-            return self.firebase_ref.child('vaseList').order_by_child("vase_id").equal_to(v_id).get()
+            result = self.firebase_ref.child('vaseList').order_by_child("vase_id").equal_to(v_id).get().values()
+            return next(iter(result), None)
         elif args[0].startswith('user') and args[1]:
             u_id = args[1]
-            return self.firebase_ref.child('userList').order_by_child("user_id").equal_to(u_id).get()
+            result = self.firebase_ref.child('userList').order_by_child("user_id").equal_to(u_id).get().values()
+            return next(iter(result), None)
 
         else:
             return {"message": "Invalid resource"}
