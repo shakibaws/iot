@@ -15,7 +15,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'recommendationService'
-          __path__: /var/log/recommendationService.log
+          __path__: /var/log/*.log
 
   - job_name: 'chartService'
     static_configs:
@@ -23,7 +23,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'chartService'
-          __path__: /var/log/chart_service.log
+          __path__: /var/log/*.log
 
   - job_name: 'geminiService'
     static_configs:
@@ -31,7 +31,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'geminiService'
-          __path__: /var/log/gemini.log
+          __path__: /var/log/*.log
 
   - job_name: 'imageRecognitionService'
     static_configs:
@@ -39,7 +39,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'imageRecognitionService'
-          __path__: /var/log/image_recognition.log
+          __path__: /var/log/*.log
 
   - job_name: 'thingSpeakAdaptorService'
     static_configs:
@@ -47,7 +47,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'thingSpeakAdaptorService'
-          __path__: /var/log/ThingSpeak_adaptor.log
+          __path__: /var/log/*.log
 
   - job_name: 'vaseControlService'
     static_configs:
@@ -55,7 +55,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'vaseControlService'
-          __path__: /var/log/vase_control.log
+          __path__: /var/log/*.log
 
   - job_name: 'resourceCatalogService'
     static_configs:
@@ -63,7 +63,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'resourceCatalogService'
-          __path__: /var/log/resource_catalog.log
+          __path__: /var/log/*.log
 
   - job_name: 'serviceCatalogService'
     static_configs:
@@ -71,4 +71,4 @@ scrape_configs:
           - localhost
         labels:
           job: 'serviceCatalogService'
-          __path__: /var/log/service_catalog.log
+          __path__: /var/log/*.log
