@@ -2,6 +2,7 @@ import datetime
 from MyMQTT import *
 import time
 import requests
+import CustomerLogger
 
 class vaseControl:
     def __init__(self,clientID,broker,port,topic_sensors, topic_actuators, topic_telegram_chat, resource_catalog):
@@ -10,10 +11,12 @@ class vaseControl:
         self.topic_pub = topic_actuators
         self.topic_telegram_chat = topic_telegram_chat
         self.boo = 1
+        self.logger = CustomerLogger.CustomLogger("vase_control", "user_id_test")
         
     def notify(self,topic,payload):
         data = json.loads(payload)
         print(f"Message received on topic: {topic}, {data}")
+        self.logger.info(f"Message received on topic: {topic}, {data}")
         # "topic_sensors": "smartplant/+/sensors",
         # "topic_actuators": "smartplant/device_id/actuators"
         device_id = topic.split('/')[1]
@@ -32,26 +35,17 @@ class vaseControl:
         publisher = self.topic_pub.replace("device_id", device_id)
         resource = requests.get(resource_catalog+'/device/'+device_id).json()
         vase = requests.get(resource_catalog+'/vaseByDevice/'+device_id).json()
-       
+
     
         # If the device is not configured yet (no vase)
         if not vase:
+            self.logger.error(f"Device {device_id} is not configured yet")
             return
         else:
             user_id = vase["user_id"]
             user = requests.get(resource_catalog+'/user/'+user_id).json()
             telegram_chat = self.topic_telegram_chat.replace("telegram_chat_id", str(user["telegram_chat_id"]))
-
-            """ {
-                'bn': device_id,
-                'e':
-                [
-                    {'n': 'temperature', 'value': '', 'timestamp': '', 'unit': 'C'},
-                    {'n': 'soil_moisture', 'value': '', 'timestamp': '', 'unit': '%'}
-                    {'n': 'light_level', 'value': '', 'timestamp': '', 'unit': 'lumen'},
-                    {'n': 'watertank_level', 'value': '', 'timestamp': '', 'unit': '%'}
-                ]
-            } """
+            self.logger.info(f"Analyzing data from {device_id}")
             for i in data['e']:    
                 if i['n'] == 'light_level':
                     # to be analyze later with thingspeak data

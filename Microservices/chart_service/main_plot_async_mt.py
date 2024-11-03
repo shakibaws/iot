@@ -18,23 +18,26 @@ from datetime import datetime
 from random import *
 # Thread pool per eseguire operazioni sincrone in thread separati
 executor = ThreadPoolExecutor(max_workers=4)
-
+import CustomerLogger
 class ThingspeakChart:
     exposed = True
 
     def __init__(self):
+        self.logger = CustomerLogger.CustomLogger("chart_service", "user_id_test")
         pass
 
     async def fetch_data(self, url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status != 200:
+                    self.logger.error(f"Error fetching data: {response.status}")
                     raise cherrypy.HTTPError(400, f"Error fetching data: {response.status}")
                 return await response.json()
 
     async def generate_chart(self, times, values, field_name, days):
         """Funzione per generare il grafico in un thread separato"""
         def _generate_chart():
+            self.logger.info("Generating chart...")
             plt.figure(figsize=(8, 6))
             plt.plot(times, values, marker="o", linestyle="-")
             plt.xlabel("Time")
@@ -74,12 +77,14 @@ class ThingspeakChart:
             plt.tight_layout()
             plt.savefig(img_buf, format="jpeg")
             img_buf.seek(0)
+            self.logger.info("Chart generated successfully")
             return img_buf
 
         # Eseguire la generazione del grafico in un thread separato
         return await asyncio.get_event_loop().run_in_executor(executor, _generate_chart)
 
     def GET(self, *args, **kwargs):
+        self.logger.info("GET request received")
         return asyncio.run(self.get_chart(args, kwargs))
 
     async def get_chart(self, args, kwargs):
@@ -102,6 +107,7 @@ class ThingspeakChart:
             feeds = data.get("feeds", [])
             
             if not feeds:
+                self.logger.error(f"No data found for the specified field:\nchannel: {args[0]}\nfield:{args[1]}.")
                 raise ValueError("No data found for the specified field.")
 
             times = [feed['created_at'] for feed in feeds]
@@ -125,8 +131,10 @@ class ThingspeakChart:
             img_buf = await self.generate_chart(times, values, field_name, days)
 
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
+            self.logger.info("GET request successful")
             return img_buf.getvalue()
         else:
+            self.logger.error("Invalid parameters provided")
             return {"message": "error"}
 
 if __name__ == '__main__':

@@ -17,6 +17,7 @@ class vaseControl:
         device_id = topic.split('/')[1]
         self.speaker(data, device_id)
 
+
         
     def startSim(self):
         self.control.start()
@@ -30,20 +31,22 @@ class vaseControl:
     def speaker(self, data, device_id):
         device = requests.get(resource_catalog+'/device/'+device_id).json()
         vase = requests.get(resource_catalog+'/vaseByDevice/'+device_id).json()
+        self.logger.info(f"Analyzing data from {device_id}")
         #print("in speaker")
         #print(device)
         #print(vase)
     
         # If the device is not configured yet (no vase)
         if not vase:
-            #log_to_loki("info", f"no vase found for the user", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
-            return
+            self.logger.error(f"Device {device_id} is not configured yet")
+            return 
         else:
             write_key = device["write_key"]
             url = "https://api.thingspeak.com/update.json"
             
             send_data = {}
             send_data['api_key'] =  write_key  
+
             for i in data['e']:    
                 if i['n'] == 'light_level':
                     send_data["field3"]=i['value']
@@ -53,28 +56,28 @@ class vaseControl:
                     send_data["field2"]=i['value']
                 elif i['n'] == "watertank_level":
                     send_data["field4"]=i['value']
-
-            #log_to_loki("info", f"Data sent to ThingSpeak", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)      
-            # Send the POST request
             response = requests.post(url, data=send_data)
                     
+            if response.status_code == 200:
+                self.logger.info(f"Data sent to ThingSpeak for {device_id}")
+            else:
+                self.logger.error(f"Error in sending data to ThingSpeak for {device_id}")
 
-            #print(response)
 if __name__ == "__main__":
 
     clientID = "thingspeak_adaptor"
-
-    #TODO get from firebase. then add loki logging
-    #get al service_catalog
+    logger = CustomerLogger.CustomLogger(service_name, "user_id_test")
     go = False
     while not go:
         try:
             service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
             go = True
         except requests.exceptions.RequestException as e:
+            logger.error(f"Error occurred while making the HTTP request: {e}")
             print(f"Error occurred while making the HTTP request: {e}")
         time.sleep(5)
-        
+    
+    logger.info("Service catalog received")
     topicSensors = service_catalog["mqtt_topics"]["topic_sensors"]
     resource_catalog = service_catalog["services"]["resource_catalog_address"]
     broker = service_catalog["mqtt_broker"]["broker_address"]

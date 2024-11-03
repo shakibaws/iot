@@ -1,5 +1,5 @@
 import json
-
+import CustomerLogger
 import paho.mqtt.client as PahoMQTT
 service_name = "thingspeak_adaptor"
 
@@ -17,31 +17,25 @@ class MyMQTT:
         # register the callback
         self._paho_mqtt.on_connect = self.myOnConnect
         self._paho_mqtt.on_message = self.myOnMessageReceived
+        self.logger = CustomerLogger.CustomLogger(service_name, "user_id_test")
 
     def myOnConnect(self, paho_mqtt, userdata, flags, rc):
+        self.logger.info(f"Connected to {self.broker} with result code: {rc}")
         pass
-        #print("Connected to %s with result code: %d" % (self.broker, rc))
-        #log_to_loki("info", f"connected to {self.broker}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
 
     def myOnMessageReceived(self, paho_mqtt, userdata, msg):
-        #log_to_loki("info", f"message received from topic {self.topic}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
         self.notifier.notify(msg.topic, msg.payload)
+        self.logger.info(f"Message received on topic: {msg.topic}, {msg.payload}")
 
     def myPublish(self, topic, msg):
-        # publish a message with a certain topic
+        self.logger.info(f"Publishing message on topic: {topic}, {msg}")
         self._paho_mqtt.publish(topic, json.dumps(msg), 2)
-        #log_to_loki("info", f"message published to topic {self.topic}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
-
-        ##print(f"message published on topic: {topic}, {json.dumps(msg)}")
 
     def mySubscribe(self, topic):
-        # subscribe for a topic
+        self.logger.info(f"Subscribed to {topic}")
         self._paho_mqtt.subscribe(topic, 2)
-        # just to remember that it works also as a subscriber
         self._isSubscriber = True
         self._topic = topic
-        #log_to_loki("info", f"subscribed to {self.broker}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
-        #print("subscribed to %s" % (topic))
 
     def start(self):
         # manage connection to broker
