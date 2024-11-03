@@ -2,6 +2,7 @@ import datetime
 from MyMQTT import *
 import time
 import requests
+import CustomerLogger
 
 service_name = "thingspeak_adaptor"
 
@@ -9,6 +10,7 @@ class vaseControl:
     def __init__(self,clientID,broker,port,topic_sensors, resource_catalog):
         self.control = MyMQTT(clientID,broker,port,self)
         self.topic_sub = topic_sensors
+        self.logger = CustomerLogger.CustomLogger(service_name, "user_id_test")
         
     def notify(self,topic,payload):
         data = json.loads(payload)
