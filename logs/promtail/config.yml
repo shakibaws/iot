@@ -9,10 +9,66 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: 'rrecommendationService'
+  - job_name: 'recommendationService'
     static_configs:
       - targets:
           - localhost
         labels:
           job: 'recommendationService'
-          __path__: var/log/recommendationService.log
+          __path__: /var/log/recommendationService.log
+
+  - job_name: 'chartService'
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 'chartService'
+          __path__: /var/log/chart_service.log
+
+  - job_name: 'geminiService'
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 'geminiService'
+          __path__: /var/log/gemini.log
+
+  - job_name: 'imageRecognitionService'
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 'imageRecognitionService'
+          __path__: /var/log/image_recognition.log
+
+  - job_name: 'thingSpeakAdaptorService'
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 'thingSpeakAdaptorService'
+          __path__: /var/log/ThingSpeak_adaptor.log
+
+  - job_name: 'vaseControlService'
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 'vaseControlService'
+          __path__: /var/log/vase_control.log
+
+  - job_name: 'resourceCatalogService'
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 'resourceCatalogService'
+          __path__: /var/log/resource_catalog.log
+
+  - job_name: 'serviceCatalogService'
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 'serviceCatalogService'
+          __path__: /var/log/service_catalog.log
