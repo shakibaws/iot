@@ -13,7 +13,7 @@ class CustomLogger:
         os.makedirs(log_dir, exist_ok=True)
 
         # Create file handler
-        file_handler = logging.FileHandler(f'./logs/{service_name}.log')
+        file_handler = logging.FileHandler(f'./logs/{service_name}/{service_name}.log')
         file_handler.setLevel(logging.DEBUG)
 
         # Create formatter

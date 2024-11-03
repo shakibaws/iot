@@ -14,7 +14,14 @@ services:
     image: grafana/promtail:2.8.2
     container_name: promtail
     volumes:
-      - ./recomendationService/logs:/var/log/recomendationService
+      - ./chart_service/logs:/var/log/recomendationService
+      - ./gemini/logs:/var/log/gemini
+      - ./image_recognition/logs:/var/log/image_recognition
+      - ./recommendation_service/logs:/var/log/recomendationService
+      - ./ThingSpeak_adaptor/logs:/var/log/ThingSpeak_adaptor
+      - ./vase_control/logs:/var/log/vase_control
+      - ./catalog_expose/logs/resource_catalog:/var/log/resource_catalog
+      - ./catalog_expose/logs/service_catalog:/var/log/service_catalog
       - ./logs/promtail:/etc/promtail
     command: -config.file=/etc/promtail/config.yaml
     networks:
