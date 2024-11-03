@@ -4,7 +4,7 @@ import datetime
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
-
+import CustomerLogger
 class ServiceCatalogExpose:
     exposed = True
 
@@ -14,19 +14,24 @@ class ServiceCatalogExpose:
             'databaseURL': url 
         })
         self.firebase_ref = db.reference('service_catalog/')
+        self.logger = CustomerLogger.CustomLogger("service_catalog", "user_id_test")
 
     @cherrypy.tools.json_out()
     def GET(self, *args, **kwargs):
         if args:
             key = args[0].lower()
             if key == 'all':
+                self.logger.info("GET request received - all")
                 return self.firebase_ref.get()
             else:
                 try:
+                    self.logger.info(f"GET request received - {key}")
                     return self.firebase_ref.child(key).get()
                 except Exception as e:
+                    self.logger.error(f"GET request received - {key} - {e}")
                     print(e)
         else:
+            self.logger.error("GET request received: Invalid resource")
             return self.firebase_ref.get()
 
 
