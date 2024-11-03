@@ -17,7 +17,7 @@ class CatalogExpose:
             'databaseURL': 'https://smartvase-effeb-default-rtdb.europe-west1.firebasedatabase.app' 
         })
         self.firebase_ref = db.reference('resource_catalog/')
-        self.logger = CustomerLogger.CustomLogger("image_recognition", "user_id_test")
+        self.logger = CustomerLogger.CustomLogger("resource_service", "user_id_test")
 
 
     @cherrypy.tools.json_out()

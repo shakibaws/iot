@@ -2,7 +2,7 @@
 
 pkill screen
 
-screen -S resource_catalog -dm bash -c 'source venv/bin/activate; cd  Microservices/catalog_expose; python ./resource_service_firebase.py'
+screen -S resource_catalog -dm bash -c 'source venv/bin/activate; cd Microservices/catalog_expose; python ./resource_service_firebase.py'
 
 screen -S service_catalog -dm bash -c 'source venv/bin/activate; cd Microservices/catalog_expose; python ./service_service_firebase.py'
 
