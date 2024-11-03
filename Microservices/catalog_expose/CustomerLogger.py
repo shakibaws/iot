@@ -9,7 +9,7 @@ class CustomLogger:
         self.logger.setLevel(logging.DEBUG)
 
         # Ensure the log directory exists
-        log_dir = './logs'
+        log_dir = f'./logs/{service_name}'
         os.makedirs(log_dir, exist_ok=True)
 
         # Create file handler

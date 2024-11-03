@@ -23,7 +23,7 @@ services:
       - ./catalog_expose/logs/resource_catalog:/var/log/resource_catalog
       - ./catalog_expose/logs/service_catalog:/var/log/service_catalog
       - ./logs/promtail:/etc/promtail
-    command: -config.file=/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yml
     networks:
       - tjp-net
 
