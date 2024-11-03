@@ -14,14 +14,14 @@ services:
     image: grafana/promtail:2.8.2
     container_name: promtail
     volumes:
-      - ./Microservices/chart_service/logs:/var/log
-      - ./Microservices/gemini/logs:/var/log
-      - ./Microservices/image_recognition/logs:/var/log
-      - ./Microservices/recommendation_service/logs:/var/log
-      - ./Microservices/ThingSpeak_adaptor/logs:/var/log
-      - ./Microservices/vase_control/logs:/var/log
-      - ./Microservices/catalog_expose/logs/resource_service:/var/log
-      - ./Microservices/catalog_expose/logs/service_catalog:/var/log
+      - ./Microservices/chart_service/logs:/var/log/chart_service
+      - ./Microservices/gemini/logs:/var/log/gemini
+      - ./Microservices/image_recognition/logs:/var/log/image_recognition
+      - ./Microservices/recommendation_service/logs:/var/log/recommendation_service
+      - ./Microservices/ThingSpeak_adaptor/logs:/var/log/ThingSpeak_adaptor
+      - ./Microservices/vase_control/logs:/var/log/vase_control
+      - ./Microservices/catalog_expose/logs/resource_service:/var/log/resource_service
+      - ./Microservices/catalog_expose/logs/service_catalog:/var/log/service_catalog
       - ./logs/promtail:/etc/promtail
     command: -config.file=/etc/promtail/config.yml
     networks:
