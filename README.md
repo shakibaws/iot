@@ -21,7 +21,7 @@ chmod +x run_all.sh
 ```  
 Run  
 ```bash
-sh run_all.sh
+sh screen_run_all.sh
 ```  
 Close **all** python process in background
 ```bash
@@ -29,9 +29,7 @@ pkill -9 python
 ```
 
 ## TO-DO List
-- [x] add instructions to telegram bot
-- [x] add activation code to esp32 micropython
-- [] host mosquitto mqtt public broker
 - [] dockerize everything
-- [] add simple api and topics documentation for each service
+- [] api and documentation for each service
+- [] ngix router and kuberneetes
 - [] restyle esp32 web page
