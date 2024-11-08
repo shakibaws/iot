@@ -29,6 +29,7 @@ pkill -9 python
 ```
 
 ## TO-DO List
+- [] !!!env file for telegram bot token and gemini api key
 - [] dockerize everything
 - [] api and documentation for each service
 - [] ngix router and kuberneetes
