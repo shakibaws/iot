@@ -124,7 +124,7 @@ class IoTDevice:
             self.device_cfg = ujson.load(file)
             self.device_cfg["device"]["user_id"] = user_id
             file.close()
-            resource_catalog = service_catalog["services"]["resource_catalog_address"]
+            resource_catalog = service_catalog["services"]["resource_catalog"]
             print(resource_catalog)
             retries = 5
             for attempt in range(retries):

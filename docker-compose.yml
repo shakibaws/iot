@@ -1,19 +1,20 @@
 services:
   loki:
-    image: grafana/loki:2.8.2
-    container_name: loki
-    ports:
-      - "3100:3100"
+    image: grafana/loki:3.0.0                       # Specifies the Loki Docker image and version.
+    container_name: loki                            # Names the container for easier management.
     volumes:
-      - ./logs/loki:/etc/loki
-    command: -config.file=/etc/loki/config.yml
+      - ./logs/loki/loki-config.yaml:/mnt/config/loki-config.yaml # Mounts the Loki configuration file.
+    ports:
+      - "3100:3100"                                 # Maps port 3100 on the host to port 3100 in the container.
+    command: -config.file=/mnt/config/loki-config.yaml # Runs Loki with the specified configuration file.
     networks:
       - tjp-net
 
   promtail:
-    image: grafana/promtail:2.8.2
-    container_name: promtail
+    image: grafana/promtail:3.0.0                   # Specifies the Promtail Docker image and version.
+    container_name: promtail                        # Names the container for easier management.
     volumes:
+      - ./logs/promtail/promtail-config.yaml:/mnt/config/promtail-config.yaml
       - ./Microservices/chart_service/logs:/var/log/chart_service
       - ./Microservices/gemini/logs:/var/log/gemini
       - ./Microservices/image_recognition/logs:/var/log/image_recognition
@@ -22,10 +23,39 @@ services:
       - ./Microservices/vase_control/logs:/var/log/vase_control
       - ./Microservices/catalog_expose/logs/resource_service:/var/log/resource_service
       - ./Microservices/catalog_expose/logs/service_catalog:/var/log/service_catalog
-      - ./logs/promtail:/etc/promtail
-    command: -config.file=/etc/promtail/config.yml
+      - ./TelegramBot/logs:/var/log/telegramBot
+
+    depends_on:
+      - loki                                       # Ensures Promtail starts after Loki.
+    command: -config.file=/mnt/config/promtail-config.yaml # Runs Promtail with the specified configuration file.
     networks:
       - tjp-net
+
+  grafana:
+      image: grafana/grafana
+      container_name: grafana
+      restart: unless-stopped
+      ports:
+      - '3000:3000'
+      user: "1000"
+      volumes:
+        - ./logs/grafana:/var/lib/grafana
+      networks:
+          - tjp-net
+
+  prometheus:
+      image: prom/prometheus:latest
+      volumes:
+        - ./logs/prometheus:/etc/prometheus
+      ports:
+        - "9095:9090"
+      restart: unless-stopped
+      command:
+        - --config.file=/etc/prometheus/prometheus-config.yml
+        - --storage.tsdb.path=/prometheus
+      networks:
+        - tjp-net
+
 
 networks:
   tjp-net:

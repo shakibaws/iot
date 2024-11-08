@@ -74,7 +74,7 @@ if __name__ == "__main__":
     topicSensors = service_catalog["mqtt_topics"]["topic_sensors"]
     topicActuators = service_catalog["mqtt_topics"]["topic_actuators"]
     topic_telegram_chat = service_catalog["mqtt_topics"]["topic_telegram_chat"]
-    resource_catalog = service_catalog["services"]["resource_catalog_address"]
+    resource_catalog = service_catalog["services"]["resource_catalog"]
     broker = service_catalog["mqtt_broker"]["broker_address"]
     port = service_catalog["mqtt_broker"]["port"]
 

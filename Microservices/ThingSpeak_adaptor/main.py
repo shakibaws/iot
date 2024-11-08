@@ -22,6 +22,7 @@ class vaseControl:
 
         
     def startSim(self):
+        print("starting...")
         self.control.start()
         self.control.mySubscribe(self.topic_sub)
 
@@ -73,6 +74,7 @@ if __name__ == "__main__":
     while not go:
         try:
             service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
+            print("Service get")
             go = True
         except requests.exceptions.RequestException as e:
             logger.error(f"Error occurred while making the HTTP request: {e}")
@@ -81,7 +83,7 @@ if __name__ == "__main__":
     
     logger.info("Service catalog received")
     topicSensors = service_catalog["mqtt_topics"]["topic_sensors"]
-    resource_catalog = service_catalog["services"]["resource_catalog_address"]
+    resource_catalog = service_catalog["services"]["resource_catalog"]
     broker = service_catalog["mqtt_broker"]["broker_address"]
     port = service_catalog["mqtt_broker"]["port"]
 

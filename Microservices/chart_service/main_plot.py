@@ -15,132 +15,109 @@ from io import BytesIO
 from PIL import Image
 from datetime import datetime
 from random import randint
-import gc #garbage collector
+import gc  # garbage collectorx
+import threading
+import CustomerLogger
 
 class ThingspeakChart:
     exposed = True
 
     def __init__(self):
-        pass
+        # Create an event loop that will run in a separate thread
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self.start_loop, daemon=True)
+        self.thread.start()
+        self.logger = CustomerLogger.CustomLogger("chart_service", "user_id_test")
+
+    def start_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
 
     async def fetch_data(self, url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status != 200:
+                    self.logger.error("error fetching data")
                     raise cherrypy.HTTPError(400, f"Error fetching data: {response.status}")
                 return await response.json()
 
     def GET(self, *args, **kwargs):
-        return asyncio.run(self.get_chart(args, kwargs))
+        # Schedule `get_chart` to run in the background loop
+        future = asyncio.run_coroutine_threadsafe(self.get_chart(args, kwargs), self.loop)
+        return future.result()
 
     async def get_chart(self, args, kwargs):
-        if "days" in kwargs:
-            days = int(kwargs["days"])
-            details = "days=" + str(days)
-        else:
-            days = 1
-            details = "days=1"
-        
-        if "title" in kwargs:
-            title = str(kwargs["title"])
-            print(title)
-            if title.startswith("temperature"):
-                y_max = 40
-            elif title.startswith("light"):
-                y_max = 1000
-            elif title.startswith("soil"):
-                y_max = 100
-            elif title.startswith("watertank"):
-                y_max = 100
-        else:
-            print("Nome non trovato")
-        
-        
+        # Handle parameters and set chart limits
+        days = int(kwargs.get("days", 1))
+        title = kwargs.get("title", "default")
+        y_max = 100  # Default y-axis limit, can be adjusted based on title
+
+        # URL and data fetch
         if args[0] and args[1]:
-            url = f"https://api.thingspeak.com/channels/{args[0]}/fields/{args[1]}.json?" + details
-
-            # Esegui la richiesta asincrona a ThingSpeak
+            url = f"https://api.thingspeak.com/channels/{args[0]}/fields/{args[1]}.json?days={days}"
             data = await self.fetch_data(url)
-
+            
             field_name = data["channel"].get(f"field{args[1]}")
             feeds = data.get("feeds", [])
             
             if not feeds:
+                self.logger.error("error fetching data")
                 raise ValueError("No data found for the specified field.")
 
-            times = [feed['created_at'] for feed in feeds]
+            times = [datetime.strptime(feed['created_at'], '%Y-%m-%dT%H:%M:%SZ') for feed in feeds]
             values = [float(feed[f"field{args[1]}"]) for feed in feeds]
 
-            times = [datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%SZ') for time_str in times]
+            # Downsampling
+            step = max(1, len(values) // 60)
+            times, values = times[::step], values[::step]
 
-            # Funzione di downsampling
-            def downsample_data(times, values, step=10):
-                return times[::step], values[::step]
-
-            # Downsample dei dati
-            l = len(values)
-            interval = 1
-            if l > 60:
-                interval = int(l / 60)
-         
-            times, values = downsample_data(times, values, step=interval)
-         
-            # Generazione del grafico
+            # Plot generation
             plt.figure(figsize=(8, 6))
             plt.plot(times, values, marker="o", linestyle="-")
             plt.xlabel("Time")
-            plt.ylabel(str(field_name).capitalize())
-            plt.title(f"{str(field_name).split('_')[0].capitalize()} chart")
+            plt.ylabel(field_name.capitalize())
+            plt.title(f"{title.capitalize()} chart")
             plt.ylim(0, y_max)
-
-            # Formattazione personalizzata degli assi
-            if days == 1:
-                locator = mdates.HourLocator(interval=1)
-                plt.gca().xaxis.set_major_locator(locator)
-
-                def custom_date_formatter(x, pos):
-                    current_time = mdates.num2date(x)
-                    if pos == 0 or pos == len(times) - 1:
-                        return current_time.strftime('%d/%m/%y %H:%M')
-                    return current_time.strftime('%H:%M')
-
-                plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(custom_date_formatter))
-
-            elif days == 7:
-                locator = mdates.HourLocator(byhour=[8, 20])
-                plt.gca().xaxis.set_major_locator(locator)
-                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
-
-            elif days == 30:
-                locator = mdates.DayLocator(interval=1)
-                plt.gca().xaxis.set_major_locator(locator)
-                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
-
-            elif days == 365:
-                locator = mdates.MonthLocator(interval=1)
-                plt.gca().xaxis.set_major_locator(locator)
-                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
-
             plt.xticks(rotation=45, ha='right')
 
+            # Format x-axis
+            locator, formatter = self.get_locator_and_formatter(days)
+            plt.gca().xaxis.set_major_locator(locator)
+            plt.gca().xaxis.set_major_formatter(formatter)
+
+            # Save to buffer
             img_buf = BytesIO()
             plt.tight_layout()
             plt.savefig(img_buf, format="jpeg")
             img_buf.seek(0)
-
             plt.clf()
             plt.close()
             gc.collect()
-            
-            image_data = img_buf.getvalue()
-            img_buf.close()
 
-            plt.close()
-
+            # Serve image
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
-            return image_data
+            return img_buf.getvalue()
+
+        return {"message": "error"}
+
+    def get_locator_and_formatter(self, days):
+        # Helper function to return the right locator and formatter for days
+        if days == 1:
+            locator = mdates.HourLocator(interval=1)
+            formatter = ticker.FuncFormatter(lambda x, pos: mdates.num2date(x).strftime('%H:%M'))
+        elif days == 7:
+            locator = mdates.HourLocator(byhour=[8, 20])
+            formatter = mdates.DateFormatter('%d/%m/%y %H:%M')
+        elif days == 30:
+            locator = mdates.DayLocator(interval=1)
+            formatter = mdates.DateFormatter('%d/%m/%y')
+        elif days == 365:
+            locator = mdates.MonthLocator(interval=1)
+            formatter = mdates.DateFormatter('%B')
         else:
-            return {"message": "error"}
+            locator = mdates.AutoDateLocator()
+            formatter = mdates.AutoDateFormatter(locator)
+        return locator, formatter
 
 if __name__ == '__main__':
     chart = ThingspeakChart()

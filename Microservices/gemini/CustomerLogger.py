@@ -15,7 +15,7 @@ class CustomLogger:
         file_handler.setLevel(logging.DEBUG)
 
         # Create formatter
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s - Service: %(service)s - User ID: %(user_id)s')
+        formatter = logging.Formatter('%(message)s')
 
         # Set formatter to handler
         file_handler.setFormatter(formatter)
@@ -24,7 +24,7 @@ class CustomLogger:
         self.logger.addHandler(file_handler)
 
     def info(self, message):
-        self.logger.info(message, extra={'service': self.service_name, 'user_id': self.user_id})
+        self.logger.info(message)
 
     def error(self, message):
-        self.logger.error(message, extra={'service': self.service_name, 'user_id': self.user_id})
+        self.logger.error(message)

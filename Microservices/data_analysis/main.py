@@ -28,19 +28,14 @@ class DataAnalysis:
 
         # Fetch the device list and vase list asynchronously
         async with aiohttp.ClientSession() as session:
-            async with session.get(self.catalog['services']['resource_catalog_address'] + "/listDevice") as device_resp:
-                device_list = await device_resp.json()
+            async with session.get(f"{self.catalog['services']['resource_catalog']}/device/{device_id}") as device_resp:
+                dev = await device_resp.json()
+            async with session.get(f"{self.catalog['services']['resource_catalog']}/vaseByDevice/{device_id}") as vase_resp:
+                vase = await vase_resp.json()
 
-            async with session.get(self.catalog['services']['resource_catalog_address'] + "/listVase") as vase_resp:
-                vase_list = await vase_resp.json()
-
-        # Find the channel and vase data
-        for d in device_list:
-            if d['device_id'] == device_id:
-                channel = d['channel_id']
-                break
+        if dev:
+            channel = dev['channel_id']
         
-        vase = next((v for v in vase_list if v['device_id'] == device_id), None)
         if not channel or not vase:
             return {"error": "Device or vase not found"}
 
@@ -62,9 +57,9 @@ class DataAnalysis:
                     vase_data['watertank_level'] = data['field4']
                     vase_data['soil_moisture'] = data['field2']
 
-        # Fetch the data for the last 30 days from ThingSpeak
+        # Fetch the data for the last 7 days from ThingSpeak
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://api.thingspeak.com/channels/{str(channel)}/feeds.json?days=30") as resp:
+            async with session.get(f"https://api.thingspeak.com/channels/{str(channel)}/feeds.json?days=7") as resp:
                 res = await resp.json()
                 if len(res["feeds"]) > 0:
                     data = res['feeds']
@@ -92,13 +87,13 @@ class DataAnalysis:
                     num_light = num_feeds * int(vase["plant"]["hours_sun_min"]) / 24
                     if np.average(light_level[:int(num_light)]) < 50:  # Assume less than 50 lux is "very low"
                         vase_data["light_level_alert"] = "low"
-
+        print(vase_data)
         return vase_data
 
 
 if __name__ == '__main__':
     res = requests.get("https://serviceservice.duck.pictures").json()
-    serviceCatalog = DataAnalysis(res)
+    dataAnalysis = DataAnalysis(res)
 
     conf = {
         '/': {
@@ -112,6 +107,6 @@ if __name__ == '__main__':
         'server.socket_port': 5082  # Specify your desired port here
     })
 
-    cherrypy.tree.mount(serviceCatalog, '/', conf)
+    cherrypy.tree.mount(dataAnalysis, '/', conf)
     cherrypy.engine.start()
     cherrypy.engine.block()

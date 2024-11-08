@@ -5,8 +5,6 @@ import requests
 import time
 import datetime
 
-image_recognition_service = "http://imagerecognition.duck.pictures"
-
 class API:
     exposed=True
     @cherrypy.tools.json_out()

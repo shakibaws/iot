@@ -30,6 +30,20 @@ class CatalogExpose:
         elif args[0] == 'listUser':
             return self.listUser()
         
+        elif args[0] == 'listDeviceByUser':
+            print("listDeviceByUser")
+            u_id = args[1]
+            result = self.firebase_ref.child('deviceList').order_by_child("user_id").equal_to(u_id).get().values()
+            self.logger.info("GET request received: listDeviceByUser")
+            return list(result)
+        
+        elif args[0] == 'listVaseByUser':
+            print("listVaseByUser")
+            u_id = args[1]
+            result = self.firebase_ref.child('vaseList').order_by_child("user_id").equal_to(u_id).get().values()
+            self.logger.info("GET request received: listDeviceByUser")
+            return list(result)
+
         elif args[0].startswith('device') and args[1]:
             d_id = args[1]
             result = self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(d_id).get().values()
@@ -65,11 +79,9 @@ class CatalogExpose:
             device["lastUpdate"] = this_time.strftime("%Y-%m-%d %H:%M:%S")
             device["device_status"] = "active"
             found = False
-            print(self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(device['device_id']).get())
-
-            """ if self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(device['device_id']).get():
-                print("Device already exist")
-                found = True """
+            result = self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(device['device_id']).get().values()
+            if next(iter(result), None):
+                found = True
             if not found:
                 if self.firebase_ref.child('userList').order_by_child("user_id").equal_to(device["user_id"]).get():
                     print("User exist")

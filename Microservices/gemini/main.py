@@ -18,7 +18,7 @@ class Gemini_service:
             print("asking")
             question = cherrypy.request.json['question']
             response = self.model.generate_content(question)
-            if response.status_code == 200:
+            if response.text:
                 self.logger.info("POST request send to gemini")
                 return response.text
             else:

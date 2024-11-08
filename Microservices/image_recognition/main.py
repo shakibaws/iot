@@ -54,7 +54,6 @@ class API:
             # Read the image data from form-data
             image_data = image.file.read()
             files.append(('images', ("image.jpg", image_data)))
-            print(len(files))
 
         # Ensure files list is not empty
         if not files:
