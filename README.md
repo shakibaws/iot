@@ -21,7 +21,7 @@ chmod +x run_all.sh
 ```  
 Run  
 ```bash
-sh run_all.sh
+sh screen_run_all.sh
 ```  
 Close **all** python process in background
 ```bash
