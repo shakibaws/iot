@@ -1,4 +1,5 @@
 services:
+  ### LOGS
   loki:
     image: grafana/loki:3.0.0                       # Specifies the Loki Docker image and version.
     container_name: loki                            # Names the container for easier management.
@@ -15,15 +16,15 @@ services:
     container_name: promtail                        # Names the container for easier management.
     volumes:
       - ./logs/promtail/promtail-config.yaml:/mnt/config/promtail-config.yaml
-      - ./Microservices/chart_service/logs:/var/log/chart_service
-      - ./Microservices/gemini/logs:/var/log/gemini
-      - ./Microservices/image_recognition/logs:/var/log/image_recognition
-      - ./Microservices/recommendation_service/logs:/var/log/recommendation_service
-      - ./Microservices/ThingSpeak_adaptor/logs:/var/log/ThingSpeak_adaptor
-      - ./Microservices/vase_control/logs:/var/log/vase_control
-      - ./Microservices/catalog_expose/logs/resource_service:/var/log/resource_service
-      - ./Microservices/catalog_expose/logs/service_catalog:/var/log/service_catalog
-      - ./TelegramBot/logs:/var/log/telegramBot
+      - ./logs/chart_service:/var/log/chart_service
+      - ./logs/gemini:/var/log/gemini
+      - ./logs/image_recognition:/var/log/image_recognition
+      - ./logs/recommendation_service:/var/log/recommendation_service
+      - ./logs/thingspeak_adaptor:/var/log/thingspeak_adaptor
+      - ./logs/vase_control:/var/log/vase_control
+      - ./logs/resource_catalog:/var/log/resource_catalog
+      - ./logs/service_catalog:/var/log/service_catalog
+      - ./logs/telegram_bot:/var/log/telegram_botot
 
     depends_on:
       - loki                                       # Ensures Promtail starts after Loki.
@@ -55,7 +56,144 @@ services:
         - --storage.tsdb.path=/prometheus
       networks:
         - tjp-net
+  ### MICROSERVICES
+  bot_notifier:
+    build: ./Microservices/bot_notifier
+    container_name: bot_notifier
+    depends_on:
+      - telegram_bot
+    volumes:
+      - ./logs/bot_notifier:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
 
+  chart_service:
+    build: ./Microservices/chart_service
+    container_name: chart_service
+    ports:
+      - "5300:5300"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/chart_service:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  data_analysis:
+    build: ./Microservices/data_analysis
+    container_name: data_analysis
+    ports:
+      - "5082:5082"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/data_analysis:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  gemini:
+    build: ./Microservices/gemini
+    container_name: gemini
+    ports:
+      - "5151:5151"
+    volumes:
+      - ./logs/gemini:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  image_recognition:
+    build: ./Microservices/image_recognition
+    container_name: image_recognition
+    ports:
+      - "8085:8085"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/image_recognition:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  recommendation_service:
+    build: ./Microservices/recommendation_service
+    container_name: recommendation_service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/recommendation_service:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  resource_catalog:
+    build: ./Microservices/resource_catalog
+    container_name: resource_catalog
+    ports:
+      - "5000:5000"
+    depends_on:
+      - service_catalog
+    volumes:
+      - ./logs/resource_catalog:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  service_catalog:
+    build: ./Microservices/service_catalog
+    container_name: service_catalog
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./logs/service_catalog:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  telegram_bot:
+    build: ./Microservices/telegram_bot
+    container_name: telegram_bot
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/telegram_bot:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  thingspeak_adaptor:
+    build: ./Microservices/thingspeak_adaptor
+    container_name: thingspeak_adaptor
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/thingspeak_adaptor:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+
+  vase_control:
+    build: ./Microservices/vase_control
+    container_name: vase_control
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/vase_control:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+ 
+
+  portainer:
+      image: portainer/portainer-ce:latest
+      container_name: portainer
+      restart: always
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock  # Access to Docker engine
+        - portainer_data:/data  # Persistent data storage for Portainer
+      ports:
+        - "9000:9000"  # Access Portainer UI on this port
+      environment:
+        - TZ=Europe/Paris  # Set timezone (optional)
+
+
+volumes:
+  portainer_data:
+    driver: local
 
 networks:
   tjp-net:

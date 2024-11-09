@@ -2,10 +2,13 @@ import cherrypy
 import google.generativeai as genai
 import os
 import CustomerLogger
+import os
+from dotenv import load_dotenv
+
 class Gemini_service:
     exposed = True
-    def __init__(self):
-        genai.configure(api_key="AIzaSyCmorRbRVa7whMTl7utEyQwo0xCXYWfXlo")
+    def __init__(self, api_key):
+        genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
         self.logger = CustomerLogger.CustomLogger("gemini_service", "user_id_test")
 
@@ -29,6 +32,17 @@ class Gemini_service:
             return {"message": "Invalid resource"}
 
 if __name__ == '__main__':
+    load_dotenv()
+
+    API_KEY = os.getenv("API_KEY")
+
+    service_name = "image_recognition"
+
+    if not API_KEY:
+        #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+        raise ValueError("API_KEY is missing from environment variables")
+    
+    gemini = Gemini_service(API_KEY)
 
     conf = {
         '/':{
@@ -40,6 +54,6 @@ if __name__ == '__main__':
         'server.socket_host': '0.0.0.0',
         'server.socket_port': 5151  # Specify your desired port here
     })
-    cherrypy.tree.mount(Gemini_service(), '/', conf)
+    cherrypy.tree.mount(gemini, '/', conf)
     cherrypy.engine.start()
     cherrypy.engine.block()

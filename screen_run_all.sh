@@ -6,7 +6,7 @@ screen -S resource_catalog -dm bash -c 'source venv/bin/activate; cd Microservic
 
 screen -S service_catalog -dm bash -c 'source venv/bin/activate; cd Microservices/catalog_expose; python ./service_service_firebase.py'
 
-screen -S telegram_bot -dm bash -c 'source venv/bin/activate; cd TelegramBot; python ./bot_async.py'
+screen -S telegram_bot -dm bash -c 'source venv/bin/activate; cd Microservices/telegram_bot; python ./bot_async.py'
 
 sleep 4
 
@@ -18,7 +18,7 @@ screen -S vase_control -dm bash -c 'source venv/bin/activate; cd Microservices/v
 
 screen -S image_recognition -dm bash -c 'source venv/bin/activate; cd Microservices/image_recognition; python ./main.py'
 
-screen -S thingspeak_adaptor -dm bash -c 'source venv/bin/activate; cd Microservices/ThingSpeak_adaptor; python ./main.py'
+screen -S thingspeak_adaptor -dm bash -c 'source venv/bin/activate; cd Microservices/thingspeak_adaptor; python ./main.py'
 
 screen -S chart_service -dm bash -c 'source venv/bin/activate; cd Microservices/chart_service; python ./main_plot_async_mt.py'
 

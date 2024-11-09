@@ -2,6 +2,8 @@
 
 ## MICROSERVICES
 
+---
+
 ### 0. **Resource Catalog**
 local port -> :5000  
 public endpoint = 'http://resourceservice.duck.pictures'  
@@ -201,6 +203,8 @@ public endpoint = 'http://resourceservice.duck.pictures'
      ```json
      { "message": "User not found" }
      ```
+
+---
 
 ### 1. **Data Analysis Service**
 - **Local Port**: `:5082`

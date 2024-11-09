@@ -4,6 +4,9 @@ import time
 import requests
 from telegram import Bot
 import asyncio  # Import asyncio to use async functionality
+import os
+from dotenv import load_dotenv
+
 
 class TelegramNotifier:
     def __init__(self,clientID,broker,port,topic_sub, token):
@@ -56,13 +59,22 @@ if __name__ == "__main__":
 
     clientID = "bot_notifier"
 
+    load_dotenv()
+
+    TOKEN = os.getenv("TOKEN")
+
+    if not TOKEN:
+        #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+        raise ValueError("TOKEN is missing from environment variables")
+
+
     #get al service_catalog
     service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
 
     broker = service_catalog["mqtt_broker"]["broker_address"]
     port = service_catalog["mqtt_broker"]["port"]
     topic_sub = service_catalog['mqtt_topics']['topic_telegram_chat']
-    token = service_catalog['telegram_bot']['token']
+    token = TOKEN
 
     bot_notification = TelegramNotifier(clientID,broker,port,str(topic_sub).replace('telegram_chat_id', '+')+'/alert', token)
     bot_notification.startSim()

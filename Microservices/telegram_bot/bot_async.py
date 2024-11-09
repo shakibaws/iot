@@ -10,6 +10,9 @@ import asyncio
 import aiohttp
 import aiofiles
 import CustomerLogger
+import os
+from dotenv import load_dotenv
+
 
 resource_catalog_address = ''
 service_expose_endpoint = 'http://serviceservice.duck.pictures'
@@ -19,7 +22,7 @@ current_context = None
 welcome_message = None
 no_vase_found_message = None
 vase_found_message = None
-logger = CustomerLogger.CustomLogger(service_name="TelegramBot")
+logger = CustomerLogger.CustomLogger(service_name="telegram_bot")
 
 
 async def start(update: Update, context: CallbackContext) -> None:
@@ -465,13 +468,12 @@ async def handle_photo(update: Update, context):
     except Exception as e:
         logger.error("Exception on handle_photo():" + str(e)) 
 
-def main():
+def main(TOKEN):
     # Creiamo l'istanza dell'applicazione del bot
 
 
     #get al service_catalog
-    service_catalog = requests.get(f"{service_expose_endpoint}/all").json()
-    token = service_catalog['telegram_bot']['token']
+    token = TOKEN
 
     application = Application.builder().token(token).concurrent_updates(True).build()
 
@@ -489,4 +491,12 @@ def main():
 
 if __name__ == '__main__':
     #asyncio.run(main())
-    main()
+
+    load_dotenv()
+
+    TOKEN = os.getenv("TOKEN")
+
+    if not TOKEN:
+        #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+        raise ValueError("TOKEN is missing from environment variables")
+    main(TOKEN)

@@ -9,11 +9,11 @@ class CustomLogger:
         self.logger.setLevel(logging.DEBUG)
 
         # Ensure the log directory exists
-        log_dir = f'./logs/{service_name}'
+        log_dir = os.getenv('LOG_DIR', '/app/logs') # get dir from env
         os.makedirs(log_dir, exist_ok=True)
-
+        
         # Create file handler
-        file_handler = logging.FileHandler(f'./logs/{service_name}.log')
+        file_handler = logging.FileHandler(f'{log_dir}/{service_name}.log')
         file_handler.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter('[%(levelname)s] %(message)s - %(user_id)s')
@@ -36,4 +36,3 @@ class CustomLogger:
 
     def setUserId (self, userId):
         self.user_id=userId
-

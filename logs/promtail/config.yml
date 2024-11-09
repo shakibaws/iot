@@ -47,7 +47,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'thingSpeakAdaptorService'
-          __path__: /var/log/ThingSpeak_adaptor/*.log
+          __path__: /var/log/thingspeak_adaptor/*.log
 
   - job_name: 'vaseControlService'
     static_configs:
@@ -63,7 +63,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'resourceCatalogService'
-          __path__: /var/log/resource_service/*.log
+          __path__: /var/log/resource_catalog/*.log
 
   - job_name: 'serviceCatalogService'
     static_configs:
