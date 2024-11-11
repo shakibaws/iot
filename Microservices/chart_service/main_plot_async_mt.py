@@ -26,7 +26,7 @@ class ThingspeakChart:
     exposed = True
 
     def __init__(self):
-        self.logger = CustomerLogger.CustomLogger("chart_service", "user_id_test")
+        self.logger = CustomerLogger.CustomLogger("chart_service")
 
     async def fetch_data(self, url):
         """Fetch data asynchronously from ThingSpeak API with error handling."""

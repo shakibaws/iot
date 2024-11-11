@@ -24,8 +24,7 @@ services:
       - ./logs/vase_control:/var/log/vase_control
       - ./logs/resource_catalog:/var/log/resource_catalog
       - ./logs/service_catalog:/var/log/service_catalog
-      - ./logs/telegram_bot:/var/log/telegram_botot
-
+      - ./logs/telegram_bot:/var/log/telegram_bot
     depends_on:
       - loki                                       # Ensures Promtail starts after Loki.
     command: -config.file=/mnt/config/promtail-config.yaml # Runs Promtail with the specified configuration file.

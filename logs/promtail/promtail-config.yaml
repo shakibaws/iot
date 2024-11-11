@@ -16,6 +16,11 @@ scrape_configs:
         labels:
           job: 'recommendationService'
           __path__: /var/log/recommendation_service/*.log
+    pipeline_stages:
+      - regex:
+          expression: "\\[(?P<level>\\w+)\\] (?P<message>.*)"
+      - labels:
+          level: level
 
   - job_name: 'chartService'
     static_configs:
@@ -37,6 +42,11 @@ scrape_configs:
         labels:
           job: 'geminiService'
           __path__: /var/log/gemini/*.log
+    pipeline_stages:
+      - regex:
+          expression: "\\[(?P<level>\\w+)\\] (?P<message>.*)"
+      - labels:
+          level: level
 
   - job_name: 'imageRecognitionService'
     static_configs:
@@ -45,6 +55,11 @@ scrape_configs:
         labels:
           job: 'imageRecognitionService'
           __path__: /var/log/image_recognition/*.log
+    pipeline_stages:
+      - regex:
+          expression: "\\[(?P<level>\\w+)\\] (?P<message>.*)"
+      - labels:
+          level: level
 
   - job_name: 'thingSpeakAdaptorService'
     static_configs:
@@ -53,6 +68,11 @@ scrape_configs:
         labels:
           job: 'thingSpeakAdaptorService'
           __path__: /var/log/thingspeak_adaptor/*.log
+    pipeline_stages:
+      - regex:
+          expression: "\\[(?P<level>\\w+)\\] (?P<message>.*)"
+      - labels:
+          level: level
 
   - job_name: 'vaseControlService'
     static_configs:
@@ -61,6 +81,11 @@ scrape_configs:
         labels:
           job: 'vaseControlService'
           __path__: /var/log/vase_control/*.log
+    pipeline_stages:
+      - regex:
+          expression: "\\[(?P<level>\\w+)\\] (?P<message>.*)"
+      - labels:
+          level: level
 
   - job_name: 'resourceCatalogService'
     static_configs:
@@ -69,6 +94,11 @@ scrape_configs:
         labels:
           job: 'resourceCatalogService'
           __path__: /var/log/resource_catalog/*.log
+    pipeline_stages:
+      - regex:
+          expression: "\\[(?P<level>\\w+)\\] (?P<message>.*)"
+      - labels:
+          level: level
 
   - job_name: 'serviceCatalogService'
     static_configs:
@@ -77,6 +107,11 @@ scrape_configs:
         labels:
           job: 'serviceCatalogService'
           __path__: /var/log/service_catalog/*.log
+    pipeline_stages:
+      - regex:
+          expression: "\\[(?P<level>\\w+)\\] (?P<message>.*)"
+      - labels:
+          level: level
 
   - job_name: 'telegramBot'
     static_configs:
@@ -84,7 +119,7 @@ scrape_configs:
           - localhost
         labels:
           job: 'telegramBot'
-          __path__: /var/log/telegramBot/*.log
+          __path__: /var/log/telegram_bot/*.log
     pipeline_stages:
       - regex:
           expression: "\\[(?P<level>\\w+)\\] (?P<message>.*)"

@@ -10,7 +10,7 @@ class Gemini_service:
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
-        self.logger = CustomerLogger.CustomLogger("gemini_service", "user_id_test")
+        self.logger = CustomerLogger.CustomLogger("gemini_service")
 
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
