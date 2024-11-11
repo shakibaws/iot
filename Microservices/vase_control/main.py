@@ -11,7 +11,7 @@ class vaseControl:
         self.topic_pub = topic_actuators
         self.topic_telegram_chat = topic_telegram_chat
         self.boo = 1
-        self.logger = CustomerLogger.CustomLogger("vase_control", "user_id_test")
+        self.logger = CustomerLogger.CustomLogger("vase_control")
         
     def notify(self,topic,payload):
         data = json.loads(payload)
