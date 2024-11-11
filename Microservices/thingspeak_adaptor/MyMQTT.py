@@ -17,7 +17,7 @@ class MyMQTT:
         # register the callback
         self._paho_mqtt.on_connect = self.myOnConnect
         self._paho_mqtt.on_message = self.myOnMessageReceived
-        self.logger = CustomerLogger.CustomLogger(service_name, "user_id_test")
+        self.logger = CustomerLogger.CustomLogger(service_name)
 
     def myOnConnect(self, paho_mqtt, userdata, flags, rc):
         self.logger.info(f"Connected to {self.broker} with result code: {rc}")

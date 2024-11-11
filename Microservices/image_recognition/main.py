@@ -31,7 +31,7 @@ class API:
                                                 ('Access-Control-Allow-Headers', 'Content-Type')])
 
     def __init__(self):
-        self.logger = CustomerLogger.CustomLogger("image_recognition", "user_id_test")
+        self.logger = CustomerLogger.CustomLogger("image_recognition")
 
     def GET(self):
         return 'GET successfully'

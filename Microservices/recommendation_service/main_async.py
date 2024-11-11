@@ -16,7 +16,7 @@ class API:
     def __init__(self, image_recognition_service, chat_service):
         self.image_recognition_service = image_recognition_service
         self.chat_service = chat_service
-        self.logger = CustomerLogger.CustomLogger("recommendation_service", "user_id_test")
+        self.logger = CustomerLogger.CustomLogger("recommendation_service")
 
     def GET(self):
         return 'GET successfully'

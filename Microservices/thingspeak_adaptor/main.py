@@ -69,7 +69,7 @@ class vaseControl:
 if __name__ == "__main__":
 
     clientID = "thingspeak_adaptor"
-    logger = CustomerLogger.CustomLogger(service_name, "user_id_test")
+    logger = CustomerLogger.CustomLogger(service_name)
     go = False
     while not go:
         try:

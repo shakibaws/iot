@@ -14,7 +14,7 @@ class ServiceCatalogExpose:
             'databaseURL': url 
         })
         self.firebase_ref = db.reference('service_catalog/')
-        self.logger = CustomerLogger.CustomLogger("service_catalog", "user_id_test")
+        self.logger = CustomerLogger.CustomLogger("service_catalog")
 
     @cherrypy.tools.json_out()
     def GET(self, *args, **kwargs):
