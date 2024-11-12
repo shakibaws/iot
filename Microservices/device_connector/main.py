@@ -4,23 +4,32 @@ import utime
 import time
 import urequests
 import ujson
-from machine import Pin, ADC
+import machine
 import onewire, ds18x20
 import random
 import dht
+    
 
 class IoTDevice:
     def __init__(self):
+
+        ##
+        ### board init
+        #machine.freq(240000000, min_freq=10000000)
+        print(machine.freq())
+        ##
+
         self.go = False
         self.pin_sensors = {}
         self.pin_actuators = {}
         self.device_cfg = {}
+        self.service_catalog = {}
         self.mqqtclient = None
         self.sub_topic = ""
         self.pub_topic = ""
 
         self.service_catalog_url = "http://serviceservice.duck.pictures/all"
-
+        
         self.c = Connector()
 
     def actuate(self, topic, msg):
@@ -40,7 +49,6 @@ class IoTDevice:
             self.pin_actuators[actuator].value(command)  # activate pump for 2 seconds
             time.sleep(2)
             self.pin_actuators[actuator].value(0)
-            time.sleep(30)  # wait for water to flow
         else:
             self.pin_actuators[actuator].value(command)
 
@@ -91,110 +99,130 @@ class IoTDevice:
 
         self.mqqtclient.publishJson(self.pub_topic, message)
 
-    def setup(self):
+    def init(self):
+
+        ### try to connect to wifi
         status = self.c.connect()
         while not status:
             print("Connection problem")
-            time.sleep(2)
+            time.sleep(5)
             status = self.c.connect()
 
-    def init(self):
-        # fetch service catalog
-        client_id = "device_connector"
-        retries = 5
-        for attempt in range(retries):
-            try:
-                res = urequests.get(self.service_catalog_url)
-                service_catalog = ujson.loads(res.text)
-                break
-            except OSError as e:
-                if attempt < retries - 1:
-                    print(f"Error {e}. Retrying in 5 seconds...")
-                    time.sleep(5)
-                else:
-                    raise
-
-        # sub(post) to resource catalog
-        user_id = ""
-        with open("user_id.dat", "r") as file:
-            user_id = file.read()
-        file.close()
-
-        with open("config.json", "r") as file:
-            self.device_cfg = ujson.load(file)
-            self.device_cfg["device"]["user_id"] = user_id
-            file.close()
-            resource_catalog = service_catalog["services"]["resource_catalog"]
-            print(resource_catalog)
-            retries = 5
-            for attempt in range(retries):
+        ### if first boot get/post on resource catalog
+        if machine.reset_cause() == machine.DEEPSLEEP_RESET:
+            # deepsleep
+            ### read from file local copy
+            with open("config.json", "r") as file:
+                self.device_cfg = ujson.load(file)
+            with open("service_catalog.json", "r") as file:
+                self.service_catalog = ujson.load(file)
+        else:
+            # hard reset | first boot
+            ### try to get service catalog
+            while True:
                 try:
-                    res = urequests.post(resource_catalog+"/device", json=self.device_cfg["device"])
+                    print("GET service catalog")
+                    res = urequests.get(self.service_catalog_url)
+                    self.service_catalog = ujson.loads(res.text)
+                    with open("service_catalog.json", 'w+') as file:
+                        ujson.dump(self.service_catalog, file)
                     break
                 except OSError as e:
-                    if attempt < retries - 1:
-                        print(f"Error {e}. Retrying in 5 seconds...")
-                        time.sleep(5)
-                    else:
-                        raise
-        file.close()
-        # set pinout
+                    print(f"Error {e}. Retrying in 5 seconds...")
+                    time.sleep(5)
+            ##
+
+            ### subscribe new device(post) to resource catalog
+            user_id = ""
+            with open("user_id.dat", "r") as file:
+                user_id = file.read()
+            with open("config.json", "r") as file:
+                self.device_cfg = ujson.load(file)
+                self.device_cfg["device"]["user_id"] = user_id
+                file.close()
+                resource_catalog_url = self.service_catalog["services"]["resource_catalog"]
+                retries = 5
+                for attempt in range(retries):
+                    try:
+                        print("POST resource catalog")
+                        res = urequests.post(resource_catalog_url+"/device", json=self.device_cfg["device"])
+                        break
+                    except OSError as e:
+                        if attempt < retries - 1:
+                            print(f"Error {e}. Retrying in 5 seconds...")
+                            time.sleep(5)
+                        else:
+                            raise
+            ##
+
+        #### set pinout
+        print("Setting pinout")
         for i in self.device_cfg["pinout"]["sensors"]:
             if i['name'] == 'temperature':
                 # DS18B20 dallas sensor
-                ds_pin = Pin(i['pin'])
+                ds_pin = machine.Pin(i['pin'])
                 ds_sensor = ds18x20.DS18X20(onewire.OneWire(ds_pin))
                 roms = ds_sensor.scan()
                 print('Found DS devices: ', roms)
                 if roms:
                     self.pin_sensors[i['name']] = {'rom': roms[0], 'ds_sensor': ds_sensor}
             else:
-                adc = ADC(Pin(i['pin']))
-                adc.atten(ADC.ATTN_11DB)
+                adc = machine.ADC(machine.Pin(i['pin']))
+                adc.atten(machine.ADC.ATTN_11DB)
                 self.pin_sensors[i['name']] = adc
         
         for i in self.device_cfg["pinout"]["actuators"]:
-            self.pin_actuators[i['name']] = Pin(i['pin'], Pin.OUT)
+            self.pin_actuators[i['name']] = machine.Pin(i['pin'], machine.Pin.OUT)
+        ##
         
-        # connect to mqtt
-        broker = service_catalog["mqtt_broker"]["broker_address"]
-        port = service_catalog["mqtt_broker"]["port"]
-
-        self.pub_topic = service_catalog["mqtt_topics"]["topic_sensors"]
+        #### connect to mqtt
+        print("Connecting mqtt")
+        client_id = "device_connector"
+        broker = self.service_catalog["mqtt_broker"]["broker_address"]
+        port = self.service_catalog["mqtt_broker"]["port"]
+        self.pub_topic = self.service_catalog["mqtt_topics"]["topic_sensors"]
         self.pub_topic = self.pub_topic.replace("+", self.device_cfg["device"]["device_id"])
-        
-        self.sub_topic = service_catalog["mqtt_topics"]["topic_actuators"]
+        self.sub_topic = self.service_catalog["mqtt_topics"]["topic_actuators"]
         self.sub_topic = self.sub_topic.replace("device_id", self.device_cfg["device"]["device_id"]) + "/+"
-
-        topic_telegram_chat = service_catalog["mqtt_topics"]["topic_telegram_chat"]
-
         self.mqqtclient = myMqtt(client_id, broker, port, self.actuate)
         self.mqqtclient.connect()
-        time.sleep(1)
+        time.sleep(2)
         self.mqqtclient.subscribe(self.sub_topic)
+        ##
 
+        machine.freq(80000000)
+        print(machine.freq())
         self.go = True
 
     def loop(self):
+        # not really a loop
         while True:
-            while self.go:
-                if not self.c.isconnected():  # if connection goes down, try again to connect
-                    self.c.connect()
-                
-                # take sensor input and publish
-                self.get_sensor()
-                time.sleep(5)
-                # Non-blocking wait for message
-                self.mqqtclient.check_message()
-                time.sleep(10)
-            self.init()
+            if not self.c.isconnected():  # if connection goes down
+                for i in range(5):
+                    if not self.c.isconnected():
+                        self.c.connect()
+                        time.sleep(20)
+                self.init()
+            # take sensor input and publish
+            self.get_sensor()
+            time.sleep(2)
+            # Non-blocking wait for message
+            self.mqqtclient.check_message()
+            time.sleep(3) # let some time to actuate the message
+
+            # set RTC.ALARM0 to fire after 60 seconds (waking the device)
+            # put the device to sleep
+            machine.deepsleep(60000)
+            print("RTC timer set for 60 seconds")
+            print("Entering deep sleep...")
+
 
     def deinit(self):
         self.go = False
         self.mqqtclient.disconnect()
         
     def run(self):
-        self.setup()
+        self.init()
         self.loop()
 
 device = IoTDevice()
