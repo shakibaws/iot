@@ -18,6 +18,8 @@ from PIL import Image
 from datetime import datetime
 from random import *
 import CustomerLogger
+import pytz
+
 
 # Thread pool to execute synchronous tasks in separate threads
 executor = ThreadPoolExecutor(max_workers=4)
@@ -59,7 +61,7 @@ class ThingspeakChart:
             # Set the date format based on days range
             try:
                 if days == 1:
-                    locator = mdates.HourLocator(interval=1)
+                    locator = mdates.MinuteLocator(interval=30)
                     plt.gca().xaxis.set_major_locator(locator)
                     plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(self._custom_date_formatter(times)))
 
@@ -94,6 +96,8 @@ class ThingspeakChart:
         """Custom formatter for date on x-axis when days=1."""
         def formatter(x, pos):
             current_time = mdates.num2date(x)
+            local_tz = datetime.now().astimezone().tzinfo
+            current_time = current_time.replace(tzinfo=pytz.utc).astimezone(local_tz)
             if pos == 0 or pos == len(times) - 1:
                 return current_time.strftime('%d/%m/%y %H:%M')
             return current_time.strftime('%H:%M')
@@ -123,6 +127,7 @@ class ThingspeakChart:
                 raise cherrypy.HTTPError(404, "No data found")
 
             times = [datetime.strptime(feed['created_at'], '%Y-%m-%dT%H:%M:%SZ') for feed in feeds]
+
             values = [float(feed[f"field{args[1]}"]) for feed in feeds]
 
             # Downsample data if necessary

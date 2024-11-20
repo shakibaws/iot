@@ -177,7 +177,7 @@ class IoTDevice:
         
         #### connect to mqtt
         print("Connecting mqtt")
-        client_id = "device_connector"
+        client_id = f"device_connector_{self.device_cfg['device']['device_id']}"
         broker = self.service_catalog["mqtt_broker"]["broker_address"]
         port = self.service_catalog["mqtt_broker"]["port"]
         self.pub_topic = self.service_catalog["mqtt_topics"]["topic_sensors"]
@@ -212,9 +212,9 @@ class IoTDevice:
 
             # set RTC.ALARM0 to fire after 60 seconds (waking the device)
             # put the device to sleep
-            machine.deepsleep(60000)
             print("RTC timer set for 60 seconds")
             print("Entering deep sleep...")
+            machine.deepsleep(60000)
 
 
     def deinit(self):

@@ -55,13 +55,8 @@ class API:
                         async with session.post(self.chat_service, json=req) as chat_response:
                             self.logger.info("Asking gemini")                        
                             
-                            res = await chat_response
-                            if res.status == 200:
-                                chat_result = res.json()
-                                return chat_result
-                            else:
-                                self.logger.error("Gemini failed to respond")
-                                raise Exception
+                            res = await chat_response.json()
+                            return res
                     else:
                         self.logger.error("API failed: impossible to find 'result' in the recognition service repsonse")
                         raise cherrypy.HTTPError(500, 'Invalid API response')
@@ -69,6 +64,7 @@ class API:
                     self.logger.error(f"Error in json decode: {json_err}")
                     raise cherrypy.HTTPError(500, f'Invalid API response {json_err}')
                 except Exception as e:
+                    self.logger.error(f"Error in requests: {e}")
                     raise cherrypy.HTTPError(500, e)
 
     def POST(self, **params):

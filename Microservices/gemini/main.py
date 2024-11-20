@@ -9,7 +9,7 @@ class Gemini_service:
     exposed = True
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
+        self.model = genai.GenerativeModel('gemini-1.5-pro', generation_config={"response_mime_type": "application/json"})
         self.logger = CustomerLogger.CustomLogger("gemini_service")
 
     @cherrypy.tools.json_in()
@@ -25,7 +25,7 @@ class Gemini_service:
                 self.logger.info("POST request send to gemini")
                 return response.text
             else:
-                self.logger.error(f"Error in sending data to gemini: {response.status_code}")
+                self.logger.error("Error in sending data to gemini")
                 return {"message": "Error in sending data to gemini"}
         else:
             self.logger.error("POST request received: Invalid resource")

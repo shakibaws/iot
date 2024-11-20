@@ -6,7 +6,8 @@ from telegram import Bot
 import asyncio  # Import asyncio to use async functionality
 import os
 from dotenv import load_dotenv
-
+import sys
+import random
 
 class TelegramNotifier:
     def __init__(self,clientID,broker,port,topic_sub, token):
@@ -54,34 +55,52 @@ class TelegramNotifier:
         self.mqtt.unsubscribe()
         self.mqtt.stop()
 
-    
-if __name__ == "__main__":
 
-    clientID = "bot_notifier"
-
-    load_dotenv()
-
-    TOKEN = os.getenv("TOKEN")
-
-    if not TOKEN:
-        #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
-        raise ValueError("TOKEN is missing from environment variables")
-
-
-    #get al service_catalog
-    service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
-
-    broker = service_catalog["mqtt_broker"]["broker_address"]
-    port = service_catalog["mqtt_broker"]["port"]
-    topic_sub = service_catalog['mqtt_topics']['topic_telegram_chat']
-    token = TOKEN
-
-    bot_notification = TelegramNotifier(clientID,broker,port,str(topic_sub).replace('telegram_chat_id', '+')+'/alert', token)
-    bot_notification.startSim()
+def main():
+    r = random.randint(0,1000)
+    clientID = "bot_notifier_smartvase_1010"+str(r)
 
     try:
-        while True:        
-            time.sleep(10)
-    except KeyboardInterrupt:
-            bot_notification.stopSim()
+        load_dotenv()
+
+        TOKEN = os.getenv("TOKEN")
+
+        if not TOKEN:
+            #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+            raise ValueError("TOKEN is missing from environment variables")
+
+
+        #get al service_catalog
+        service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
+
+        broker = service_catalog["mqtt_broker"]["broker_address"]
+        port = service_catalog["mqtt_broker"]["port"]
+        topic_sub = service_catalog['mqtt_topics']['topic_telegram_chat']
+        token = TOKEN
+
+        bot_notification = TelegramNotifier(clientID,broker,port,str(topic_sub).replace('telegram_chat_id', '+')+'/alert', token)
+        bot_notification.startSim()
+
+        try:
+            while True:        
+                time.sleep(10)
+        except KeyboardInterrupt:
+                bot_notification.stopSim()
+
+    except requests.exceptions.RequestException as e:
+        print(f"Network error: {e}")
+        restart_script()
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        restart_script()
+
+def restart_script():
+    """Restart the script from scratch."""
+    print("Restarting script...")
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
+if __name__ == "__main__":
+    main()
+
     

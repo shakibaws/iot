@@ -21,9 +21,9 @@ class MyMQTT:
 
     def myOnConnect(self, paho_mqtt, userdata, flags, rc):
         self.logger.info(f"Connected to {self.broker} with result code: {rc}")
-        pass
 
     def myOnMessageReceived(self, paho_mqtt, userdata, msg):
+        print("Message received")
         self.notifier.notify(msg.topic, msg.payload)
         self.logger.info(f"Message received on topic: {msg.topic}, {msg.payload}")
 
@@ -32,6 +32,7 @@ class MyMQTT:
         self._paho_mqtt.publish(topic, json.dumps(msg), 2)
 
     def mySubscribe(self, topic):
+        print("Subscribing...")
         self.logger.info(f"Subscribed to {topic}")
         self._paho_mqtt.subscribe(topic, 2)
         self._isSubscriber = True
@@ -39,6 +40,7 @@ class MyMQTT:
 
     def start(self):
         # manage connection to broker
+        print(f"Connecting to {self.broker}, {self.port}")
         self._paho_mqtt.connect(self.broker, self.port)
         self._paho_mqtt.loop_start()
 
