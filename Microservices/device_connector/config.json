@@ -1,6 +1,6 @@
 {
     "device": {
-        "device_id": "91827",
+        "device_id": "87283924",
         "sensors": [
             "soil_moisture",
             "watertank_level",
@@ -13,6 +13,9 @@
         ],
         "available_services": [
             "MQTT"
+        ],
+        "configurations":[
+            {"watertank_height_cm":15}
         ]
     },
     "pinout": {
@@ -23,7 +26,7 @@
             },
             {
                 "name": "watertank_level",
-                "pin": 35
+                "pin": [18,5]
             },
             {
                 "name": "temperature",

@@ -65,6 +65,59 @@ class IoTDevice:
             ]
         } 
         """
+        def _measure_perc(trigger, echo):
+            try:
+                # Ensure trigger and echo are valid objects
+                if not hasattr(trigger, 'on') or not hasattr(trigger, 'off'):
+                    raise ValueError("Invalid trigger object. Ensure it has 'on' and 'off' methods.")
+                if not hasattr(echo, 'value'):
+                    raise ValueError("Invalid echo object. Ensure it has a 'value' method or property.")
+
+                # Get the max height from the configuration
+                max_height = None
+                configurations = self.device_cfg.get("device", {}).get("configurations", [])
+                for config in configurations:
+                    if "watertank_height_cm" in config:
+                        max_height = config["watertank_height_cm"]
+                        break
+                    #for future adds of other configurations 
+                if max_height is None:
+                    raise ValueError("Max height not configured in 'device_cfg'.")
+                if not isinstance(max_height, (int, float)) or max_height <= 0:
+                    raise ValueError("Max height must be a positive number.")
+
+                # Send a 10µs pulse to the trigger pin
+                trigger.off()
+                time.sleep_us(2)
+                trigger.on()
+                time.sleep_us(10)
+                trigger.off()
+
+                # Measure the time the echo pin is HIGH
+                duration = machine.time_pulse_us(echo, 1, 30000)  # Timeout after 30ms
+                if duration < 0:
+                    print("Out of range: No echo received or object too far.")
+                    return None
+
+                # Calculate the distance in cm
+                distance = (duration * 0.0343) / 2
+                if distance > max_height:
+                    print(f"Measured distance ({distance} cm) exceeds max height ({max_height} cm).")
+                    return None
+
+                # Calculate the percentage based on max height
+                percentage = (distance / max_height) * 100
+
+                # Return as an integer percentage
+                return int(percentage)
+            except ValueError as e:
+                print(f"Error: {e}")
+                return None
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+                return None
+
+
         message = {
             'bn': self.device_cfg["device"]["device_id"],
             'e': []
@@ -90,7 +143,7 @@ class IoTDevice:
             elif name == "watertank_level":
                 #stock["value"] = random.randint(0,100) # random value(to be removed)
                 stock["unit"] = '%'
-                value = p.read()/4095*100
+                value = _measure_perc(p[0]["out"], p[1]["in"])
             else:
                 stock["unit"] = 'N/D'
                 value = p.read()
@@ -166,6 +219,10 @@ class IoTDevice:
                 print('Found DS devices: ', roms)
                 if roms:
                     self.pin_sensors[i['name']] = {'rom': roms[0], 'ds_sensor': ds_sensor}
+            elif i['name'] == 'watertank_level':
+                pin_out = machine.Pin(i['pin'][1], machine.Pin.OUT)
+                pin_in = machine.Pin(i['pin'][0], machine.Pin.IN)
+                self.pin_sensors[i['name']] = [{"out": pin_out},{"in" : pin_in}]
             else:
                 adc = machine.ADC(machine.Pin(i['pin']))
                 adc.atten(machine.ADC.ATTN_11DB)
