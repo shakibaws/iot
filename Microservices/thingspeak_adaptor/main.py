@@ -70,7 +70,7 @@ class vaseControl:
             else:
                 self.logger.error(f"Error in sending data to ThingSpeak for {device_id}")
 
-def main():
+if __name__ == '__main__':
     r = random.randint(0,1000)
     clientID = "thingspeak_adaptor_smartvase_1010"+str(r)
 
@@ -103,20 +103,6 @@ def main():
             print("Stopping simulation...")
             controller.stopSim()
 
-    except requests.exceptions.RequestException as e:
-        print(f"Network error: {e}")
-        restart_script()
     except Exception as e:
         print(f"Unexpected error: {e}")
-        restart_script()
-
-def restart_script():
-    """Restart the script from scratch."""
-    print("Restarting script...")
-    python = sys.executable
-    os.execl(python, python, *sys.argv)
-
-if __name__ == "__main__":
-    main()
-
-    
+        sys.exit(1)   

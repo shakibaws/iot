@@ -13,6 +13,9 @@
         ],
         "available_services": [
             "MQTT"
+        ],
+        "configurations":[
+            {"watertank_height_cm":15}
         ]
     },
     "pinout": {
