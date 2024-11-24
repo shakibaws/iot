@@ -65,6 +65,7 @@ services:
       - ./logs/bot_notifier:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   chart_service:
     build: ./Microservices/chart_service
@@ -77,6 +78,7 @@ services:
       - ./logs/chart_service:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   data_analysis:
     build: ./Microservices/data_analysis
@@ -89,6 +91,7 @@ services:
       - ./logs/data_analysis:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   gemini:
     build: ./Microservices/gemini
@@ -99,6 +102,7 @@ services:
       - ./logs/gemini:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   image_recognition:
     build: ./Microservices/image_recognition
@@ -111,6 +115,7 @@ services:
       - ./logs/image_recognition:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   recommendation_service:
     build: ./Microservices/recommendation_service
@@ -123,6 +128,7 @@ services:
       - ./logs/recommendation_service:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   resource_catalog:
     build: ./Microservices/resource_catalog
@@ -135,6 +141,7 @@ services:
       - ./logs/resource_catalog:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   service_catalog:
     build: ./Microservices/service_catalog
@@ -145,6 +152,7 @@ services:
       - ./logs/service_catalog:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   telegram_bot:
     build: ./Microservices/telegram_bot
@@ -155,6 +163,7 @@ services:
       - ./logs/telegram_bot:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   thingspeak_adaptor:
     build: ./Microservices/thingspeak_adaptor
@@ -165,6 +174,7 @@ services:
       - ./logs/thingspeak_adaptor:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
 
   vase_control:
     build: ./Microservices/vase_control
@@ -175,6 +185,7 @@ services:
       - ./logs/vase_control:/app/logs
     environment:
       - LOG_DIR=/app/logs
+    restart: always
  
 
   portainer:
