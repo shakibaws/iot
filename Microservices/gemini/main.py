@@ -4,6 +4,9 @@ import os
 import CustomerLogger
 import os
 from dotenv import load_dotenv
+import os
+import sys
+import datetime
 
 class Gemini_service:
     exposed = True
@@ -32,28 +35,38 @@ class Gemini_service:
             return {"message": "Invalid resource"}
 
 if __name__ == '__main__':
-    load_dotenv()
+    try:
+        load_dotenv()
 
-    API_KEY = os.getenv("API_KEY")
+        API_KEY = os.getenv("API_KEY")
 
-    service_name = "image_recognition"
+        service_name = "image_recognition"
 
-    if not API_KEY:
-        #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
-        raise ValueError("API_KEY is missing from environment variables")
-    
-    gemini = Gemini_service(API_KEY)
+        if not API_KEY:
+            #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+            raise ValueError("API_KEY is missing from environment variables")
+        
+        gemini = Gemini_service(API_KEY)
 
-    conf = {
-        '/':{
-            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
-            'tools.sessions.on' : True
-        }
-        }
-    cherrypy.config.update({
-        'server.socket_host': '0.0.0.0',
-        'server.socket_port': 5151  # Specify your desired port here
-    })
-    cherrypy.tree.mount(gemini, '/', conf)
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+        conf = {
+            '/':{
+                'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+                'tools.sessions.on' : True
+            }
+            }
+        cherrypy.config.update({
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 5151  # Specify your desired port here
+        })
+        cherrypy.tree.mount(gemini, '/', conf)
+        cherrypy.engine.start()
+        cherrypy.engine.block()
+    except Exception as e:
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_gemini.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1) 

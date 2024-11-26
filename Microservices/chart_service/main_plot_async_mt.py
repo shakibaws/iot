@@ -19,6 +19,7 @@ from datetime import datetime
 from random import *
 import CustomerLogger
 import pytz
+import sys
 
 
 # Thread pool to execute synchronous tasks in separate threads
@@ -150,17 +151,27 @@ class ThingspeakChart:
         return times[::interval], values[::interval]
 
 if __name__ == '__main__':
-    chart = ThingspeakChart()
-    conf = {
-        '/': {
-            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
-            'tools.sessions.on': True
+    try:
+        chart = ThingspeakChart()
+        conf = {
+            '/': {
+                'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+                'tools.sessions.on': True
+            }
         }
-    }
-    cherrypy.config.update({
-        'server.socket_host': '0.0.0.0',
-        'server.socket_port': 5300
-    })
-    cherrypy.tree.mount(chart, '/', conf)
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+        cherrypy.config.update({
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 5300
+        })
+        cherrypy.tree.mount(chart, '/', conf)
+        cherrypy.engine.start()
+        cherrypy.engine.block()
+    except Exception as e:
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_chartservice.err')
+        with open(path, 'a') as file:
+            date = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1) 

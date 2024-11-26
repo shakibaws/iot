@@ -6,6 +6,8 @@ import time
 import datetime
 import CustomerLogger
 import requests
+import os
+import sys
 
 class API:
     exposed=True
@@ -82,21 +84,31 @@ class API:
         return result
 
 if __name__ == '__main__':
-    res = requests.get("https://serviceservice.duck.pictures/all").json()
+    try:
+        res = requests.get("https://serviceservice.duck.pictures/all").json()
 
-    conf = {
-        '/':{
-            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
-            'tools.sessions.on' : True,
-            'tools.response_headers.on': True,
+        conf = {
+            '/':{
+                'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+                'tools.sessions.on' : True,
+                'tools.response_headers.on': True,
+            }
         }
-    }
-    cherrypy.config.update({
-       'server.socket_host': '0.0.0.0',
-        'server.socket_port': 8081  # Specifica la porta desiderata
-    })
-    
-    webService = API(res['services']['image_recognition'], res['services']['gemini']+'/chat')
-    cherrypy.tree.mount(webService, '/', conf)
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+        cherrypy.config.update({
+        'server.socket_host': '0.0.0.0',
+            'server.socket_port': 8081  # Specifica la porta desiderata
+        })
+        
+        webService = API(res['services']['image_recognition'], res['services']['gemini']+'/chat')
+        cherrypy.tree.mount(webService, '/', conf)
+        cherrypy.engine.start()
+        cherrypy.engine.block()
+    except Exception as e:
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_recommendationservice.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1) 

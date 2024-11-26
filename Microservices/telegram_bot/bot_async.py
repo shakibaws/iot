@@ -12,7 +12,8 @@ import aiofiles
 import CustomerLogger
 import os
 from dotenv import load_dotenv
-
+import datetime
+import sys
 
 resource_catalog_address = ''
 service_expose_endpoint = 'http://serviceservice.duck.pictures'
@@ -277,12 +278,71 @@ async def button(update: Update, context):
                 ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await update.callback_query.message.reply_text(text=f"Select the time range for the chart", reply_markup=reply_markup) 
-   
-
-        
         elif query.data.startswith('no_details_'):
             parameter_type = query.data.split('_')[2]
             await update.callback_query.message.reply_text(text=f"Sorry, still no data for {parameter_type}")    
+        elif query.data.startswith('edit_vase_'):
+            device_id = query.data.split('_')[2]
+            context.user_data["global_device_id"] = device_id
+            keyboard = [
+                [InlineKeyboardButton("🌸 Vase Name", callback_data='edit_params_vasename')],
+                [InlineKeyboardButton("☀️ Min Hours of Light", callback_data='edit_params_hourssun')],
+                [InlineKeyboardButton("💧 Min Soil Moisture", callback_data='edit_params_minsoilmoisture')],
+                [InlineKeyboardButton("🌊 Max Soil Moisture", callback_data='edit_params_maxsoilmoisture')],
+                [InlineKeyboardButton("🌡️ Min Temperature", callback_data='edit_params_mintemperature')],
+                [InlineKeyboardButton("🔥 Max Temperature", callback_data='edit_params_maxtemperature')]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.callback_query.message.reply_text(
+                text=(
+                    "⚙️ *Edit Vase Parameters*\n\n"
+                    "Please select a parameter to update from the list below:\n\n"
+                    "🌸 *Vase Name*: The identifier for your vase.\n"
+                    "☀️ *Min Hours of Light*: Minimum daily light hours.\n"
+                    "💧 *Min Soil Moisture*: Lowest acceptable soil moisture.\n"
+                    "🌊 *Max Soil Moisture*: Highest acceptable soil moisture.\n"
+                    "🌡️ *Min Temperature*: Lowest acceptable temperature.\n"
+                    "🔥 *Max Temperature*: Highest acceptable temperature."
+                ),
+                reply_markup=reply_markup,
+                parse_mode="Markdown"
+            )
+
+        elif query.data.startswith('edit_params_'):
+            param = query.data.split('_')[2]
+            # save param to context
+            context.user_data["param_to_edit"] = param
+            match(param):
+                case 'vasename':
+                    await update.callback_query.message.reply_text(
+                        text="✏️ *Rename Vase*\n\nWrite the new name for your vase.",
+                        parse_mode="Markdown"
+                    )
+                case 'hourssun':
+                    await update.callback_query.message.reply_text(
+                        text="☀️ *Edit Minimum Hours of Light*\n\nInsert the new value. [*Min*: 1, *Max*: 24]",
+                        parse_mode="Markdown"
+                    )
+                case 'minsoilmoisture':                    
+                    await update.callback_query.message.reply_text(
+                        text="💧 *Edit Minimum Soil Moisture*\n\nInsert the new value in %. [*Min*: 10, *Max*: 90]",
+                        parse_mode="Markdown"
+                    )
+                case 'maxsoilmoisture':
+                    await update.callback_query.message.reply_text(
+                        text="🌊 *Edit Maximum Soil Moisture*\n\nInsert the new value in %. [*Min*: 10, *Max*: 90]",
+                        parse_mode="Markdown"
+                    )
+                case 'mintemperature':                    
+                    await update.callback_query.message.reply_text(
+                        text="🌡️ *Edit Minimum Temperature*\n\nInsert the new value in °C. [*Min*: 0, *Max*: 50]",
+                        parse_mode="Markdown"
+                    )
+                case 'maxtemperature':
+                    await update.callback_query.message.reply_text(
+                        text="🔥 *Edit Maximum Temperature*\n\nInsert the new value in °C. [*Min*: 0, *Max*: 50]",
+                        parse_mode="Markdown"
+                    )
         elif query.data == 'add_vase':
             context.user_data["global_device_id"] = ""
             await add_vase(update, context)
@@ -334,6 +394,7 @@ async def vase_details(update: Update, context, device_id: str):
                     [
                         InlineKeyboardButton(f"🌱 Soil Moisture: {soil_moisture}%", callback_data=f'details_soil_{channel_id}')
                     ],
+                    [InlineKeyboardButton("⚙️ Edit Vase", callback_data=f'edit_vase_{device_id}')],
                     [InlineKeyboardButton("🔙 Go Back", callback_data='vase_list')]
                 ]
 
@@ -364,15 +425,12 @@ async def vase_details(update: Update, context, device_id: str):
                 elif alert == "high":
                     message += "☀️ _Warning: The light level is too high! Consider moving the plant to a darker place._\n"
 
-            # Send the beautified message
             await update.callback_query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
         
-        else:
-            # Beautify the setup prompt with Markdown and emojis
+        else:            
             keyboard = [
                 [InlineKeyboardButton("✅ Yes", callback_data=f'configure_{device_id}'), 
-                InlineKeyboardButton("❌ No", callback_data='vase_list')],
-            ]
+                InlineKeyboardButton("❌ No", callback_data='vase_list')]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await update.callback_query.message.reply_text(
                 "🌿 _It looks like this vase is not yet configured._\n\n"
@@ -382,7 +440,55 @@ async def vase_details(update: Update, context, device_id: str):
     except Exception as e:
         logger.error("Exception on get_user_vase_list():" + str(e))
 
-async def handle_photo(update: Update, context):
+async def handle_message(update: Update, context: CallbackContext):
+    if context.user_data["param_to_edit"] and context.user_data["global_device_id"]:
+        param = context.user_data["param_to_edit"]
+        device_id = context.user_data["global_device_id"]
+        if update.callback_query:
+            message = update.callback_query.message
+        else:
+            message = update.message
+        # get message from input
+        new_value = update.message.text
+        async with aiohttp.ClientSession() as session:
+            res = await session.get(f"{resource_catalog_address}/vaseByDevice/{device_id}")
+            vase = await res.json()        
+            match(param):
+                case 'vasename':
+                    vase['vase_name'] = new_value
+                    res = await session.put(f"{resource_catalog_address}/vase/{vase['vase_id']}", json=vase)
+                    if res.status == 200:
+                        await message.reply_text(text="Name updated successfully")
+                case 'hourssun':
+                    vase['plant']['hours_sun_min'] = new_value
+                    vase['plant']['plant_schedule_light_level'] = new_value
+                    res = await session.put(f"{resource_catalog_address}/vase/{vase['vase_id']}", json=vase)
+                    if res.status == 200:
+                        await message.reply_text(text="Hours of sun updated successfully")
+                case 'minsoilmoisture':    
+                    vase['plant']['soil_moisture_min'] = new_value
+                    res = await session.put(f"{resource_catalog_address}/vase/{vase['vase_id']}", json=vase)
+                    if res.status == 200:
+                        await message.reply_text(text="Soil moisture updated successfully")                
+                case 'maxsoilmoisture':
+                    vase['plant']['soil_moisture_max'] = new_value
+                    res = await session.put(f"{resource_catalog_address}/vase/{vase['vase_id']}", json=vase)
+                    if res.status == 200:
+                        await message.reply_text(text="Soil moisture updated successfully")
+                case 'mintemperature':    
+                    vase['plant']['temperature_min'] = new_value
+                    res = await session.put(f"{resource_catalog_address}/vase/{vase['vase_id']}", json=vase)
+                    if res.status == 200:
+                        await message.reply_text(text="Temperature updated successfully")                
+                case 'maxtemperature':
+                    vase['plant']['temperature_max'] = new_value
+                    res = await session.put(f"{resource_catalog_address}/vase/{vase['vase_id']}", json=vase)
+                    if res.status == 200:
+                        await message.reply_text(text="Temperature updated successfully")
+        # clear user related param
+        del context.user_data["param_to_edit"]
+
+async def handle_photo(update: Update, context: CallbackContext):
     try:
         service_catalog = requests.get(f"{service_expose_endpoint}/all").json()
         recommendation_service = service_catalog['services']['recommendation_service']
@@ -483,6 +589,7 @@ def main(TOKEN):
     application.add_handler(CommandHandler("add_vase", add_vase))
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))  # Nota: filters è ora minuscolo in v20+
+    application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
     # Avviamo il polling in modo asincrono
     #application.initialize()
@@ -491,12 +598,21 @@ def main(TOKEN):
 
 if __name__ == '__main__':
     #asyncio.run(main())
+    try:
+        load_dotenv()
 
-    load_dotenv()
+        TOKEN = os.getenv("TOKEN")
 
-    TOKEN = os.getenv("TOKEN")
-
-    if not TOKEN:
-        #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
-        raise ValueError("TOKEN is missing from environment variables")
-    main(TOKEN)
+        if not TOKEN:
+            #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+            raise ValueError("TOKEN is missing from environment variables")
+        main(TOKEN)
+    except Exception as e:
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_telegrambot.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1) 

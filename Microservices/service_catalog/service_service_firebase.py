@@ -5,6 +5,9 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
 import CustomerLogger
+import os
+import sys
+
 class ServiceCatalogExpose:
     exposed = True
 
@@ -36,17 +39,27 @@ class ServiceCatalogExpose:
 
 
 if __name__ == '__main__':
-    serviceCatalog = ServiceCatalogExpose('https://smartvase-effeb-default-rtdb.europe-west1.firebasedatabase.app')
-    conf = {
-        '/': {
-            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
-            'tools.sessions.on': True
+    try:
+        serviceCatalog = ServiceCatalogExpose('https://smartvase-effeb-default-rtdb.europe-west1.firebasedatabase.app')
+        conf = {
+            '/': {
+                'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+                'tools.sessions.on': True
+            }
         }
-    }
-    cherrypy.config.update({
-        'server.socket_host': '0.0.0.0',
-        'server.socket_port': 8082  # Specify your desired port here
-    })
-    cherrypy.tree.mount(serviceCatalog, '/', conf)
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+        cherrypy.config.update({
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 8082  # Specify your desired port here
+        })
+        cherrypy.tree.mount(serviceCatalog, '/', conf)
+        cherrypy.engine.start()
+        cherrypy.engine.block()
+    except Exception as e:
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_servicecatalog.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1) 

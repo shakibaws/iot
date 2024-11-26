@@ -48,15 +48,21 @@ class TelegramNotifier:
                 self.watertank[telegram_chat] = {'date': datetime.datetime.now()}
         
     def startSim(self):
-        self.mqtt.start()
+        print("connecting mqtt...")
+        self.mqtt.connect()
+        time.sleep(1)
+        print(f"Subscribing to : {self.topic_sub}")
         self.mqtt.mySubscribe(self.topic_sub)
+        time.sleep(1)
+        print("Start loop_forever")
+        self.mqtt.start()
     
     def stopSim(self):
         self.mqtt.unsubscribe()
         self.mqtt.stop()
 
 
-def main():
+if __name__ == "__main__":
     r = random.randint(0,1000)
     clientID = "bot_notifier_smartvase_1010"+str(r)
 
@@ -79,28 +85,21 @@ def main():
         token = TOKEN
 
         bot_notification = TelegramNotifier(clientID,broker,port,str(topic_sub).replace('telegram_chat_id', '+')+'/alert', token)
-        bot_notification.startSim()
+        bot_notification.startSim() # blocking
 
-        try:
-            while True:        
-                time.sleep(10)
-        except KeyboardInterrupt:
-                bot_notification.stopSim()
+        # if exit the loop_forever
+        raise RuntimeError
 
-    except requests.exceptions.RequestException as e:
-        print(f"Network error: {e}")
-        restart_script()
     except Exception as e:
-        print(f"Unexpected error: {e}")
-        restart_script()
-
-def restart_script():
-    """Restart the script from scratch."""
-    print("Restarting script...")
-    python = sys.executable
-    os.execl(python, python, *sys.argv)
-
-if __name__ == "__main__":
-    main()
+        print("Stopping simulation...")
+        bot_notification.stopSim()
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_botnotifier.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1)   
 
     

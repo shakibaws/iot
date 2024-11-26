@@ -65,7 +65,7 @@ services:
       - ./logs/bot_notifier:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   chart_service:
     build: ./Microservices/chart_service
@@ -78,7 +78,7 @@ services:
       - ./logs/chart_service:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   data_analysis:
     build: ./Microservices/data_analysis
@@ -91,7 +91,7 @@ services:
       - ./logs/data_analysis:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   gemini:
     build: ./Microservices/gemini
@@ -102,7 +102,7 @@ services:
       - ./logs/gemini:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   image_recognition:
     build: ./Microservices/image_recognition
@@ -115,7 +115,7 @@ services:
       - ./logs/image_recognition:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   recommendation_service:
     build: ./Microservices/recommendation_service
@@ -128,7 +128,7 @@ services:
       - ./logs/recommendation_service:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   resource_catalog:
     build: ./Microservices/resource_catalog
@@ -141,7 +141,7 @@ services:
       - ./logs/resource_catalog:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   service_catalog:
     build: ./Microservices/service_catalog
@@ -152,7 +152,7 @@ services:
       - ./logs/service_catalog:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   telegram_bot:
     build: ./Microservices/telegram_bot
@@ -163,7 +163,7 @@ services:
       - ./logs/telegram_bot:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   thingspeak_adaptor:
     build: ./Microservices/thingspeak_adaptor
@@ -174,7 +174,7 @@ services:
       - ./logs/thingspeak_adaptor:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
 
   vase_control:
     build: ./Microservices/vase_control
@@ -185,13 +185,13 @@ services:
       - ./logs/vase_control:/app/logs
     environment:
       - LOG_DIR=/app/logs
-    restart: always
+    restart: on-failure
  
 
   portainer:
       image: portainer/portainer-ce:latest
       container_name: portainer
-      restart: always
+      restart: on-failure
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock  # Access to Docker engine
         - portainer_data:/data  # Persistent data storage for Portainer

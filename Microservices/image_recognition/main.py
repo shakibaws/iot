@@ -5,6 +5,7 @@ import time
 import os
 import datetime
 import CustomerLogger
+import sys
 
 
 from dotenv import load_dotenv
@@ -96,19 +97,29 @@ class API:
     
 
 if __name__ == '__main__':
-    
-    conf = {
-        '/':{
-            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
-            'tools.sessions.on' : True,
-            'tools.response_headers.on': True,
+    try:
+
+        conf = {
+            '/':{
+                'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+                'tools.sessions.on' : True,
+                'tools.response_headers.on': True,
+            }
         }
-    }
-    cherrypy.config.update({
-       'server.socket_host': '0.0.0.0',
-        'server.socket_port': 8085  # Specify your desired port here
-    })
-    webService=API()
-    cherrypy.tree.mount(webService, '/', conf)
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+        cherrypy.config.update({
+        'server.socket_host': '0.0.0.0',
+            'server.socket_port': 8085  # Specify your desired port here
+        })
+        webService=API()
+        cherrypy.tree.mount(webService, '/', conf)
+        cherrypy.engine.start()
+        cherrypy.engine.block()
+    except Exception as e:
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_imagerecognition.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1) 

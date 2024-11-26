@@ -7,6 +7,8 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
 import CustomerLogger
+import os
+import sys
 
 
 class CatalogExpose:
@@ -170,7 +172,9 @@ class CatalogExpose:
             self.logger.info("PUT request received: updateVase")
             vase_id = args[1]
             vase = cherrypy.request.json
-            if self.firebase_ref.child('vaseList').order_by_child("vase_id").equal_to(vase_id).set(vase):
+            key_to_update = list(self.firebase_ref.child('vaseList').order_by_child("vase_id").equal_to(vase_id).get().keys())[0]
+            if key_to_update:
+                self.firebase_ref.child('vaseList').child(key_to_update).update(vase)
                 self.logger.info("Vase updated successfully")
                 return {"message": "Vase updated successfully"}
             else:
@@ -198,18 +202,28 @@ class CatalogExpose:
         return list(self.firebase_ref.child('vaseList').get().values())
 
 if __name__ == '__main__':
-    catalog = CatalogExpose()
+    try:
+        catalog = CatalogExpose()
 
-    conf = {
-    '/':{
-        'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
-        'tools.sessions.on' : True
-    }
-    }
-    cherrypy.config.update({
-        'server.socket_host': '0.0.0.0',
-        'server.socket_port': 5000  # Specify your desired port here
-    })
-    cherrypy.tree.mount(catalog, '/', conf)
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+        conf = {
+        '/':{
+            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+            'tools.sessions.on' : True
+        }
+        }
+        cherrypy.config.update({
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 5000  # Specify your desired port here
+        })
+        cherrypy.tree.mount(catalog, '/', conf)
+        cherrypy.engine.start()
+        cherrypy.engine.block()
+    except Exception as e:
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_resourcecatalog.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1) 

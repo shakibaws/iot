@@ -4,6 +4,8 @@ import aiohttp
 import asyncio
 import numpy as np
 import requests
+import sys
+import datetime
 
 class DataAnalysis:
     exposed = True
@@ -84,29 +86,39 @@ class DataAnalysis:
                         vase_data["soil_moisture_alert"] = "high"
 
                     # Light level alerts
-                    num_light = num_feeds * int(vase["plant"]["hours_sun_min"]) / 24
-                    if np.average(light_level[:int(num_light)]) < 50:  # Assume less than 50 lux is "very low"
+                    num_light = num_feeds*10 * int(vase["plant"]["hours_sun_min"]) / 24
+                    if np.average(light_level[-int(num_light):]) < 50:  # Assume less than 50 lux is "very low"
                         vase_data["light_level_alert"] = "low"
         print(vase_data)
         return vase_data
 
 
 if __name__ == '__main__':
-    res = requests.get("https://serviceservice.duck.pictures").json()
-    dataAnalysis = DataAnalysis(res)
+    try:
+        res = requests.get("https://serviceservice.duck.pictures").json()
+        dataAnalysis = DataAnalysis(res)
 
-    conf = {
-        '/': {
-            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
-            'tools.sessions.on': True
+        conf = {
+            '/': {
+                'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+                'tools.sessions.on': True
+            }
         }
-    }
 
-    cherrypy.config.update({
-        'server.socket_host': '0.0.0.0',
-        'server.socket_port': 5082  # Specify your desired port here
-    })
+        cherrypy.config.update({
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 5082  # Specify your desired port here
+        })
 
-    cherrypy.tree.mount(dataAnalysis, '/', conf)
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+        cherrypy.tree.mount(dataAnalysis, '/', conf)
+        cherrypy.engine.start()
+        cherrypy.engine.block()
+    except Exception as e:
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_dataanalisys.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1) 
