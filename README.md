@@ -29,12 +29,10 @@ pkill -9 python
 ```
 
 ## TO-DO List
-- [x] !!!env file for telegram bot token and gemini api key
-- [x] dockerize everything
-- [x] api and documentation for each service
 - [!] data analysis count times plant got wet in the last month
 - [!] data analysis compute how much water used in the last month
 - [!] temperature average in the last month
 - [!] score 1-100 how well you care for your plant
+- [] web ui dashboard
 - [] ngix router and kuberneetes
 - [] restyle esp32 web page
