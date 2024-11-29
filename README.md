@@ -56,6 +56,9 @@ pkill -9 python
 - [!] data analysis compute how much water used in the last month
 - [!] temperature average in the last month
 - [!] score 1-100 how well you care for your plant
-- [] web ui dashboard
-- [] ngix router and kuberneetes
+- [] web ui dashboard(per user)
+- [] 3d model  
+- [] slide presentation  
+- [] video to show  
+- [] prototype  
 - [] restyle esp32 web page
