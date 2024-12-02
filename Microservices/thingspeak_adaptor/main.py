@@ -9,9 +9,9 @@ import sys
 
 service_name = "thingspeak_adaptor"
 
-class vaseControl:
+class ThingspeakAdaptor:
     def __init__(self,clientID,broker,port,topic_sensors, resource_catalog):
-        self.control = MyMQTT(clientID,broker,port,self)
+        self.adapter = MyMQTT(clientID,broker,port,self)
         self.topic_sub = topic_sensors
         self.resource_catalog = resource_catalog
         self.logger = CustomerLogger.CustomLogger(service_name, "user_id_test")
@@ -23,29 +23,36 @@ class vaseControl:
         device_id = topic.split('/')[1]
         self.speaker(data, device_id)
 
-
-        
     def startSim(self):
-        print("starting...")
-        self.control.start()
-        self.control.mySubscribe(self.topic_sub)
+        print("connecting mqtt...")
+        self.adapter.connect()
+        time.sleep(1)
+        print(f"Subscribing to : {self.topic_sub}")
+        self.adapter.mySubscribe(self.topic_sub)
+        time.sleep(1)
+        print("Start loop_forever")
+        self.adapter.start()
 
     
     def stopSim(self):
-        self.control.unsubscribe()
-        self.control.stop()
+        self.adapter.unsubscribe()
+        self.adapter.stop()
 
     def speaker(self, data, device_id):
         device = requests.get(self.resource_catalog+'/device/'+device_id).json()
-        vase = requests.get(self.resource_catalog+'/vaseByDevice/'+device_id).json()
+        try:
+            vase = requests.get(self.resource_catalog + '/vaseByDevice/' + device_id).json()
+        except requests.exceptions.ConnectionError:
+            self.logger.error("Connection error occurred. Please check the network.")
+            return
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"A network error occurred: {e}")
+            return        
         self.logger.info(f"Analyzing data from {device_id}")
-        #print("in speaker")
-        #print(device)
-        #print(vase)
     
         # If the device is not configured yet (no vase)
         if not vase:
-            self.logger.error(f"Device {device_id} is not configured yet")
+            self.logger.info(f"Device {device_id} is not configured yet")
             return 
         else:
             write_key = device["write_key"]
@@ -93,16 +100,20 @@ if __name__ == '__main__':
         broker = service_catalog["mqtt_broker"]["broker_address"]
         port = service_catalog["mqtt_broker"]["port"]
 
-        controller = vaseControl(clientID,broker,port,topicSensors,resource_catalog)
-        controller.startSim()
+        adapter = ThingspeakAdaptor(clientID,broker,port,topicSensors,resource_catalog)
+        adapter.startSim() # blocking
         
-        try:
-            while True:
-                time.sleep(1)  # Keep the script running
-        except KeyboardInterrupt:
-            print("Stopping simulation...")
-            controller.stopSim()
+        # if exit the loop_forever
+        raise RuntimeError
 
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print("Stopping simulation...")
+        adapter.stopSim()
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_thingspeakadaptor.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
         sys.exit(1)   

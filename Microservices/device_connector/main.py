@@ -283,4 +283,10 @@ class IoTDevice:
         self.loop()
 
 device = IoTDevice()
-device.run()
+try:
+    device.run()
+except Exception as e:
+    # dumping exception to file
+    with open("crash_dump.err", 'w')as file:
+        file.write(f"ERROR ON DEVICE.RUN: {e}")
+    machine.reset() # hard reset

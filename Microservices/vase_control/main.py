@@ -26,8 +26,14 @@ class vaseControl:
 
         
     def startSim(self):
-        self.control.start()
+        print("connecting mqtt...")
+        self.control.connect()
+        time.sleep(1)
+        print(f"Subscribing to : {self.topic_sub}")
         self.control.mySubscribe(self.topic_sub)
+        time.sleep(1)
+        print("Start loop_forever")
+        self.control.start()
     
     def stopSim(self):
         self.control.unsubscribe()
@@ -35,8 +41,14 @@ class vaseControl:
 
     def controller(self, data, device_id):
         publisher = self.topic_pub.replace("device_id", device_id)
-        vase = requests.get(self.resource_catalog+'/vaseByDevice/'+device_id).json()
-
+        try:
+            vase = requests.get(self.resource_catalog + '/vaseByDevice/' + device_id).json()
+        except requests.exceptions.ConnectionError:
+            self.logger.error("Connection error occurred. Please check the network.")
+            return
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"A network error occurred: {e}")
+            return
     
         # If the device is not configured yet (no vase)
         if not vase:
@@ -63,7 +75,7 @@ class vaseControl:
                         self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
                 elif i['n'] == "watertank_level":
                     if int(i['value']) < 20:
-                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level": f"{vase['vase_name']}"})
+                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level": "low"})
 
 if __name__ == "__main__":
     r = random.randint(0,1000)
@@ -83,13 +95,17 @@ if __name__ == "__main__":
         controller = vaseControl(clientID, broker, port, topicSensors, topicActuators, topic_telegram_chat, resource_catalog)
         controller.startSim()
 
-        try:
-            while True:
-                time.sleep(10)
-        except KeyboardInterrupt:
-            print("Stopping simulation...")
-            controller.stopSim()
+        # if exit the loop_forever
+        raise RuntimeError
 
     except Exception as e:
-        print(f"Unexpected error: {e}")
-        sys.exit(1)
+        print("Stopping simulation...")
+        controller.stopSim()
+        print("ERROR OCCUREDD, DUMPING INFO...")
+        path = os.path.abspath('/app/logs/ERROR_vasecontrol.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
+        print("EXITING...")
+        sys.exit(1)   

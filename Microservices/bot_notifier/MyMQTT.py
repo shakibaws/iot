@@ -37,10 +37,14 @@ class MyMQTT:
         self._topic = topic
         print("subscribed to %s" % (topic))
 
-    def start(self):
+    def connect(self):
         # manage connection to broker
+        print(f"Connecting to {self.broker}, {self.port}")
         self._paho_mqtt.connect(self.broker, self.port)
-        self._paho_mqtt.loop_start()
+        #self._paho_mqtt.loop_start()
+
+    def start(self):
+        self._paho_mqtt.loop_forever()
 
     def unsubscribe(self):
         if (self._isSubscriber):
