@@ -6,6 +6,20 @@ import CustomerLogger
 import os
 import sys
 import random
+import asyncio
+import threading
+
+service_name="vase_control"
+
+class MqttCustomException(Exception):
+    pass
+
+async def checkNewAddress(broker):
+    while True:
+        time.sleep(60)
+        res = requests.get("http://serviceservice.duck.pictures/mqtt").text
+        if res != broker:
+            raise MqttCustomException("new address detected")
 
 class vaseControl:
     def __init__(self,clientID,broker,port,topic_sensors, topic_actuators, topic_telegram_chat, resource_catalog):
@@ -15,7 +29,7 @@ class vaseControl:
         self.resource_catalog = resource_catalog
         self.topic_telegram_chat = topic_telegram_chat
         self.boo = 1
-        self.logger = CustomerLogger.CustomLogger("vase_control")
+        self.logger = CustomerLogger.CustomLogger(service_name=service_name)
         
     def notify(self,topic,payload):
         data = json.loads(payload)
@@ -27,11 +41,10 @@ class vaseControl:
         
     def startSim(self):
         print("connecting mqtt...")
-        self.control.connect()
-        time.sleep(1)
-        print(f"Subscribing to : {self.topic_sub}")
         self.control.mySubscribe(self.topic_sub)
         time.sleep(1)
+        self.control.connect()
+        time.sleep(15)
         print("Start loop_forever")
         self.control.start()
     
@@ -72,7 +85,11 @@ class vaseControl:
                         self.control.myPublish(telegram_chat+"/alert", {"temperature":"high"}) """
                 elif i['n'] == "soil_moisture":
                     if int(i['value']) < int(vase["plant"]["soil_moisture_min"]):
-                        self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
+                        # check if watertank is not empty
+                        for c in data['e']:
+                            if c['n'] == "watertank_level":
+                                if c['value'] >= 10:
+                                    self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
                 elif i['n'] == "watertank_level":
                     if int(i['value']) < 20:
                         self.control.myPublish(telegram_chat+"/alert", {"watertank_level": "low"})
@@ -80,11 +97,13 @@ class vaseControl:
 if __name__ == "__main__":
     r = random.randint(0,1000)
     clientID = "vase_control_smartvase_1010"+str(r)
+    logger = CustomerLogger.CustomLogger(service_name)
 
     try:
         # Get the service catalog
+     
         service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
-
+        
         topicSensors = service_catalog["mqtt_topics"]["topic_sensors"]
         topicActuators = service_catalog["mqtt_topics"]["topic_actuators"]
         topic_telegram_chat = service_catalog["mqtt_topics"]["topic_telegram_chat"]
@@ -92,20 +111,30 @@ if __name__ == "__main__":
         broker = service_catalog["mqtt_broker"]["broker_address"]
         port = service_catalog["mqtt_broker"]["port"]
 
+        logger.info(f"Starting service. The parameters are: topicSensors: {str(topicSensors)}, topicActuators: {str(topicActuators)}, topic_telegram_chat: {topic_telegram_chat}, resource_catalog: {resource_catalog}")
         controller = vaseControl(clientID, broker, port, topicSensors, topicActuators, topic_telegram_chat, resource_catalog)
+        threading.Thread(target=checkNewAddress, args=(broker))
         controller.startSim()
 
         # if exit the loop_forever
+        
         raise RuntimeError
 
-    except Exception as e:
+    except MqttCustomException as e:
         print("Stopping simulation...")
         controller.stopSim()
-        print("ERROR OCCUREDD, DUMPING INFO...")
+        print("New address detected, restarting...")
+        sys.exit(1) 
+
+    except Exception as e:
+        logger.error("SYSTEM CRASHED AT TIME: "+datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
+        logger.error("Stopping simulation...")
+        controller.stopSim()
+        logger.error("ERROR OCCUREDD, DUMPING INFO...")
         path = os.path.abspath('/app/logs/ERROR_vasecontrol.err')
         with open(path, 'a') as file:
             date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             file.write(f"Crashed at : {date}")
             file.write(f"Unexpected error: {e}")
-        print("EXITING...")
+        logger.error("EXITING...")
         sys.exit(1)   

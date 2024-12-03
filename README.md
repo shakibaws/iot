@@ -5,16 +5,26 @@ Programming for IOT project
 [docs](https://github.com/dagh3n/IOT/blob/main/Documentation/documentation.md)
 
 ## How to run microservices **with** docker (recommended)
-First time can take a while  
-Run  
+First time can take a while to build  
+### With make
+Build and run
+```bash
+make build-<all|logs|microservices>
+```    
+Start  
+```bash
+make start-<logs|microservices>
+```  
+Restart  
+```bash
+make restart-<logs|microservices>
+```  
+### Directly with docker
+Build and run
 ```bash
 docker compose up <service_name|empty for all> --build -d
 ```  
-Or using script(same command as above)  
-```bash
-./launch
-```  
-Stop services  
+Stop  
 ```bash
 docker compose down <service_name|empty for all>
 ```  
@@ -62,3 +72,4 @@ pkill -9 python
 - [] video to show  
 - [] prototype  
 - [] restyle esp32 web page
+- [] weather forecast

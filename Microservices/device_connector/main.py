@@ -46,6 +46,7 @@ class IoTDevice:
         actuator = topic.split("/")[3]
         command = ujson.loads(msg)["target"]
         if actuator == "soil_moisture":
+            
             self.pin_actuators[actuator].value(command)  # activate pump for 2 seconds
             time.sleep(2)
             self.pin_actuators[actuator].value(0)
@@ -236,6 +237,7 @@ class IoTDevice:
         print("Connecting mqtt")
         client_id = f"device_connector_{self.device_cfg['device']['device_id']}"
         broker = self.service_catalog["mqtt_broker"]["broker_address"]
+        print(broker)
         port = self.service_catalog["mqtt_broker"]["port"]
         self.pub_topic = self.service_catalog["mqtt_topics"]["topic_sensors"]
         self.pub_topic = self.pub_topic.replace("+", self.device_cfg["device"]["device_id"])
@@ -287,6 +289,7 @@ try:
     device.run()
 except Exception as e:
     # dumping exception to file
+    print(f"ERROR CRASH{e}")
     with open("crash_dump.err", 'w')as file:
         file.write(f"ERROR ON DEVICE.RUN: {e}")
     machine.reset() # hard reset

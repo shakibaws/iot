@@ -19,9 +19,13 @@ class MyMQTT:
         self.logger = CustomerLogger.CustomLogger("vase_control")
 
     def myOnConnect(self, paho_mqtt, userdata, flags, rc):
-        #print("Connected to %s with result code: %d" % (self.broker, rc))
         self.logger.info(f"Connected to {self.broker} with result code: {rc}")
-        pass
+        if self._topic:
+            self.logger.info(f"Subscribed to {self._topic}")
+            self._paho_mqtt.subscribe(self._topic, 2)
+        else:
+            self.logger.warning("No topic set to subscribe")
+                
     
     def myOnMessageReceived(self, paho_mqtt, userdata, msg):
         self.logger.info(f"Message received on topic: {msg.topic}, {msg.payload}")
@@ -33,11 +37,9 @@ class MyMQTT:
 
     def mySubscribe(self, topic):
         # subscribe for a topic
-        self._paho_mqtt.subscribe(topic, 2)
-        # just to remember that it works also as a subscriber
+        self.logger.info("subscribing to" + topic)
         self._isSubscriber = True
         self._topic = topic
-        self.logger.info(f"Subscribed to {topic}")
 
     def connect(self):
         # manage connection to broker

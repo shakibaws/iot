@@ -10,18 +10,20 @@ class CustomLogger:
         log_dir = os.getenv('LOG_DIR', '/app/logs') # get dir from env
         os.makedirs(log_dir, exist_ok=True)
         
+        if not self.logger.hasHandlers():
+
         # Create file handler
-        file_handler = logging.FileHandler(f'{log_dir}/{service_name}.log')
-        file_handler.setLevel(logging.DEBUG)
+            file_handler = logging.FileHandler(f'{log_dir}/{service_name}.log')
+            file_handler.setLevel(logging.DEBUG)
 
-        # Create formatter
-        formatter = logging.Formatter('[%(levelname)s] %(message)s - %(user_id)s')
+            # Create formatter
+            formatter = logging.Formatter('[%(levelname)s] %(message)s - %(user_id)s')
 
-        # Set formatter to handler
-        file_handler.setFormatter(formatter)
+            # Set formatter to handler
+            file_handler.setFormatter(formatter)
 
-        # Add the file handler to the logger
-        self.logger.addHandler(file_handler)
+            # Add the file handler to the logger
+            self.logger.addHandler(file_handler)
 
     def info(self, message):
         self.logger.info(message, extra={'user_id': self.user_id or 'N/A'})

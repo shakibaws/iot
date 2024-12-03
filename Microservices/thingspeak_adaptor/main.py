@@ -6,8 +6,20 @@ import CustomerLogger
 import random
 import os
 import sys
+import asyncio
+import threading
 
 service_name = "thingspeak_adaptor"
+
+class MqttCustomException(Exception):
+    pass
+
+async def checkNewAddress(broker):
+    while True:
+        time.sleep(60)
+        res = requests.get("http://serviceservice.duck.pictures/mqtt").text
+        if res != broker:
+            raise MqttCustomException("new address detected")
 
 class ThingspeakAdaptor:
     def __init__(self,clientID,broker,port,topic_sensors, resource_catalog):
@@ -25,11 +37,10 @@ class ThingspeakAdaptor:
 
     def startSim(self):
         print("connecting mqtt...")
-        self.adapter.connect()
-        time.sleep(1)
-        print(f"Subscribing to : {self.topic_sub}")
         self.adapter.mySubscribe(self.topic_sub)
         time.sleep(1)
+        self.adapter.connect()
+        time.sleep(15)
         print("Start loop_forever")
         self.adapter.start()
 
@@ -73,16 +84,16 @@ class ThingspeakAdaptor:
             response = requests.post(url, data=send_data)
                     
             if response.status_code == 200:
-                self.logger.info(f"Data sent to ThingSpeak for {device_id}")
+                self.logger.info(f"Data sent to ThingSpeak for {device_id}: {send_data}")
             else:
                 self.logger.error(f"Error in sending data to ThingSpeak for {device_id}")
 
 if __name__ == '__main__':
     r = random.randint(0,1000)
     clientID = "thingspeak_adaptor_smartvase_1010"+str(r)
+    logger = CustomerLogger.CustomLogger(service_name)
 
     try:
-        logger = CustomerLogger.CustomLogger(service_name)
         go = False
         while not go:
             try:
@@ -99,21 +110,31 @@ if __name__ == '__main__':
         resource_catalog = service_catalog["services"]["resource_catalog"]
         broker = service_catalog["mqtt_broker"]["broker_address"]
         port = service_catalog["mqtt_broker"]["port"]
-
-        adapter = ThingspeakAdaptor(clientID,broker,port,topicSensors,resource_catalog)
-        adapter.startSim() # blocking
         
+        logger.info("Starting service...")
+        adapter = ThingspeakAdaptor(clientID,broker,port,topicSensors,resource_catalog)
+        threading.Thread(target=checkNewAddress, args=(broker))
+
+        adapter.startSim() # blocking
+    
         # if exit the loop_forever
         raise RuntimeError
 
-    except Exception as e:
+    except MqttCustomException as e:
         print("Stopping simulation...")
         adapter.stopSim()
-        print("ERROR OCCUREDD, DUMPING INFO...")
+        print("New address detected, restarting...")
+        sys.exit(1) 
+
+    except Exception as e:
+        logger.error("SYSTEM CRASHED AT TIME: "+datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
+        logger.error("Stopping simulation...")
+        adapter.stopSim()
+        logger.error("ERROR OCCUREDD, DUMPING INFO...")
         path = os.path.abspath('/app/logs/ERROR_thingspeakadaptor.err')
         with open(path, 'a') as file:
             date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             file.write(f"Crashed at : {date}")
             file.write(f"Unexpected error: {e}")
-        print("EXITING...")
+        logger.error("EXITING...")
         sys.exit(1)   

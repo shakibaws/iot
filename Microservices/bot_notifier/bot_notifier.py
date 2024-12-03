@@ -8,6 +8,17 @@ import os
 from dotenv import load_dotenv
 import sys
 import random
+import threading
+
+class MqttCustomException(Exception):
+    pass
+
+async def checkNewAddress(broker):
+    while True:
+        time.sleep(60)
+        res = requests.get("http://serviceservice.duck.pictures/mqtt").text
+        if res != broker:
+            raise MqttCustomException("new address detected")
 
 class TelegramNotifier:
     def __init__(self,clientID,broker,port,topic_sub, token):
@@ -85,11 +96,17 @@ if __name__ == "__main__":
         token = TOKEN
 
         bot_notification = TelegramNotifier(clientID,broker,port,str(topic_sub).replace('telegram_chat_id', '+')+'/alert', token)
+        threading.Thread(target=checkNewAddress, args=(broker))
         bot_notification.startSim() # blocking
-
+        
         # if exit the loop_forever
         raise RuntimeError
 
+    except MqttCustomException as e:
+        print("Stopping simulation...")
+        bot_notification.stopSim()
+        print("New address detected, restarting...")
+        sys.exit(1) 
     except Exception as e:
         print("Stopping simulation...")
         bot_notification.stopSim()

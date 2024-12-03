@@ -26,6 +26,8 @@ class ServiceCatalogExpose:
             if key == 'all':
                 self.logger.info("GET request received - all")
                 return self.firebase_ref.get()
+            elif key == 'mqtt':
+                return self.firebase_ref.child('mqtt_broker').child('broker_address').get()
             else:
                 try:
                     self.logger.info(f"GET request received - {key}")
@@ -36,7 +38,18 @@ class ServiceCatalogExpose:
         else:
             self.logger.error("GET request received: Invalid resource")
             return self.firebase_ref.get()
-
+        
+    @cherrypy.tools.json_out()
+    def POST(self, *args, **kwargs):
+        if args[0]:
+            if args[0] == 'publicip':
+                new_address = cherrypy.request.body.read()
+                print("New address")
+                print(new_address)
+                new_address = json.loads(new_address)
+                self.firebase_ref.child('mqtt_broker').update({"broker_address": new_address['publicip']})
+                return "Success"
+        return "Wrong url"
 
 if __name__ == '__main__':
     try:
