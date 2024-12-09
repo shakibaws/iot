@@ -1,6 +1,7 @@
 import json
 import CustomerLogger
 import paho.mqtt.client as PahoMQTT
+service_name = "thingspeak_adaptor"
 
 
 class MyMQTT:
@@ -16,29 +17,24 @@ class MyMQTT:
         # register the callback
         self._paho_mqtt.on_connect = self.myOnConnect
         self._paho_mqtt.on_message = self.myOnMessageReceived
-        self.logger = CustomerLogger.CustomLogger("vase_control")
+        self.logger = CustomerLogger.CustomLogger(service_name)
 
     def myOnConnect(self, paho_mqtt, userdata, flags, rc):
         self.logger.info(f"Connected to {self.broker} with result code: {rc}")
-        if self._topic:
-            self.logger.info(f"Subscribed to {self._topic}")
-            self._paho_mqtt.subscribe(self._topic, 2)
-        else:
-            self.logger.warning("No topic set to subscribe")
-                
-    
+        self.logger.info(f"Subscribed to {self._topic}")
+        self._paho_mqtt.subscribe(self._topic, 2)
+
     def myOnMessageReceived(self, paho_mqtt, userdata, msg):
-        self.logger.info(f"Message received on topic: {msg.topic}, {msg.payload}")
+        print("Message received")
         self.notifier.notify(msg.topic, msg.payload)
+        self.logger.info(f"Message received on topic: {msg.topic}, {msg.payload}")
 
     def myPublish(self, topic, msg):
-        print(f"Publishing on topic: {topic}, msg: {msg}")
         self.logger.info(f"Publishing message on topic: {topic}, {msg}")
         self._paho_mqtt.publish(topic, json.dumps(msg), 2)
 
     def mySubscribe(self, topic):
-        # subscribe for a topic
-        self.logger.info("subscribing to" + topic)
+        print("Subscribing...")
         self._isSubscriber = True
         self._topic = topic
 
@@ -53,11 +49,12 @@ class MyMQTT:
 
     def unsubscribe(self):
         if (self._isSubscriber):
-            self.logger.info(f"Unsubscribed from {self._topic}")
+            #log_to_loki("info", f"unsubscribed from {self._topic}", service_name=service_name, service_name=service_name, user_id=user_id, request_id=request_id)
             self._paho_mqtt.unsubscribe(self._topic)
 
     def stop(self):
         if (self._isSubscriber):
+            # remember to unsuscribe if it is working also as subscriber
             self._paho_mqtt.unsubscribe(self._topic)
 
         self._paho_mqtt.loop_stop()

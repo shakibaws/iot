@@ -10,6 +10,7 @@ services:
     command: -config.file=/mnt/config/loki-config.yaml # Runs Loki with the specified configuration file.
     networks:
       - tjp-net
+    restart: on-failure
 
   promtail:
     image: grafana/promtail:3.0.0                   # Specifies the Promtail Docker image and version.
@@ -30,31 +31,33 @@ services:
     command: -config.file=/mnt/config/promtail-config.yaml # Runs Promtail with the specified configuration file.
     networks:
       - tjp-net
+    restart: on-failure
 
   grafana:
-      image: grafana/grafana
-      container_name: grafana
-      restart: unless-stopped
-      ports:
-      - '3000:3000'
-      user: "1000"
-      volumes:
-        - ./logs/grafana:/var/lib/grafana
-      networks:
-          - tjp-net
-
+    image: grafana/grafana
+    container_name: grafana
+    restart: on-failure
+    ports:
+    - '3000:3000'
+    user: "1000"
+    volumes:
+      - ./logs/grafana:/var/lib/grafana
+    networks:
+        - tjp-net
+        
   prometheus:
       image: prom/prometheus:latest
       volumes:
         - ./logs/prometheus:/etc/prometheus
       ports:
         - "9095:9090"
-      restart: unless-stopped
+      restart: on-failure
       command:
         - --config.file=/etc/prometheus/prometheus-config.yml
         - --storage.tsdb.path=/prometheus
       networks:
         - tjp-net
+
   ### PORTAINER
   portainer:
       image: portainer/portainer-ce:latest

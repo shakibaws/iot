@@ -2,7 +2,11 @@
 import time
 import requests
 while True:
-    time.sleep(60)
-    res = requests.get("http://ifconfig.me").text
-    print(res)
-    requests.post("https://serviceservice.duck.pictures/publicip", json={'publicip': res})
+    try:
+        time.sleep(60)
+        res = requests.get("http://ifconfig.me").text
+        print(res)
+        requests.post("https://serviceservice.duck.pictures/publicip", json={'publicip': res})
+    except Exception as e:
+        print(e)
+        pass

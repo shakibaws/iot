@@ -402,7 +402,7 @@ async def vase_details(update: Update, context, device_id: str):
 
             # Build a beautiful message with proper Markdown formatting
             message = f"**🌿 Details for Vase: {vase['vase_name']}**\n\n"
-
+            message += f"In the last week your plant has been watered {res['watered_times']} time(s)\nThis is the equivalent of {res['watered_times']*25}ml"
             # Add alerts with emojis and warnings
             alert = res.get('temperature_alert')
             if alert:

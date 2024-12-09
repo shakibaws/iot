@@ -15,11 +15,12 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
 from io import BytesIO
 from PIL import Image
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import *
 import CustomerLogger
 import pytz
 import sys
+import numpy as np
 
 
 # Thread pool to execute synchronous tasks in separate threads
@@ -62,25 +63,27 @@ class ThingspeakChart:
             # Set the date format based on days range
             try:
                 if days == 1:
-                    locator = mdates.MinuteLocator(interval=30)
+                    locator = mdates.HourLocator(interval=1)
                     plt.gca().xaxis.set_major_locator(locator)
                     plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(self._custom_date_formatter(times)))
 
                 elif days == 7:
-                    locator = mdates.HourLocator(byhour=[8, 20])
-                    plt.gca().xaxis.set_major_locator(locator)
-                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
-
-                elif days == 30:
                     locator = mdates.DayLocator(interval=1)
                     plt.gca().xaxis.set_major_locator(locator)
                     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
 
-                elif days == 365:
+                elif days == 30:
+                    locator = mdates.DayLocator(interval=2)
+                    plt.gca().xaxis.set_major_locator(locator)
+                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
+
+                if days == 365 and len(times) < 12:
+                    plt.xlim(times[0], times[-1])  # Limit to the actual data range
+                else:
                     locator = mdates.MonthLocator(interval=1)
                     plt.gca().xaxis.set_major_locator(locator)
-                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
-
+                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m'))
+                    
                 plt.xticks(rotation=45, ha='right')
                 img_buf = BytesIO()
                 plt.tight_layout()
@@ -129,12 +132,19 @@ class ThingspeakChart:
 
             times = [datetime.strptime(feed['created_at'], '%Y-%m-%dT%H:%M:%SZ') for feed in feeds]
 
-            values = [float(feed[f"field{args[1]}"]) for feed in feeds]
+            values = [feed[f"field{args[1]}"] for feed in feeds]
+
+            filtered_times_values = [(time, float(value)) for time, value in zip(times, values) if value is not None]
+
+            # Unzip the filtered list of tuples into separate times and values lists
+            filtered_times, filtered_values = zip(*filtered_times_values) if filtered_times_values else ([], [])
+
 
             # Downsample data if necessary
-            times, values = self.downsample_data(times, values, max_points=60)
+            times1, values1 = self.downsample_data(filtered_times, filtered_values, days)
             
-            img_buf = await self.generate_chart(times, values, field_name, days, y_max)
+            print(times1)
+            img_buf = await self.generate_chart(times1, values1, field_name, days, y_max)
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
             self.logger.info("Chart image generated and retrieved successfully")
             return img_buf.getvalue()
@@ -145,10 +155,61 @@ class ThingspeakChart:
             self.logger.error(f"Unexpected error: {str(e)}")
             raise cherrypy.HTTPError(500, "Internal server error")
 
-    def downsample_data(self, times, values, max_points=60):
-        """Downsample data to reduce the number of points plotted."""
-        interval = max(1, len(values) // max_points)
-        return times[::interval], values[::interval]
+    def downsample_data(self, times, values, days, max_points=60):
+        """Downsample data to reduce the number of points plotted based on the time period."""
+        # Determine the aggregation interval
+        print(days)
+        if days == 1:  # Aggregate by hour
+            interval = timedelta(hours=1)
+            time_format = "%Y-%m-%d %H"
+        elif days in [7, 30]:  # Aggregate by day
+            interval = timedelta(days=1)
+            time_format = "%Y-%m-%d"
+        elif days == 365:  # Aggregate by month
+            interval = timedelta(days=30)  # Approximate month duration
+            time_format = "%Y-%m"
+        else:
+            # If an unsupported 'days' value is provided, default to hourly aggregation
+            interval = timedelta(hours=1)
+            time_format = "%Y-%m-%d %H"
+        
+        # Group data by the specified time period (hour, day, or month)
+        aggregated_times = []
+        aggregated_values = []
+        
+        # Initialize variables for the aggregation
+        current_group = []
+        group_start_time = times[0]
+
+        for time, value in zip(times, values):
+            # Determine the group for this data point
+            group_key = time.strftime(time_format)
+            
+            if not current_group:
+                current_group.append(value)
+            elif time - group_start_time <= interval:
+                current_group.append(value)
+            else:
+                # Aggregate the current group
+                aggregated_times.append(group_start_time)
+                aggregated_values.append(np.mean(current_group))  # Use the mean as "average"
+                
+                # Start a new group
+                current_group = [value]
+                group_start_time = time
+        
+        # Add the last group
+        if current_group:
+            aggregated_times.append(group_start_time)
+            aggregated_values.append(np.mean(current_group))
+        
+        # Downsample if the number of points exceeds max_points
+        if len(aggregated_values) > max_points:
+            interval = len(aggregated_values) // max_points
+            aggregated_times = aggregated_times[::interval]
+            aggregated_values = aggregated_values[::interval]
+        
+        return aggregated_times, aggregated_values
 
 if __name__ == '__main__':
     try:

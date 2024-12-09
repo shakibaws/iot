@@ -62,10 +62,9 @@ pkill -9 python
 
 ## TO-DO List
 - [!] fake sensor data for demo
-- [!] data analysis count times plant got wet in the last month
-- [!] data analysis compute how much water used in the last month
 - [!] temperature average in the last month
 - [!] score 1-100 how well you care for your plant
+- [] user authentication catalog api
 - [] web ui dashboard(per user)
 - [] 3d model  
 - [] slide presentation  

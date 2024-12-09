@@ -6,6 +6,7 @@ import numpy as np
 import requests
 import sys
 import datetime
+import os
 
 class DataAnalysis:
     exposed = True
@@ -27,6 +28,10 @@ class DataAnalysis:
 
     async def get_from_thingspeak(self, device_id):
         channel = None
+
+        vase = requests.get(self.catalog['services']['resource_catalog']+"/vaseByDevice/"+str(device_id))
+
+
 
         # Fetch the device list and vase list asynchronously
         async with aiohttp.ClientSession() as session:
@@ -61,7 +66,7 @@ class DataAnalysis:
 
         # Fetch the data for the last 7 days from ThingSpeak
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://api.thingspeak.com/channels/{str(channel)}/feeds.json?days=7") as resp:
+            async with session.get(f"https://api.thingspeak.com/channels/{str(channel)}/feeds.json?days=31") as resp:
                 res = await resp.json()
                 if len(res["feeds"]) > 0:
                     data = res['feeds']
@@ -72,8 +77,12 @@ class DataAnalysis:
                     light_level = np.sort(np.array([float(feed['field3']) for feed in data if feed['field3']]))
                     watertank_level = np.sort(np.array([float(feed['field4']) for feed in data if feed['field4']]))
                     soil_moisture = np.sort(np.array([float(feed['field2']) for feed in data if feed['field2']]))
+                    """ watered_array = np.array([int(feed['field2'])] for feed in data if feed['field5'])
+                    watered_times = np.size(watered_array)
+                    vase_data["watered_times"] = watered_times """
 
                     # Temperature alerts
+                    # !!TO-DO --> second overwrite the first
                     if np.average(temperature[:num_feeds]) < int(vase["plant"]["temperature_min"]):
                         vase_data["temperature_alert"] = "low"
                     if np.average(temperature[-num_feeds:]) > int(vase["plant"]["temperature_max"]):
@@ -89,6 +98,28 @@ class DataAnalysis:
                     num_light = num_feeds*10 * int(vase["plant"]["hours_sun_min"]) / 24
                     if np.average(light_level[-int(num_light):]) < 50:  # Assume less than 50 lux is "very low"
                         vase_data["light_level_alert"] = "low"
+
+                    # !!!!TO-DO!!!
+                    # Care score calculator
+                    score = 0
+                    score += np.searchsorted(temperature, int(vase["plant"]["temperature_min"]), side='left') # return the index of
+                    score += len(temperature) - np.searchsorted(temperature, int(vase["plant"]["temperature_max"]), side='right')
+                    score += np.searchsorted(soil_moisture, int(vase["plant"]["soil_moisture_min"]), side='left')
+                    score += len(soil_moisture) - np.searchsorted(soil_moisture, int(vase["plant"]["soil_moisture_max"]), side='right')
+                    
+                    score += np.searchsorted(temperature, int(vase["plant"]["temperature_min"]), side='left')
+                    score += len(temperature) - np.searchsorted(temperature, int(vase["plant"]["temperature_max"]), side='right')
+                    
+
+        #old version
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.catalog['services']['resource_catalog']+'/getData/'+str(vase['vase_id'])+"?days=30") as resp:
+                res = await resp.json()
+                print(res)
+                if res['water_pump']:
+                    vase_data["watered_times"] = len(res['water_pump'])
+        
         print(vase_data)
         return vase_data
 

@@ -188,60 +188,16 @@ class WifiManager:
         self.client.send("""Connection: close\r\n""")
 
 
-    def send_response(self, payload, status_code=200):
+    def send_response(self, payload, status_code = 200):
         self.send_header(status_code)
         self.client.sendall("""
             <!DOCTYPE html>
             <html lang="en">
                 <head>
-                    <title>Choose the wifi connection</title>
+                    <title>WiFi Manager</title>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
                     <link rel="icon" href="data:,">
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                            background-color: #f4f4f4;
-                            color: #333;
-                            text-align: center;
-                        }
-                        h1 {
-                            background-color: #4CAF50;
-                            color: white;
-                            padding: 10px 0;
-                            margin-bottom: 20px;
-                        }
-                        form {
-                            background: white;
-                            margin: 0 auto;
-                            padding: 20px;
-                            border-radius: 10px;
-                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                            max-width: 400px;
-                        }
-                        p {
-                            margin: 15px 0;
-                        }
-                        label {
-                            font-weight: bold;
-                        }
-                        input[type="radio"], input[type="password"], input[type="submit"] {
-                            margin: 10px 0;
-                        }
-                        input[type="submit"] {
-                            background-color: #4CAF50;
-                            color: white;
-                            border: none;
-                            padding: 10px 20px;
-                            border-radius: 5px;
-                            cursor: pointer;
-                        }
-                        input[type="submit"]:hover {
-                            background-color: #45a049;
-                        }
-                    </style>
                 </head>
                 <body>
                     {0}
@@ -249,7 +205,6 @@ class WifiManager:
             </html>
         """.format(payload))
         self.client.close()
-
 
     def handle_root(self, query_params):
         print("Inside handle root")

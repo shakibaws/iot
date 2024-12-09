@@ -8,7 +8,22 @@ import machine
 import onewire, ds18x20
 import random
 import dht
+import gc
+import os
     
+
+def df():
+    s = os.statvfs('//')
+    return ('{0} MB'.format((s[0]*s[3])/1048576))
+
+def free(full=False):
+    gc.collect() # free up memory
+    F = gc.mem_free()
+    A = gc.mem_alloc()
+    T = F+A
+    P = '{0:.2f}%'.format(F/T*100)
+    if not full: return P
+    else : return ('Total:{0} Free:{1} ({2})'.format(T,F,P))
 
 class IoTDevice:
     def __init__(self):
@@ -45,11 +60,13 @@ class IoTDevice:
         # check what to actuate(topic) and how(json msg)
         actuator = topic.split("/")[3]
         command = ujson.loads(msg)["target"]
-        if actuator == "soil_moisture":
+        if actuator == "water_pump":
             
             self.pin_actuators[actuator].value(command)  # activate pump for 2 seconds
             time.sleep(2)
             self.pin_actuators[actuator].value(0)
+            # let the water flow
+            time.sleep(180)       
         else:
             self.pin_actuators[actuator].value(command)
 
@@ -243,6 +260,7 @@ class IoTDevice:
         self.pub_topic = self.pub_topic.replace("+", self.device_cfg["device"]["device_id"])
         self.sub_topic = self.service_catalog["mqtt_topics"]["topic_actuators"]
         self.sub_topic = self.sub_topic.replace("device_id", self.device_cfg["device"]["device_id"]) + "/+"
+        
         self.mqqtclient = myMqtt(client_id, broker, port, self.actuate)
         self.mqqtclient.connect()
         time.sleep(2)
@@ -256,6 +274,8 @@ class IoTDevice:
     def loop(self):
         # not really a loop
         while True:
+            print(free())
+            print(df())
             if not self.c.isconnected():  # if connection goes down
                 for i in range(5):
                     if not self.c.isconnected():
@@ -267,7 +287,9 @@ class IoTDevice:
             time.sleep(2)
             # Non-blocking wait for message
             self.mqqtclient.check_message()
-            time.sleep(3) # let some time to actuate the message
+            time.sleep(5) # let some time to actuate the message
+
+            self.deinit()
 
             # set RTC.ALARM0 to fire after 60 seconds (waking the device)
             # put the device to sleep
@@ -289,7 +311,14 @@ try:
     device.run()
 except Exception as e:
     # dumping exception to file
+    print("Timestamp:")
+    dateTimeObj = utime.localtime()
+    Dyear, Dmonth, Dday, Dhour, Dmin, Dsec, Dweekday, Dyearday = (dateTimeObj)
+    Ddateandtime = "{:02d}/{:02d}/{} {:02d}:{:02d}"
+    datestr = Ddateandtime.format(Dday, Dmonth, Dyear, Dhour, Dmin,)
+    print(datestr)
+    resource_data = f"Free memory %: {free()}, free space : {df()}"
     print(f"ERROR CRASH{e}")
     with open("crash_dump.err", 'w')as file:
-        file.write(f"ERROR ON DEVICE.RUN: {e}")
+        file.write(f"Timestamp: {datestr}\nERROR ON DEVICE.RUN: {e}, resource -> {resource_data}")
     machine.reset() # hard reset

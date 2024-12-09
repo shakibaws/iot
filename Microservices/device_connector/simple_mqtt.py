@@ -34,6 +34,5 @@ class myMqtt:
         self.mqttc.check_msg() # check other message in queue
 
     def disconnect(self):
-        self.mqttc.unsubscribe()
         self.mqttc.disconnect()
         print("Disconnected from MQTT broker")

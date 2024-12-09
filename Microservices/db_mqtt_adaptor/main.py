@@ -9,10 +9,10 @@ import sys
 import asyncio
 import threading
 
-service_name = "thingspeak_adaptor"
+service_name = "db_mqtt_adaptor"
 
-class ThingspeakAdaptor:
-    def __init__(self,clientID,broker,port,topic_sensors,resource_catalog):
+class Db_Mqtt_Adaptor:
+    def __init__(self,clientID,broker,port,topic_sensors, resource_catalog):
         self.adapter = MyMQTT(clientID,broker,port,self)
         self.topic_sub = topic_sensors
         self.resource_catalog = resource_catalog
@@ -44,19 +44,19 @@ class ThingspeakAdaptor:
 
     def notify(self,topic,payload):
         self._message_arrived=True
-        data = json.loads(payload)
-        # "topic_sensors": "smartplant/+/sensors",
-        # "topic_actuators": "smartplant/device_id/actuators"
-        splitted = topic.split('/')
-        if len(splitted) < 3:
+        try:
+            data = json.loads(payload)
+            if data['target'] == 1:
+                print("target 1 detected")
+                # topic -> "smartplant/<device_id>/actuators/<actuator>"
+                splitted = topic.split('/')
+                device_id = splitted[1]
+                actuator = splitted[3]
+                print(f"dev_id: {device_id}, actuator: {actuator}")
+                self.pusher(device_id, actuator)
+        except Exception as e:
+            self.logger.error(f"Error on notify: {e}")
             return
-        device_id = splitted[1]
-        flag = splitted[2]
-        name = None
-        if len(splitted) > 3 :
-            name = splitted[3]
-        self.speaker(data, device_id, flag, name)
-        time.sleep(15)
 
     def startSim(self):
         print("connecting mqtt...")
@@ -72,8 +72,7 @@ class ThingspeakAdaptor:
         self.adapter.unsubscribe()
         self.adapter.stop()
 
-    def speaker(self, data, device_id, flag, actuator_name):
-        device = requests.get(self.resource_catalog+'/device/'+device_id).json()
+    def pusher(self, device_id, actuator):
         try:
             vase = requests.get(self.resource_catalog + '/vaseByDevice/' + device_id).json()
         except requests.exceptions.ConnectionError:
@@ -89,35 +88,27 @@ class ThingspeakAdaptor:
             self.logger.info(f"Device {device_id} is not configured yet")
             return 
         else:
-            write_key = device["write_key"]
-            url = "https://api.thingspeak.com/update.json"
-            
-            send_data = {}
-            send_data['api_key'] =  write_key  
+            print("vase found")
+            # **Endpoint**: `/postData/vaseid/<datatype(ex. water_pump)>`
+            url = self.resource_catalog+"/postData/"+str(vase['vase_id'])+"/"+actuator
+            print(url)
+            # date and time
+            dateTimeObj = time.localtime()
+            Dyear, Dmonth, Dday, Dhour, Dmin, Dsec = dateTimeObj[:6]  # Extract only the first six elements
+            Ddateandtime = "{:02d}/{:02d}/{:4d}-{:02d}:{:02d}"
+            datestr = Ddateandtime.format(Dday, Dmonth, Dyear, Dhour, Dmin)
 
-            if flag == "sensors":
-                for i in data['e']:    
-                    if i['n'] == 'light_level':
-                        send_data["field3"]=i['value']
-                    elif i['n'] == "temperature":
-                        send_data["field1"]=i['value']
-                    elif i['n'] == "soil_moisture":
-                        send_data["field2"]=i['value']
-                    elif i['n'] == "watertank_level":
-                        send_data["field4"]=i['value']
-            """ elif flag == "actuators":
-                
-                if actuator_name == "water_pump":
-                    send_data["field5"]=1
-                else:
-                    self.logger.error(f"{actuator_name} doesn't exist") """
+            send_data = {actuator: datestr}
+            print(send_data)
 
-            response = requests.post(url, data=send_data)
-
+            response = requests.post(url, json=send_data)
+                    
             if response.status_code == 200:
-                self.logger.info(f"Data sent to ThingSpeak for {device_id}: {send_data}")
+                print("Post successfull")
+                self.logger.info(f"Data sent to firebase for {device_id}: {send_data}")
             else:
-                self.logger.error(f"Error in sending data to ThingSpeak for {device_id}")
+                print("Error post")
+                self.logger.error(f"Error in sending data to firebase for {device_id}")
 
 if __name__ == '__main__':
     r = random.randint(0,10000)
@@ -137,20 +128,23 @@ if __name__ == '__main__':
             time.sleep(5)
         
         logger.info("Service catalog received")
-        topicSensors = service_catalog["mqtt_topics"]["topic_sensors"]
+        topicActuators = service_catalog["mqtt_topics"]["topic_actuators"]
         resource_catalog = service_catalog["services"]["resource_catalog"]
         broker = service_catalog["mqtt_broker"]["broker_address"]
         port = service_catalog["mqtt_broker"]["port"]
         
+        topicActuators = topicActuators.replace("device_id", '+') + "/+"
+
+
         logger.info("Starting service...")
-        adapter = ThingspeakAdaptor(clientID,broker,port,topicSensors,resource_catalog)
+        adapter = Db_Mqtt_Adaptor(clientID,broker,port,topicActuators,resource_catalog)
         # thread to check new addres for public ip
         t_addr = threading.Thread(target=adapter.checkNewAddress, args=(broker,))
         # thread to restart script to avoid problem with mqtt not receiving message
-        #t_timer = threading.Thread(target=adapter.timerRestart)
+        ##t_timer = threading.Thread(target=adapter.timerRestart)
 
         t_addr.start()
-        #t_timer.start()
+        ##t_timer.start()
 
         adapter.startSim() # blocking
     
@@ -162,7 +156,7 @@ if __name__ == '__main__':
         logger.error("Stopping simulation...")
         adapter.stopSim()
         logger.error("ERROR OCCUREDD, DUMPING INFO...")
-        path = os.path.abspath('/app/logs/ERROR_thingspeakadaptor.err')
+        path = os.path.abspath('/app/logs/ERROR_db_mqtt_adaptor.err')
         with open(path, 'a') as file:
             date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             file.write(f"Crashed at : {date}")

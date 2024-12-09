@@ -10,24 +10,39 @@ import sys
 import random
 import threading
 
-class MqttCustomException(Exception):
-    pass
-
-async def checkNewAddress(broker):
-    while True:
-        time.sleep(60)
-        res = requests.get("http://serviceservice.duck.pictures/mqtt").text
-        if res != broker:
-            raise MqttCustomException("new address detected")
-
 class TelegramNotifier:
     def __init__(self,clientID,broker,port,topic_sub, token):
         self.mqtt = MyMQTT(clientID,broker,port,self)
         self.topic_sub = topic_sub
         self.watertank = {}
         self.bot = Bot(token=token)
+        self._message_arrived = False
+
+    def timerRestart(self):
+        # check every 5 minutes if a new message has arrived, otherwise restart the service
+        while True:
+            self._message_arrived = False
+            time.sleep(300)
+            if not self._message_arrived:
+                print("Stopping simulation...")
+                self.stopSim()
+                print("Timer expired, restarting...")
+                sys.exit(1) 
+
+    def checkNewAddress(self, broker):
+        # follow public ip changement for mqtt broker
+        while True:
+            time.sleep(60)
+            res = requests.get("http://serviceservice.duck.pictures/mqtt").text
+            res = res.replace('"', '')
+            if res != broker:
+                print("Stopping simulation...")
+                self.stopSim()
+                print("New address detected, restarting...")
+                sys.exit(1)   
         
     def notify(self,topic,payload):
+        self._message_arrived = True
         data = json.loads(payload)
         print(f"Message received on topic: {topic}, {data}")
         # "topic_sensors": "smartplant/+/sensors",
@@ -96,17 +111,19 @@ if __name__ == "__main__":
         token = TOKEN
 
         bot_notification = TelegramNotifier(clientID,broker,port,str(topic_sub).replace('telegram_chat_id', '+')+'/alert', token)
-        threading.Thread(target=checkNewAddress, args=(broker))
+        # thread to check new addres for public ip
+        t_addr = threading.Thread(target=bot_notification.checkNewAddress, args=(broker,))
+        # thread to restart script to avoid problem with mqtt not receiving message
+        #t_timer = threading.Thread(target=bot_notification.timerRestart)
+
+        t_addr.start()
+        #t_timer.start()
+
         bot_notification.startSim() # blocking
         
         # if exit the loop_forever
         raise RuntimeError
 
-    except MqttCustomException as e:
-        print("Stopping simulation...")
-        bot_notification.stopSim()
-        print("New address detected, restarting...")
-        sys.exit(1) 
     except Exception as e:
         print("Stopping simulation...")
         bot_notification.stopSim()

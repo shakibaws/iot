@@ -89,6 +89,13 @@ public endpoint = 'http://resourceservice.duck.pictures'
      { "user_id": "...", "telegram_chat_id": "...", ... }
      ```
 
+10. **Get data by vase_id**
+   - **Endpoint**: `/getData/<vase_id>?days=<num>`
+   - **Response**:
+     ```json
+     { "water_pump": [], ... }
+     ```
+
 ---
 
 **POST Requests**
@@ -149,11 +156,28 @@ public endpoint = 'http://resourceservice.duck.pictures'
      }
      ```
 
+4. **Push data to resourceData**
+   - **Endpoint**: `/postData/vaseid/<datatype(ex. water_pump)>`
+   - **Request Body**:
+     ```json
+     {
+       "water_pump": "20/05/2024-15:35"
+     }
+     ```
+   - **Response**:
+     ```json
+     {
+       "message": "Data added successfully",
+     }
+     ```
+
 ---
 
-**PUT Requests**
+**PUT Requests**  
 
-1. **Update a device**
+1. **Update a device**  
+Not working!!!  
+
    - **Endpoint**: `/device/{device_id}`
    - **Request Body**:
      ```json
@@ -175,7 +199,9 @@ public endpoint = 'http://resourceservice.duck.pictures'
    - **Request Body**:
      ```json
      {
-       "vase_name": "Outdoor Vase"
+       "...":"...",
+       "vase_name": "Outdoor Vase",
+       "...":"..."
      }
      ```
    - **Response**:
@@ -187,7 +213,9 @@ public endpoint = 'http://resourceservice.duck.pictures'
      { "message": "Vase not found" }
      ```
 
-3. **Update a user**
+3. **Update a user**  
+Not working!!!  
+
    - **Endpoint**: `/user/{user_id}`
    - **Request Body**:
      ```json

@@ -11,6 +11,17 @@ services:
       - LOG_DIR=/app/logs
     restart: on-failure
 
+  db_mqtt_adaptor:
+    build: ./Microservices/db_mqtt_adaptor
+    container_name: db_mqtt_adaptor
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/db_mqtt_adaptor:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+    restart: on-failure
+
   chart_service:
     build: ./Microservices/chart_service
     container_name: chart_service

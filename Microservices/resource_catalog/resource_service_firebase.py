@@ -66,7 +66,30 @@ class CatalogExpose:
             result = self.firebase_ref.child('userList').order_by_child("user_id").equal_to(u_id).get().values()
             self.logger.info("GET request received: getUserById")
             return next(iter(result), None)
+        elif args[0] == ('getData') and args[1] and kwargs['days']:
+            v_id = str(args[1])
+            days = kwargs['days']
+            result = self.firebase_ref.child('resourceData').child(v_id).get()
+            self.logger.info("GET request received: geData")
+            ret = {}
+            for key,value in result.items():
+                # Get the current date and calculate the cutoff date
+                now = datetime.datetime.now()
+                cutoff_date = now - datetime.timedelta(days=int(days))
+                ret[key]=[]
 
+                # Iterate through the dates in the water_pump data
+                for k, date_str in value.items():
+                    # Parse the date string
+                    try:
+                        date_obj = datetime.datetime.strptime(date_str, "%d/%m/%Y-%H:%M")
+                        # Check if the date is within the range
+                        if cutoff_date <= date_obj <= now:
+                            ret[key].append(date_str)
+                    except ValueError:
+                        self.logger.error(f"Invalid date format: {date_str}")
+
+            return ret
         else:
             self.logger.error("GET request received: Invalid resource")
             return {"message": "Invalid resource"}
@@ -150,6 +173,15 @@ class CatalogExpose:
             self.logger.info("User added successfully")
             return {"message": "User added successfully",
                     "id": this_id}
+        elif args[0] == 'postData':
+            self.logger.info("POST request received: data")
+            data = cherrypy.request.json
+            if args[1] and args[2] and data[args[2]]:
+                vase_id = str(args[1])
+                self.firebase_ref.child("resourceData").child(vase_id).child(args[2]).push(data[args[2]])
+                return {"message": "Data added successfully"}
+            else:
+                return{"message": "Invalid data format"}
         else:
             self.logger.error("Invalid resource")
             return {"message": "Invalid resource"}

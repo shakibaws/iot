@@ -11,16 +11,6 @@ import threading
 
 service_name="vase_control"
 
-class MqttCustomException(Exception):
-    pass
-
-async def checkNewAddress(broker):
-    while True:
-        time.sleep(60)
-        res = requests.get("http://serviceservice.duck.pictures/mqtt").text
-        if res != broker:
-            raise MqttCustomException("new address detected")
-
 class vaseControl:
     def __init__(self,clientID,broker,port,topic_sensors, topic_actuators, topic_telegram_chat, resource_catalog):
         self.control = MyMQTT(clientID,broker,port,self)
@@ -30,8 +20,33 @@ class vaseControl:
         self.topic_telegram_chat = topic_telegram_chat
         self.boo = 1
         self.logger = CustomerLogger.CustomLogger(service_name=service_name)
-        
+        self._message_arrived = False
+
+    def timerRestart(self):
+        # check every 5 minutes if a new message has arrived, otherwise restart the service
+        while True:
+            self._message_arrived = False
+            time.sleep(300)
+            if not self._message_arrived:
+                print("Stopping simulation...")
+                self.stopSim()
+                print("Timer expired, restarting...")
+                sys.exit(1) 
+
+    def checkNewAddress(self, broker):
+        # follow public ip changement for mqtt broker
+        while True:
+            time.sleep(60)
+            res = requests.get("http://serviceservice.duck.pictures/mqtt").text
+            res = res.replace('"', '')
+            if res != broker:
+                print("Stopping simulation...")
+                self.stopSim()
+                print("New address detected, restarting...")
+                sys.exit(1)   
+
     def notify(self,topic,payload):
+        self._message_arrived = True
         data = json.loads(payload)
         print(f"Message received on topic: {topic}, {data}")
         self.logger.info(f"Message received on topic: {topic}, {data}")
@@ -84,14 +99,14 @@ class vaseControl:
                     elif i['value'] > vase["plant"]["temperature_max"]:
                         self.control.myPublish(telegram_chat+"/alert", {"temperature":"high"}) """
                 elif i['n'] == "soil_moisture":
-                    if int(i['value']) < int(vase["plant"]["soil_moisture_min"]):
+                    if i['value'] and int(i['value']) < int(vase["plant"]["soil_moisture_min"]):
                         # check if watertank is not empty
                         for c in data['e']:
                             if c['n'] == "watertank_level":
-                                if c['value'] >= 10:
-                                    self.control.myPublish(publisher+"/"+i['n'], {"target":1}) # wet the plant
+                                if c['value'] and c['value'] >= 10:
+                                    self.control.myPublish(publisher+"/"+"water_pump", {"target":1}) # wet the plant
                 elif i['n'] == "watertank_level":
-                    if int(i['value']) < 20:
+                    if i['value'] and int(i['value']) < 20:
                         self.control.myPublish(telegram_chat+"/alert", {"watertank_level": "low"})
 
 if __name__ == "__main__":
@@ -113,18 +128,19 @@ if __name__ == "__main__":
 
         logger.info(f"Starting service. The parameters are: topicSensors: {str(topicSensors)}, topicActuators: {str(topicActuators)}, topic_telegram_chat: {topic_telegram_chat}, resource_catalog: {resource_catalog}")
         controller = vaseControl(clientID, broker, port, topicSensors, topicActuators, topic_telegram_chat, resource_catalog)
-        threading.Thread(target=checkNewAddress, args=(broker))
+        # thread to check new addres for public ip
+        t_addr = threading.Thread(target=controller.checkNewAddress, args=(broker,))
+        # thread to restart script to avoid problem with mqtt not receiving message
+        ##t_timer = threading.Thread(target=controller.timerRestart)
+
+        t_addr.start()
+        ##t_timer.start()
+
         controller.startSim()
 
         # if exit the loop_forever
         
         raise RuntimeError
-
-    except MqttCustomException as e:
-        print("Stopping simulation...")
-        controller.stopSim()
-        print("New address detected, restarting...")
-        sys.exit(1) 
 
     except Exception as e:
         logger.error("SYSTEM CRASHED AT TIME: "+datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
