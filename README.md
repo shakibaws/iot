@@ -61,13 +61,6 @@ pkill -9 python
 ```
 
 ## TO-DO List
-- [!] fake sensor data for demo
-- [!] temperature average in the last month
-- [!] score 1-100 how well you care for your plant
-- [] user authentication catalog api
-- [] web ui dashboard(per user)
-- [x] 3d model  
-- [] slide presentation and video demo  
-- [] video promo  
-- [] prototype
-- [] weather forecast
+- [] score 1-100 how well you care for your plant
+- [] web ui dashboard (User frontend)
+- [] prototype 
