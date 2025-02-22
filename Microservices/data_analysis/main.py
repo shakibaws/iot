@@ -114,11 +114,13 @@ class DataAnalysis:
         #old version
         
         async with aiohttp.ClientSession() as session:
-            async with session.get(self.catalog['services']['resource_catalog']+'/getData/'+str(vase['vase_id'])+"?days=30") as resp:
+            async with session.get(self.catalog['services']['resource_catalog']+'/getData/'+str(vase['vase_id'])+"?days=14") as resp:
                 res = await resp.json()
                 print(res)
-                if res['water_pump']:
+                if res and res['water_pump']:
                     vase_data["watered_times"] = len(res['water_pump'])
+                else:
+                    vase_data["watered_times"] = 0
         
         print(vase_data)
         return vase_data

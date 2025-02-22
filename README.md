@@ -66,9 +66,8 @@ pkill -9 python
 - [!] score 1-100 how well you care for your plant
 - [] user authentication catalog api
 - [] web ui dashboard(per user)
-- [] 3d model  
-- [] slide presentation  
-- [] video to show  
-- [] prototype  
-- [] restyle esp32 web page
+- [x] 3d model  
+- [] slide presentation and video demo  
+- [] video promo  
+- [] prototype
 - [] weather forecast

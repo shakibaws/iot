@@ -72,6 +72,8 @@ class CatalogExpose:
             result = self.firebase_ref.child('resourceData').child(v_id).get()
             self.logger.info("GET request received: geData")
             ret = {}
+            if not result:
+                return {}
             for key,value in result.items():
                 # Get the current date and calculate the cutoff date
                 now = datetime.datetime.now()

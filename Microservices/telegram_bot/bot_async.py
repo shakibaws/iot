@@ -402,7 +402,8 @@ async def vase_details(update: Update, context, device_id: str):
 
             # Build a beautiful message with proper Markdown formatting
             message = f"**🌿 Details for Vase: {vase['vase_name']}**\n\n"
-            message += f"In the last week your plant has been watered {res['watered_times']} time(s)\nThis is the equivalent of {res['watered_times']*25}ml"
+            if res['watered_times']:
+                message += f"In the last 14 days your plant has been watered {res['watered_times']} time(s)\nThis is the equivalent of {res['watered_times']*25}ml"
             # Add alerts with emojis and warnings
             alert = res.get('temperature_alert')
             if alert:
@@ -560,7 +561,17 @@ async def handle_photo(update: Update, context: CallbackContext):
                                 # Send the new vase data to the resource catalog
                                 async with session.post(f"{resource_catalog_address}/vase", json=new_vase) as res:
                                     if res.status == 200:
-                                        await update.message.reply_text(f"Vase with {chat_response['plant_name']} added successfully.")
+                                        await update.message.reply_text(
+                                            f"🌱 *Vase Added Successfully!* 🌱\n\n"
+                                            f"*Plant Name*: {chat_response['plant_name']}\n\n"
+                                            f"*Auto-detected Parameters:*\n"
+                                            f"  - 🌡️ *Temperature Range*: {chat_response['temperature_min']}°C to {chat_response['temperature_max']}°C\n"
+                                            f"  - 💧 *Soil Moisture*: {chat_response['soil_moisture_min']}% to {chat_response['soil_moisture_max']}%\n"
+                                            f"  - ☀️ *Light Level*: {chat_response['hours_sun_suggested']} hours/day\n\n"
+                                            f"💡 *Suggestions*: {chat_response['description']}\n\n"
+                                            f"Thank you for adding a new plant to your vase! 🌿"
+                                        )
+
                                     else:
                                         await update.message.reply_text('Failed to add the vase.')
 

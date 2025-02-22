@@ -1,0 +1,15 @@
+Features
+
+vase with light, soil moisture, temperature sensors. watertank with digital water level indicator. water pump. battery and usb c
+super low power and efficient, run on battery power for weeks
+
+easy and simple addition of new devices trough wifi
+easy ui trough telegram bot 
+manage multiple vases.
+easy addition of new plants simplified by leveraging huge and richful plant dataset and ai to perfectly auto detect the plant and suggest the best enviroment condition possible based on that.
+check status of the plants in real time.
+visualize past data trough charts.
+visualize how many times the plant has been watered and how 
+push notifications for alerts such as watertank low/empty and battery.
+analyze past data and notify the user the condition of the plant
+suggest improvement to the user for better care of plant.

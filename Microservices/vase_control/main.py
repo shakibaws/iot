@@ -107,7 +107,7 @@ class vaseControl:
                                     self.control.myPublish(publisher+"/"+"water_pump", {"target":1}) # wet the plant
                 elif i['n'] == "watertank_level":
                     if i['value'] and int(i['value']) < 20:
-                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level": "low"})
+                        self.control.myPublish(telegram_chat+"/alert", {"watertank_level": vase['vase_name']})
 
 if __name__ == "__main__":
     r = random.randint(0,1000)

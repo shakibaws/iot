@@ -1,0 +1,227 @@
+{
+  "resource_catalog": {
+    "deviceList": {
+      "-OJc9eNaWGR-D2_aZeed": {
+        "actuators": [
+          "light_level",
+          "soil_moisture"
+        ],
+        "available_services": [
+          "MQTT"
+        ],
+        "channel_id": 1111111,
+        "configurations": [
+          {
+            "watertank_height_cm": 15
+          }
+        ],
+        "device_id": "111890988",
+        "device_status": "active",
+        "lastUpdate": "2025-02-21 11:00:37",
+        "read_key": "R8ECBTOR4YGZN0N2",
+        "sensors": [
+          "soil_moisture",
+          "watertank_level",
+          "temperature",
+          "light_level"
+        ],
+        "user_id": "111116871977302905989256955321167310217",
+        "write_key": "7OL0R9NAHE2NNR92"
+      },
+      "-OJdEjgZQUehZcTCp-GT": {
+        "actuators": [
+          "light_level",
+          "soil_moisture"
+        ],
+        "available_services": [
+          "MQTT"
+        ],
+        "channel_id": 2850426,
+        "configurations": [
+          {
+            "watertank_height_cm": 15
+          }
+        ],
+        "device_id": "0238402938",
+        "device_status": "active",
+        "lastUpdate": "2025-02-21 16:02:27",
+        "read_key": "5EDH2YOZZSTT8KCV",
+        "sensors": [
+          "soil_moisture",
+          "watertank_level",
+          "temperature",
+          "light_level"
+        ],
+        "user_id": "239391674367824826438604428251723347224",
+        "write_key": "ZNG3UMEQGWC4YQIZ"
+      }
+    },
+    "resourceData": {
+      "201900885198426923459290868978746322098": {
+        "water_pump": {
+          "-ODgmn5icH0om3J3wwbD": "09/12/2024-19:00"
+        }
+      },
+      "257801381876904984820639528779118245491": {
+        "water_pump": {
+          "-OJdN7ggpXwKHXxdIS5a": "21/02/2025-16:39",
+          "-OJdNjWxmMogWkzRq9EP": "21/02/2025-16:41",
+          "-OJdOmYphUOFU5fyMGLN": "21/02/2025-16:46",
+          "-OJdPpYy-1j8XqBH7GoT": "21/02/2025-16:50",
+          "-OJdQsle9zQ9sTOzjAvc": "21/02/2025-16:55",
+          "-OJdRw0FntYJMK6k_kgO": "21/02/2025-17:00",
+          "-OJdSzkSrQ5Wlz24PB9N": "21/02/2025-17:04",
+          "-OJdU2sxlx46AebVA1TR": "21/02/2025-17:09",
+          "-OJdV5oWVSei1kWxCpBz": "21/02/2025-17:13",
+          "-OJdWA6wC5dPLDKJEQIK": "21/02/2025-17:18",
+          "-OJdXDh-zwJCVg3Kxm9f": "21/02/2025-17:23",
+          "-OJdYHL6Qc4zl_I2SRtw": "21/02/2025-17:27",
+          "-OJdZKzpwXhLY85k0YBO": "21/02/2025-17:32",
+          "-OJd_OwEUVRcNMRE2s6Q": "21/02/2025-17:37",
+          "-OJdaRoCEDY4tapemJQE": "21/02/2025-17:41",
+          "-OJdbU_tz9pS_aWlbrRl": "21/02/2025-17:46",
+          "-OJdcXNOmGb6qTdJmYFD": "21/02/2025-17:50",
+          "-OJdd_Degs8ZE5NI6u6R": "21/02/2025-17:55",
+          "-OJdec7_okeweoML479D": "21/02/2025-17:59",
+          "-OJdffOupzVkjFFhw4NJ": "21/02/2025-18:04",
+          "-OJdgiBOQ27u3TfA0ogC": "21/02/2025-18:09",
+          "-OJdhlT61F43PpkiGfzM": "21/02/2025-18:13",
+          "-OJdioen8ABdy5FQOLYF": "21/02/2025-18:18",
+          "-OJdjri1gzckmbH6lmyB": "21/02/2025-18:22",
+          "-OJdkuoyHzGbHDIaq2LO": "21/02/2025-18:27",
+          "-OJdlyxuuqPIBg5JqY8D": "21/02/2025-18:32",
+          "-OJdmGGvgU7N-kNphQN5": "21/02/2025-18:33",
+          "-OJdnJkOJuRxPgggng1H": "21/02/2025-18:37",
+          "-OJdoMoSDC0Z_JOsgwrq": "21/02/2025-18:42",
+          "-OJdpQImh9vFlcbLrTe7": "21/02/2025-18:47",
+          "-OJdqU9XLa8ql8QP6gb0": "21/02/2025-18:51",
+          "-OJdrX0ODNj200Vwdbqn": "21/02/2025-18:56",
+          "-OJdsZhI-6062fAgHNa3": "21/02/2025-19:00",
+          "-OJdtbgUnjF3hGL6GP65": "21/02/2025-19:05",
+          "-OJdtuFEe8Szku7OFiCh": "21/02/2025-19:06",
+          "-OJduwuvFgP9hbcQIsPQ": "21/02/2025-19:11",
+          "-OJdvzcG1dHhVqCJxa8G": "21/02/2025-19:15"
+        }
+      },
+      "734762515306555459842723431389627361": {
+        "water_pump": {
+          "-ODfVOKDsPK_VzNVZXZH": "09/12/2024-13:59",
+          "-ODfVWk0eUeuMnYXHThh": "09/12/2024-13:59",
+          "-ODfdTSGp8y59MtLPtQu": "09/12/2024-14:39",
+          "-ODfdWW2uNVyjStAlbRN": "09/12/2024-14:40",
+          "-ODgCVwKxXz4d9F7uSE-": "09/12/2024-16:17",
+          "-ODgD6iBUqc9NkFTR2_p": "09/12/2024-16:20",
+          "-ODgE7iVCka_kSGoM9wh": "09/12/2024-16:24",
+          "-ODgEweuEEkB7jjfQhsX": "09/12/2024-16:28",
+          "-ODgFjbp4u1cTQVazK6j": "09/12/2024-16:31",
+          "-ODgFooNgUmC71jjDGFW": "09/12/2024-16:31",
+          "-ODgFsZUFYtWuxSi9sfn": "09/12/2024-16:32",
+          "-ODgGPcM8bX87K8gZOGt": "09/12/2024-16:34",
+          "-ODgHSwXrGLbWTCREtbX": "09/12/2024-16:39",
+          "-ODgMW1Af5APakT-7SWQ": "09/12/2024-18:01",
+          "-ODgMildTmJzKEOMlpAw": "09/12/2024-18:02",
+          "-ODgN7H2HGdWU8Ec_R36": "09/12/2024-18:03",
+          "-ODgNiKZGERa5-LJ2tyB": "09/12/2024-18:06",
+          "-ODgby09XTAKcgdsgIaM": "09/12/2024-18:12",
+          "-OHSAO0ymvrvjE-NPHmL": "25/01/2025-11:16",
+          "-OHSHB1erdMCeRuw8xYQ": "25/01/2025-11:46",
+          "-OHSMZ7tjMi9Dm25kyZ7": "25/01/2025-12:09",
+          "-OHSXwbt-HKW-EEuRgVn": "25/01/2025-12:59",
+          "-OHSw9DfaDf-qv4AMhZ-": "25/01/2025-14:49",
+          "-OHSy78NP_rfIq9dd6Un": "25/01/2025-14:58",
+          "-OHT2tEVhS8nWwL3NauD": "25/01/2025-15:23",
+          "-OHT4oXkf9S_XrP4h-cc": "25/01/2025-15:31",
+          "-OHT7cjGcPa1Q13SZ6yV": "25/01/2025-15:44",
+          "-OHTOiHSMdxYK5R5JvTi": "25/01/2025-16:58",
+          "-OHTUDRKbZy-FQ2jBnFj": "25/01/2025-17:22",
+          "-OHTYZVFZYpv8YUQv93A": "25/01/2025-17:41",
+          "-OHTbu8PU_2mr29Ov9lP": "25/01/2025-18:00",
+          "-OHTgK8LMrio239Ne4oe": "25/01/2025-18:20",
+          "-OHTlac04eYUMPSF1wKE": "25/01/2025-18:43",
+          "-OHTo_yO18K7fuSJ1L25": "25/01/2025-18:56",
+          "-OHU-TR0f3QDpb2UT0a0": "25/01/2025-19:48",
+          "-OHUBfZttU7tVAcq5TfL": "25/01/2025-20:41",
+          "-OHUEXfbggy3aeGRwUT_": "25/01/2025-20:53",
+          "-OHUMrHaNLVuttjSklUI": "25/01/2025-21:30",
+          "-OHUTfYFHT-VWPfzo8SQ": "25/01/2025-22:00",
+          "-OHUV1Jk2VYDQ9Xx1GJJ": "25/01/2025-22:06",
+          "-OHUXFgkGw1qwhOSQ0Ps": "25/01/2025-22:15"
+        }
+      }
+    },
+    "userList": {
+      "-OJcxCcL8nujHZExxpd_": {
+        "lastUpdate": "2025-02-21 14:41:30",
+        "telegram_chat_id": 480884511,
+        "user_id": "239391674367824826438604428251723347224"
+      },
+      "-OJd0OG6SHHX4bM_8fmf": {
+        "lastUpdate": "2025-02-21 14:59:46",
+        "telegram_chat_id": 180371104,
+        "user_id": "43737690629845322907347211590994197335"
+      }
+    },
+    "vaseList": {
+      "-OJcE-ZmuAPpBMzoCVy4": {
+        "device_id": "111890987",
+        "lastUpdate": "2025-02-21 11:19:37",
+        "plant": {
+          "description": "This plant thrives in bright, indirect light and moderate humidity. Allow soil to dry out slightly between waterings.",
+          "hours_sun_min": 6,
+          "plant_name": "Epipremnum aureum",
+          "plant_schedule_light_level": 6,
+          "plant_schedule_water": "20",
+          "soil_moisture_max": "30",
+          "soil_moisture_min": "20",
+          "temperature_max": 29,
+          "temperature_min": 18
+        },
+        "user_id": "111116871977302905989256955321167310217",
+        "vase_id": "111117408685853697131998258612132961628",
+        "vase_name": "Epipremnum aureum",
+        "vase_status": "active"
+      },
+      "-OJdEoD_JHaDThvx55v6": {
+        "device_id": "0238402938",
+        "lastUpdate": "2025-02-21 16:02:46",
+        "plant": {
+          "description": "The Epipremnum aureum thrives in bright, indirect light and moderate humidity. Allow soil to dry slightly between waterings. Tolerant to various conditions but avoids extreme temperatures and direct sunlight.",
+          "hours_sun_min": 6,
+          "plant_name": "Epipremnum aureum",
+          "plant_schedule_light_level": 6,
+          "plant_schedule_water": "20",
+          "soil_moisture_max": "50",
+          "soil_moisture_min": "40",
+          "temperature_max": 29,
+          "temperature_min": 18
+        },
+        "user_id": "239391674367824826438604428251723347224",
+        "vase_id": "257801381876904984820639528779118245491",
+        "vase_name": "Epipremnum aureum",
+        "vase_status": "active"
+      }
+    }
+  },
+  "service_catalog": {
+    "mqtt_broker": {
+      "broker_address": "5.95.152.24",
+      "broker_websocket": "broker.duck.pictures",
+      "port": 1883,
+      "port_websocket": 8080
+    },
+    "mqtt_topics": {
+      "topic_actuators": "smartplant/device_id/actuators",
+      "topic_both": "smartplant/#",
+      "topic_sensors": "smartplant/+/sensors",
+      "topic_telegram_chat": "smartplant/telegram/telegram_chat_id"
+    },
+    "services": {
+      "chart_service": "https://chartservice.duck.pictures",
+      "data_analysis": "https://dataanalysis.duck.pictures",
+      "gemini": "https://chat.duck.pictures",
+      "image_recognition": "https://imagerecognition.duck.pictures",
+      "recommendation_service": "http://recommendationservice.duck.pictures",
+      "resource_catalog": "http://resourceservice.duck.pictures"
+    }
+  }
+}
