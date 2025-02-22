@@ -21,7 +21,7 @@ make restart-<logs|microservices>
 ```
 Clean --> stop every containers and clean logs  
 ```bash
-make restart-<logs|microservices>
+make clean
 ```  
 ### Directly with docker
 Build and run
