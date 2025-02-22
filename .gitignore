@@ -167,3 +167,4 @@ cython_debug/
 Microservices/catalog_expose/resource_catalog.json
 ./firebase_key.json
 wifi.dat
+firebase_key.json
