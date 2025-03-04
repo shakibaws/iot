@@ -67,4 +67,4 @@ pkill -9 python
 ## TO-DO List
 - [] score 1-100 how well you care for your plant
 - [] web ui dashboard (User frontend)
-- [] prototype 
+- [x] prototype 
