@@ -18,6 +18,10 @@ make start-<logs|microservices>
 Restart  
 ```bash
 make restart-<logs|microservices>
+```
+Clean --> stop every containers and clean logs  
+```bash
+make clean
 ```  
 ### Directly with docker
 Build and run
@@ -63,4 +67,4 @@ pkill -9 python
 ## TO-DO List
 - [] score 1-100 how well you care for your plant
 - [] web ui dashboard (User frontend)
-- [] prototype 
+- [x] prototype 
