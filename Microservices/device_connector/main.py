@@ -124,7 +124,7 @@ class IoTDevice:
                     return None
 
                 # Calculate the percentage based on max height
-                percentage = (distance / max_height) * 100
+                percentage = (1 - (distance / max_height)) * 100
 
                 # Return as an integer percentage
                 return int(percentage)

@@ -31,6 +31,7 @@ class ThingspeakChart:
 
     def __init__(self):
         self.logger = CustomerLogger.CustomLogger("chart_service")
+      
 
     async def fetch_data(self, url):
         """Fetch data asynchronously from ThingSpeak API with error handling."""
@@ -49,47 +50,104 @@ class ThingspeakChart:
             self.logger.error(f"Unexpected error: {str(e)}")
             raise cherrypy.HTTPError(500, "Unexpected error occurred")
 
-    async def generate_chart(self, times, values, field_name, days, y_max):
+    async def generate_chart(self, times, values, field_name, days):
         """Function to generate chart in a separate thread."""
         def _generate_chart():
-            self.logger.info("Generating chart")
-            plt.figure(figsize=(8, 6))
-            plt.plot(times, values, marker="o", linestyle="-")
-            plt.xlabel("Time")
-            plt.ylabel(str(field_name).capitalize())
-            plt.title(f"{str(field_name).split('_')[0].capitalize()} chart")
-            plt.ylim(0, y_max)
-
-            # Set the date format based on days range
             try:
-                if days == 1:
-                    locator = mdates.HourLocator(interval=1)
-                    plt.gca().xaxis.set_major_locator(locator)
-                    plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(self._custom_date_formatter(times)))
+                italy_tz = pytz.timezone('Europe/Rome')
+                self.logger.info(f"Generating chart with {len(times)} data points")
+                for t in times:
+                    if not t.tzinfo:
+                        t.replace(tzinfo=pytz.utc)
+                    t.astimezone(italy_tz)
 
-                elif days == 7:
-                    locator = mdates.DayLocator(interval=1)
-                    plt.gca().xaxis.set_major_locator(locator)
-                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
 
-                elif days == 30:
-                    locator = mdates.DayLocator(interval=2)
-                    plt.gca().xaxis.set_major_locator(locator)
-                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
-
-                if days == 365 and len(times) < 12:
-                    plt.xlim(times[0], times[-1])  # Limit to the actual data range
-                else:
-                    locator = mdates.MonthLocator(interval=1)
-                    plt.gca().xaxis.set_major_locator(locator)
-                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m'))
+                plt.figure(figsize=(8, 6))
+                plt.plot(times, values, marker="o", linestyle="-")
+                plt.xlabel("Time")
+                plt.ylabel(str(field_name).capitalize())
+                plt.title(f"{str(field_name).split('_')[0].capitalize()} chart - {days} day{'s' if days > 1 else ''}")
+                
+                # Set y-axis limits dynamically based on the data
+                if values:
+                    # Calculate data range
+                    max_val = max(values)
+                    min_val = min(values)
+                    data_range = max_val - min_val
                     
+                    # If the data range is very small, add some padding to make the chart readable
+                    if data_range < 0.1:
+                        padding = 0.5
+                    elif data_range < 1:
+                        padding = 1
+                    else:
+                        # Add padding as a percentage of the data range (20%)
+                        padding = data_range * 0.2
+                    
+                    # Set y-axis limits with appropriate padding
+                    plt.ylim(min_val - padding, max_val + padding)
+                    
+                    # Adjust the y-axis ticks for better readability
+                    if data_range < 10:
+                        # For small ranges, use more precise tick marks
+                        plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
+                    else:
+                        plt.gca().yaxis.set_major_locator(ticker.AutoLocator())
+                else:
+                    # Default if no values
+                    plt.ylim(0, 100)
+
+
+                  # Define Italy's timezone
+
+                if days == 1:
+                    min_date = datetime.now(pytz.utc) - timedelta(hours=24)  # Get UTC time
+                    min_date = min_date.astimezone(italy_tz)  # Convert to Italy time
+
+                    max_date = datetime.now(pytz.utc).astimezone(italy_tz)  # Convert now to Italy time
+
+                    print("max_time", max(times))  # Ensure times are also in correct timezone
+
+                    plt.xlim(min_date, max_date)
+                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                    plt.gca().xaxis.set_major_locator(plt.MaxNLocator(12))  # At most 12 ticks for hourly view
+                elif days == 7:
+                    min_date = datetime.now(pytz.utc) - timedelta(days=6)
+                    min_date = min_date.astimezone(italy_tz)
+
+                    max_date = datetime.now(pytz.utc).astimezone(italy_tz)
+
+                    plt.xlim(min_date, max_date)
+                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%A'))
+                    plt.gca().xaxis.set_major_locator(mdates.DayLocator())  # One tick per day
+                elif days == 30:
+                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
+                    plt.gca().xaxis.set_major_locator(plt.MaxNLocator(10))  # At most 10 ticks for monthly view
+                elif days == 365:
+                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+                    plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
+
+                    # If very few data points, reduce the locator frequency
+                    if len(times) < 6:
+                        plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+                    
+                # Rotate the x-axis labels for better readability
                 plt.xticks(rotation=45, ha='right')
-                img_buf = BytesIO()
+                
+                # Add grid for better readability
+                plt.grid(True, linestyle='--', alpha=0.7)
+                
+                # Ensure tight layout to avoid clipping labels
                 plt.tight_layout()
-                plt.savefig(img_buf, format="jpeg")
+                
+                # Save the figure to a bytes buffer
+                img_buf = BytesIO()
+                plt.savefig(img_buf, format="jpeg", dpi=100)
                 img_buf.seek(0)
                 return img_buf
+            except Exception as e:
+                self.logger.error(f"Error generating chart: {str(e)}")
+                raise
             finally:
                 plt.close()  # Ensure the figure is closed to free memory
 
@@ -119,7 +177,8 @@ class ThingspeakChart:
 
         days = int(kwargs.get("days", 1))
         title = kwargs.get("title", "")
-        y_max = 100 if title.startswith("soil") else 1000 if title.startswith("light") else 40 if title.startswith("temperature") else 100
+        
+        # Make sure we fetch only the data for the requested time period
         url = f"https://api.thingspeak.com/channels/{args[0]}/fields/{args[1]}.json?days={days}"
         
         try:
@@ -130,21 +189,44 @@ class ThingspeakChart:
                 self.logger.error("No data found for the specified field")
                 raise cherrypy.HTTPError(404, "No data found")
 
-            times = [datetime.strptime(feed['created_at'], '%Y-%m-%dT%H:%M:%SZ') for feed in feeds]
-
-            values = [feed[f"field{args[1]}"] for feed in feeds]
-
-            filtered_times_values = [(time, float(value)) for time, value in zip(times, values) if value is not None]
-
-            # Unzip the filtered list of tuples into separate times and values lists
-            filtered_times, filtered_values = zip(*filtered_times_values) if filtered_times_values else ([], [])
-
-
-            # Downsample data if necessary
-            times1, values1 = self.downsample_data(filtered_times, filtered_values, days)
+            # Parse times and extract values
+            times = []
+            values = []
+            for feed in feeds:
+                try:
+                    time_val = datetime.strptime(feed['created_at'], '%Y-%m-%dT%H:%M:%SZ')
+                    field_val = feed[f"field{args[1]}"]
+                    
+                    # Only include points with valid values
+                    if field_val is not None and field_val != "":
+                        times.append(time_val)
+                        values.append(float(field_val))
+                except (ValueError, TypeError) as e:
+                    self.logger.warning(f"Skipping invalid data point: {str(e)}")
             
-            print(times1)
-            img_buf = await self.generate_chart(times1, values1, field_name, days, y_max)
+            if not times:
+                self.logger.error("No valid data points found")
+                raise cherrypy.HTTPError(404, "No valid data found")
+                
+            self.logger.info(f"Processing {len(times)} data points for {days} days")
+            
+            # Ensure times are sorted chronologically
+            if len(times) > 1:
+                # Sort data chronologically
+                sorted_data = sorted(zip(times, values), key=lambda x: x[0])
+                times, values = zip(*sorted_data)
+            
+            # Downsample data if necessary
+            times_downsampled, values_downsampled = self.downsample_data(times, values, days)
+            
+            if not times_downsampled:
+                self.logger.error("Downsampling resulted in no data points")
+                raise cherrypy.HTTPError(500, "Error processing data")
+                
+            self.logger.info(f"After downsampling: {len(times_downsampled)} data points")
+            
+            # Generate the chart - pass the default_y_max, but let the chart function adjust based on data
+            img_buf = await self.generate_chart(times_downsampled, values_downsampled, field_name, days)
             cherrypy.response.headers['Content-Type'] = 'image/jpeg'
             self.logger.info("Chart image generated and retrieved successfully")
             return img_buf.getvalue()
@@ -153,63 +235,103 @@ class ThingspeakChart:
             raise cherrypy.HTTPError(400, "Invalid data values")
         except Exception as e:
             self.logger.error(f"Unexpected error: {str(e)}")
-            raise cherrypy.HTTPError(500, "Internal server error")
+            raise cherrypy.HTTPError(500, f"Internal server error: {str(e)}")
 
     def downsample_data(self, times, values, days, max_points=60):
         """Downsample data to reduce the number of points plotted based on the time period."""
-        # Determine the aggregation interval
-        print(days)
-        if days == 1:  # Aggregate by hour
-            interval = timedelta(hours=1)
-            time_format = "%Y-%m-%d %H"
-        elif days in [7, 30]:  # Aggregate by day
-            interval = timedelta(days=1)
-            time_format = "%Y-%m-%d"
-        elif days == 365:  # Aggregate by month
-            interval = timedelta(days=30)  # Approximate month duration
-            time_format = "%Y-%m"
-        else:
-            # If an unsupported 'days' value is provided, default to hourly aggregation
-            interval = timedelta(hours=1)
-            time_format = "%Y-%m-%d %H"
+        if not times or not values:
+            return [], []
         
-        # Group data by the specified time period (hour, day, or month)
-        aggregated_times = []
-        aggregated_values = []
+        # If we have few points, no need to downsample
+        if len(times) <= max_points:
+            return list(times), list(values)
         
-        # Initialize variables for the aggregation
-        current_group = []
-        group_start_time = times[0]
-
-        for time, value in zip(times, values):
-            # Determine the group for this data point
-            group_key = time.strftime(time_format)
+        # Adjust max_points based on time range
+        if days == 1:
+            max_points = 24  # For 1 day, show up to 24 points (hourly)
+        elif days == 7:
+            max_points = 7 * 4  # For 1 week, show up to 28 points (4 per day)
+        elif days == 30:
+            max_points = 30  # For 1 month, show daily points
+        elif days == 365:
+            max_points = 12  # For 1 year, show monthly points
+        
+        # For simple downsampling on small datasets, use linear spacing
+        if len(times) <= max_points * 2:
+            indices = np.linspace(0, len(times) - 1, max_points, dtype=int)
+            return [times[i] for i in indices], [values[i] for i in indices]
+        
+        # For larger datasets, use time-based aggregation
+        result_times = []
+        result_values = []
+        
+        if days == 1:
+            # For 1 day, aggregate by hour
+            by_hour = {}
+            for t, v in zip(times, values):
+                hour_key = t.replace(minute=0, second=0, microsecond=0)
+                if hour_key in by_hour:
+                    by_hour[hour_key].append(v)
+                else:
+                    by_hour[hour_key] = [v]
             
-            if not current_group:
-                current_group.append(value)
-            elif time - group_start_time <= interval:
-                current_group.append(value)
-            else:
-                # Aggregate the current group
-                aggregated_times.append(group_start_time)
-                aggregated_values.append(np.mean(current_group))  # Use the mean as "average"
-                
-                # Start a new group
-                current_group = [value]
-                group_start_time = time
+            for hour, vals in sorted(by_hour.items()):
+                result_times.append(hour)
+                result_values.append(np.mean(vals))
         
-        # Add the last group
-        if current_group:
-            aggregated_times.append(group_start_time)
-            aggregated_values.append(np.mean(current_group))
+        elif days == 7:
+            # For 7 days, aggregate by 6-hour periods
+            by_period = {}
+            for t, v in zip(times, values):
+                # Round to nearest 6-hour period
+                hour = t.hour
+                period_hour = (hour // 6) * 6
+                period_key = t.replace(hour=period_hour, minute=0, second=0, microsecond=0)
+                if period_key in by_period:
+                    by_period[period_key].append(v)
+                else:
+                    by_period[period_key] = [v]
+            
+            for period, vals in sorted(by_period.items()):
+                result_times.append(period)
+                result_values.append(np.mean(vals))
         
-        # Downsample if the number of points exceeds max_points
-        if len(aggregated_values) > max_points:
-            interval = len(aggregated_values) // max_points
-            aggregated_times = aggregated_times[::interval]
-            aggregated_values = aggregated_values[::interval]
+        elif days == 30:
+            # For 30 days, aggregate by day
+            by_day = {}
+            for t, v in zip(times, values):
+                day_key = t.replace(hour=0, minute=0, second=0, microsecond=0)
+                if day_key in by_day:
+                    by_day[day_key].append(v)
+                else:
+                    by_day[day_key] = [v]
+            
+            for day, vals in sorted(by_day.items()):
+                result_times.append(day)
+                result_values.append(np.mean(vals))
         
-        return aggregated_times, aggregated_values
+        elif days == 365:
+            # For 365 days, aggregate by month
+            by_month = {}
+            for t, v in zip(times, values):
+                month_key = t.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                if month_key in by_month:
+                    by_month[month_key].append(v)
+                else:
+                    by_month[month_key] = [v]
+            
+            for month, vals in sorted(by_month.items()):
+                result_times.append(month)
+                result_values.append(np.mean(vals))
+        
+        # If we still have too many points after aggregation, downsample
+        if len(result_times) > max_points:
+            indices = np.linspace(0, len(result_times) - 1, max_points, dtype=int)
+            result_times = [result_times[i] for i in indices]
+            result_values = [result_values[i] for i in indices]
+        
+        self.logger.info(f"Downsampled {len(times)} points to {len(result_times)} points for {days} days view")
+        return result_times, result_values
 
 if __name__ == '__main__':
     try:
@@ -235,4 +357,4 @@ if __name__ == '__main__':
             file.write(f"Crashed at : {date}")
             file.write(f"Unexpected error: {e}")
         print("EXITING...")
-        sys.exit(1) 
+        sys.exit(1)
