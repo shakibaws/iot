@@ -320,27 +320,27 @@ async def button(update: Update, context):
                     )
                 case 'hourssun':
                     await update.callback_query.message.reply_text(
-                        text="☀️ *Edit Minimum Hours of Light*\n\nInsert the new value. [*Min*: 1, *Max*: 24]",
+                        text="☀️ *Edit Minimum Hours of Light*\n\nInsert the new value in Hours.\n\n Range: \\[*Min*: 1, *Max*: 24\\]",
                         parse_mode="Markdown"
                     )
                 case 'minsoilmoisture':                    
                     await update.callback_query.message.reply_text(
-                        text="💧 *Edit Minimum Soil Moisture*\n\nInsert the new value in %. [*Min*: 10, *Max*: 90]",
+                        text="💧 *Edit Minimum Soil Moisture*\n\nInsert the new value in %.\n\n Range: \\[*Min*: 10, *Max*: 90\\]",
                         parse_mode="Markdown"
                     )
                 case 'maxsoilmoisture':
                     await update.callback_query.message.reply_text(
-                        text="🌊 *Edit Maximum Soil Moisture*\n\nInsert the new value in %. [*Min*: 10, *Max*: 90]",
+                        text="🌊 *Edit Maximum Soil Moisture*\n\nInsert the new value in %.\n\n Range: \\[*Min*: 10, *Max*: 90\\]",
                         parse_mode="Markdown"
                     )
                 case 'mintemperature':                    
                     await update.callback_query.message.reply_text(
-                        text="🌡️ *Edit Minimum Temperature*\n\nInsert the new value in °C. [*Min*: 0, *Max*: 50]",
+                        text="🌡️ *Edit Minimum Temperature*\n\nInsert the new value in °C.\n\n Range: \\[*Min*: 0, *Max*: 50\\]",
                         parse_mode="Markdown"
                     )
                 case 'maxtemperature':
                     await update.callback_query.message.reply_text(
-                        text="🔥 *Edit Maximum Temperature*\n\nInsert the new value in °C. [*Min*: 0, *Max*: 50]",
+                        text="🔥 *Edit Maximum Temperature*\n\nInsert the new value in °C.\n\n Range: \\[*Min*: 0, *Max*: 50\\]",
                         parse_mode="Markdown"
                     )
         elif query.data == 'add_vase':
@@ -385,18 +385,19 @@ async def vase_details(update: Update, context, device_id: str):
                 # Update the buttons with emojis and improve formatting
                 keyboard = [
                     [
-                        InlineKeyboardButton(f"🌡️ Temperature: {temperature}°C", callback_data=f'details_temperature_{channel_id}')],
+                        InlineKeyboardButton(f"🌡️ Temperature: {float(temperature):.2f} °C", callback_data=f'details_temperature_{channel_id}')],
                     [
-                        InlineKeyboardButton(f"☀️ Light: {light_level}lx", callback_data=f'details_light_{channel_id}')
+                        InlineKeyboardButton(f"☀️ Light: {float(light_level):.2f} lx", callback_data=f'details_light_{channel_id}')
                     ],
                     [
                         InlineKeyboardButton(f"💧 Watertank: {watertank_level}%", callback_data=f'details_watertank_{channel_id}')],
                     [
-                        InlineKeyboardButton(f"🌱 Soil Moisture: {soil_moisture}%", callback_data=f'details_soil_{channel_id}')
+                        InlineKeyboardButton(f"🌱 Soil Moisture: {float(soil_moisture):.2f}%", callback_data=f'details_soil_{channel_id}')
                     ],
                     [InlineKeyboardButton("⚙️ Edit Vase", callback_data=f'edit_vase_{device_id}')],
                     [InlineKeyboardButton("🔙 Go Back", callback_data='vase_list')]
                 ]
+
 
             reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -569,7 +570,8 @@ async def handle_photo(update: Update, context: CallbackContext):
                                             f"  - 💧 *Soil Moisture*: {chat_response['soil_moisture_min']}% to {chat_response['soil_moisture_max']}%\n"
                                             f"  - ☀️ *Light Level*: {chat_response['hours_sun_suggested']} hours/day\n\n"
                                             f"💡 *Suggestions*: {chat_response['description']}\n\n"
-                                            f"Thank you for adding a new plant to your vase! 🌿"
+                                            f"Thank you for adding a new plant to your vase! 🌿",
+                                            parse_mode='Markdown'
                                         )
 
                                     else:
@@ -620,10 +622,12 @@ if __name__ == '__main__':
         main(TOKEN)
     except Exception as e:
         print("ERROR OCCUREDD, DUMPING INFO...")
+        '''
         path = os.path.abspath('/app/logs/ERROR_telegrambot.err')
         with open(path, 'a') as file:
             date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             file.write(f"Crashed at : {date}")
             file.write(f"Unexpected error: {e}")
+        '''
         print("EXITING...")
         sys.exit(1) 
