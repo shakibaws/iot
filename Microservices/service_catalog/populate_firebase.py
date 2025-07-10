@@ -5,7 +5,7 @@ import json
 # Initialize Firebase with the private key
 cred = credentials.Certificate("firebase_key.json")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://iot-vase-default-rtdb.europe-west1.firebasedatabase.app/'
+    'databaseURL': 'https://iotvase-default-rtdb.europe-west1.firebasedatabase.app/'
 })
 
 # Load the JSON data (replace with your sample file)
