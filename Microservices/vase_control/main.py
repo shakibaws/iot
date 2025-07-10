@@ -37,7 +37,7 @@ class vaseControl:
         # follow public ip changement for mqtt broker
         while True:
             time.sleep(60)
-            res = requests.get("http://serviceservice.duck.pictures/mqtt").text
+            res = requests.get("http://0.0.0.0:5001/mqtt").text
             res = res.replace('"', '')
             if res != broker:
                 print("Stopping simulation...")
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     try:
         # Get the service catalog
      
-        service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
+        service_catalog = requests.get("http://0.0.0.0:5001/all").json()
         
         topicSensors = service_catalog["mqtt_topics"]["topic_sensors"]
         topicActuators = service_catalog["mqtt_topics"]["topic_actuators"]
@@ -128,6 +128,7 @@ if __name__ == "__main__":
         resource_catalog = service_catalog["services"]["resource_catalog"]
         broker = service_catalog["mqtt_broker"]["broker_address"]
         port = service_catalog["mqtt_broker"]["port"]
+
 
         logger.info(f"Starting service. The parameters are: topicSensors: {str(topicSensors)}, topicActuators: {str(topicActuators)}, topic_telegram_chat: {topic_telegram_chat}, resource_catalog: {resource_catalog}")
         controller = vaseControl(clientID, broker, port, topicSensors, topicActuators, topic_telegram_chat, resource_catalog)
@@ -150,7 +151,7 @@ if __name__ == "__main__":
         logger.error("Stopping simulation...")
         controller.stopSim()
         logger.error("ERROR OCCUREDD, DUMPING INFO...")
-        path = os.path.abspath('/app/logs/ERROR_vasecontrol.err')
+        path = './logs/ERROR_vasecontrol.err'
         with open(path, 'a') as file:
             date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             file.write(f"Crashed at : {date}")
