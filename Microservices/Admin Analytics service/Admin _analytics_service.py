@@ -15,7 +15,7 @@ class AdminAnalyticsService:
 
     def POST(self, **params):
         try:
-            self.logger.info("POST request received")
+            self.logger.info("POST request  received")
             request_body = cherrypy.request.body.read()
             data = json.loads(request_body)
             device_id = data.get("device_id")
