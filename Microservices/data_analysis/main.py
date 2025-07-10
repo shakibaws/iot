@@ -18,7 +18,7 @@ class DataAnalysis:
     def GET(self, *args, **kwargs):
         if args:
             device_id = args[0].lower()
-            # Since CherryPy is synchronous, we need to run the async function using an event loop.
+            # Since  CherryPy is synchronous, we need to run the async function using an event loop.
             #This allows you to use an async function (get_from_thingspeak) inside a normal synchronous function
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
