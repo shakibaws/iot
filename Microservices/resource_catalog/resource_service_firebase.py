@@ -16,7 +16,7 @@ class CatalogExpose:
     def __init__(self):
         cred = credentials.Certificate("firebase_key.json")
         firebase_admin.initialize_app(cred, {
-            'databaseURL': 'https://iot-vase-default-rtdb.europe-west1.firebasedatabase.app/' 
+            'databaseURL': 'https://iotvase-default-rtdb.europe-west1.firebasedatabase.app' 
         })
         self.firebase_ref = db.reference('resource_catalog/')
         self.logger = CustomerLogger.CustomLogger("resource_service", "user_id_test")
@@ -247,7 +247,7 @@ if __name__ == '__main__':
         }
         cherrypy.config.update({
             'server.socket_host': '0.0.0.0',
-            'server.socket_port': 5000  # Specify your desired port here
+            'server.socket_port': 5002  # Specify your desired port here
         })
         cherrypy.tree.mount(catalog, '/', conf)
         cherrypy.engine.start()
