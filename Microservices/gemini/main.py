@@ -62,6 +62,7 @@ if __name__ == '__main__':
         cherrypy.engine.start()
         cherrypy.engine.block()
     except Exception as e:
+        print(e)
         print("ERROR OCCUREDD, DUMPING INFO...")
         path = os.path.abspath('/app/logs/ERROR_gemini.err')
         with open(path, 'a') as file:
@@ -70,3 +71,5 @@ if __name__ == '__main__':
             file.write(f"Unexpected error: {e}")
         print("EXITING...")
         sys.exit(1) 
+
+    

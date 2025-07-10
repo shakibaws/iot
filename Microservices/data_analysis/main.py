@@ -19,6 +19,7 @@ class DataAnalysis:
         if args:
             device_id = args[0].lower()
             # Since CherryPy is synchronous, we need to run the async function using an event loop.
+            #This allows you to use an async function (get_from_thingspeak) inside a normal synchronous function
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             vase_data = loop.run_until_complete(self.get_from_thingspeak(device_id))
@@ -46,6 +47,8 @@ class DataAnalysis:
         if not channel or not vase:
             return {"error": "Device or vase not found"}
 
+        #it prepares a dictionary vase_data 
+        #where it will later store the temperature, light, moisture, and water level info.
         vase_data = {
             "temperature_alert": "",
             "soil_moisture_alert": "",
@@ -54,6 +57,7 @@ class DataAnalysis:
         }
 
         # Fetch the latest data from ThingSpeak
+        #Give me the most recent data from this device’s channel.
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://api.thingspeak.com/channels/{str(channel)}/feeds.json?results=1") as resp:
                 res = await resp.json()

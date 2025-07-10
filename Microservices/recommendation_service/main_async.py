@@ -23,7 +23,11 @@ class API:
     def GET(self):
         return 'GET successfully'
     
+    #This function is asynchronous, meaning it can wait for things like network requests without blocking the whole program.
     async def process_images(self, images):
+        #creates a form to send files (like images) over the internet using aiohttp.
+        #A form is a way to send data and files (like images or documents) over the internet 
+        #just like when you upload a photo on a website.
         form_data = aiohttp.FormData()
         for image in images:
             if not image.file:
@@ -33,6 +37,7 @@ class API:
             form_data.add_field('images', image_data, filename="image.jpg", content_type='image/jpeg')
 
         # Effettua la richiesta POST asincrona
+        #creating a session, which is like opening a browser tab to talk to a website.
         async with aiohttp.ClientSession() as session:
             async with session.post(self.image_recognition_service, data=form_data) as response:
                 try:
@@ -40,6 +45,7 @@ class API:
                         self.logger.error("No images provided")
                         raise cherrypy.HTTPError(response.status, 'Error in the API request')
                     
+                    #Read the response from the recognition service and turn it into a Python dictionary.
                     json_result = json.loads(await response.text())
                     
                     if 'result' in json_result:
@@ -69,9 +75,14 @@ class API:
                     self.logger.error(f"Error in requests: {e}")
                     raise cherrypy.HTTPError(500, e)
 
-    def POST(self, **params):
+
+    #someone sends a POST request to the API (e.g., uploads an image).
+    def POST(self, **params):           #**params contains the data sent in the request — like form fields or images.
         self.logger.info("POST request received")
         
+
+        #This checks if params['images'] is a single image or a list of images.
+        #If it’s a single image, it wraps it in a list.
         if not isinstance(params['images'], list):
             params['images'] = [params['images']]
 
@@ -104,6 +115,7 @@ if __name__ == '__main__':
         cherrypy.engine.start()
         cherrypy.engine.block()
     except Exception as e:
+        print(e)
         print("ERROR OCCUREDD, DUMPING INFO...")
         path = os.path.abspath('/app/logs/ERROR_recommendationservice.err')
         with open(path, 'a') as file:

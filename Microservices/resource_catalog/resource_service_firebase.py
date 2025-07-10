@@ -16,7 +16,7 @@ class CatalogExpose:
     def __init__(self):
         cred = credentials.Certificate("firebase_key.json")
         firebase_admin.initialize_app(cred, {
-            'databaseURL': 'https://smartvase-effeb-default-rtdb.europe-west1.firebasedatabase.app' 
+            'databaseURL': 'https://iot-vase-default-rtdb.europe-west1.firebasedatabase.app/' 
         })
         self.firebase_ref = db.reference('resource_catalog/')
         self.logger = CustomerLogger.CustomLogger("resource_service", "user_id_test")

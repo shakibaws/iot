@@ -42,10 +42,12 @@ class Db_Mqtt_Adaptor:
                 print("New address detected, restarting...")
                 sys.exit(1)   
 
+    #receiving massages
     def notify(self,topic,payload):
         self._message_arrived=True
         try:
             data = json.loads(payload)
+            #only respond to messages meant for this adaptor.
             if data['target'] == 1:
                 print("target 1 detected")
                 # topic -> "smartplant/<device_id>/actuators/<actuator>"
@@ -60,7 +62,7 @@ class Db_Mqtt_Adaptor:
 
     def startSim(self):
         print("connecting mqtt...")
-        self.adapter.mySubscribe(self.topic_sub)
+        self.adapter.mySubscribe(self.topic_sub) #tells the client which topic to listen on
         time.sleep(1)
         self.adapter.connect()
         time.sleep(15)
@@ -74,6 +76,8 @@ class Db_Mqtt_Adaptor:
 
     def pusher(self, device_id, actuator):
         try:
+            #Build URL for posting data:
+            #<resource_catalog>/postData/<vase_id>/<actuator>
             vase = requests.get(self.resource_catalog + '/vaseByDevice/' + device_id).json()
         except requests.exceptions.ConnectionError:
             self.logger.error("Connection error occurred. Please check the network.")

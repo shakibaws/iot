@@ -25,7 +25,8 @@ no_vase_found_message = None
 vase_found_message = None
 logger = CustomerLogger.CustomLogger(service_name="telegram_bot")
 
-
+#lets the bot handle many users and requests concurrently 
+#without spawning threads or freezing while waiting for network responses
 async def start(update: Update, context: CallbackContext) -> None:
     welcome_message = await update.message.reply_text(
         "*Welcome to the Smart Vase bot assistance!*\n"
@@ -621,6 +622,7 @@ if __name__ == '__main__':
             raise ValueError("TOKEN is missing from environment variables")
         main(TOKEN)
     except Exception as e:
+        print(e)
         print("ERROR OCCUREDD, DUMPING INFO...")
         '''
         path = os.path.abspath('/app/logs/ERROR_telegrambot.err')

@@ -53,7 +53,7 @@ class ServiceCatalogExpose:
 
 if __name__ == '__main__':
     try:
-        serviceCatalog = ServiceCatalogExpose('https://smartvase-effeb-default-rtdb.europe-west1.firebasedatabase.app')
+        serviceCatalog = ServiceCatalogExpose('https://iot-vase-default-rtdb.europe-west1.firebasedatabase.app/')
         conf = {
             '/': {
                 'request.dispatch': cherrypy.dispatch.MethodDispatcher(),

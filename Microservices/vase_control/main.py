@@ -45,6 +45,7 @@ class vaseControl:
                 print("New address detected, restarting...")
                 sys.exit(1)   
 
+    #Called by your MQTT client whenever a new message arrives.
     def notify(self,topic,payload):
         self._message_arrived = True
         data = json.loads(payload)
@@ -53,7 +54,8 @@ class vaseControl:
         device_id = topic.split('/')[1]
         self.controller(data, device_id)
 
-        
+
+    #subscribes to sensor topics, connects to broker, waits briefly, then starts the MQTT loop        
     def startSim(self):
         print("connecting mqtt...")
         self.control.mySubscribe(self.topic_sub)
@@ -67,6 +69,7 @@ class vaseControl:
         self.control.unsubscribe()
         self.control.stop()
 
+    #called whenever a new batch of sensor readings (data) arrives for a particular device (device_id)
     def controller(self, data, device_id):
         publisher = self.topic_pub.replace("device_id", device_id)
         try:
