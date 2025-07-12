@@ -62,8 +62,9 @@ class API:
                         # Richiesta al servizio di chat
                         async with session.post(self.chat_service, json=req) as chat_response:
                             self.logger.info("Asking gemini")                        
-                            
+                            print(f"chat_response: {chat_response}")
                             res = await chat_response.json()
+                            print(f"res: {res}")
                             return res
                     else:
                         self.logger.error("API failed: impossible to find 'result' in the recognition service repsonse")
@@ -96,7 +97,7 @@ class API:
 
 if __name__ == '__main__':
     try:
-        res = requests.get("https://serviceservice.duck.pictures/all").json()
+        res = requests.get("http://0.0.0.0:5001/all").json()
 
         conf = {
             '/':{
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         }
         cherrypy.config.update({
         'server.socket_host': '0.0.0.0',
-            'server.socket_port': 8081  # Specifica la porta desiderata
+            'server.socket_port': 5005 
         })
         
         webService = API(res['services']['image_recognition'], res['services']['gemini']+'/chat')
@@ -115,12 +116,13 @@ if __name__ == '__main__':
         cherrypy.engine.start()
         cherrypy.engine.block()
     except Exception as e:
-        print(e)
         print("ERROR OCCUREDD, DUMPING INFO...")
-        path = os.path.abspath('/app/logs/ERROR_recommendationservice.err')
-        with open(path, 'a') as file:
-            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-            file.write(f"Crashed at : {date}")
-            file.write(f"Unexpected error: {e}")
+        # path = os.path.abspath('/app/logs/ERROR_recommendationservice.err')
+        # with open(path, 'a') as file:
+        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        #     file.write(f"Crashed at : {date}")
+        #     file.write(f"Unexpected error: {e}")
+        print(e)
+
         print("EXITING...")
         sys.exit(1) 
