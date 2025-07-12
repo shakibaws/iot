@@ -1,47 +1,39 @@
 {
-    "device": {
-        "device_id": "0238402938",
-        "sensors": [
-            "soil_moisture",
-            "watertank_level",
-            "temperature",
-            "light_level"
-        ],
-        "actuators": [
-            "light_level",
-            "soil_moisture"
-        ],
-        "available_services": [
-            "MQTT"
-        ],
-        "configurations":[
-            {"watertank_height_cm":15}
-        ]
-    },
-    "pinout": {
-        "sensors": [
-            {
-                "name": "soil_moisture",
-                "pin": 34
-            },
-            {
-                "name": "watertank_level",
-                "pin": [12,13]
-            },
-            {
-                "name": "temperature",
-                "pin": 33
-            },
-            {
-                "name": "light_level",
-                "pin": 32
-            }
-        ],
-        "actuators": [
-            {
-                "name": "water_pump",
-                "pin": 26
-            }
-        ]
-    }
+  "device": {
+    "sensors": [
+      "soil_moisture",
+      "watertank_level",
+      "temperature",
+      "light_level"
+    ],
+    "actuators": ["light_level", "soil_moisture"],
+    "available_services": ["MQTT"],
+    "configurations": [{ "watertank_height_cm": 15 }]
+  },
+  "pinout": {
+    "sensors": [
+      {
+        "name": "soil_moisture",
+        "pin": 34
+      },
+      {
+        "name": "watertank_level",
+        "pin": [12, 13]
+      },
+      {
+        "name": "temperature",
+        "pin": 33
+      },
+      {
+        "name": "light_level",
+        "pin": 32
+      }
+    ],
+    "actuators": [
+      {
+        "name": "water_pump",
+        "pin": 26
+      }
+    ]
+  }
 }

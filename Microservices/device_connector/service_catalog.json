@@ -1,0 +1,19 @@
+{
+  "mqtt_broker": {
+    "broker_address": "5.95.152.24",
+    "broker_websocket": "broker.duck.pictures",
+    "port": 1883,
+    "port_websocket": 8080
+  },
+  "mqtt_topics": {
+    "topic_actuators": "smartplant/device_id/actuators",
+    "topic_sensors": "smartplant/+/sensors",
+    "topic_telegram_chat": "smartplant/telegram/telegram_chat_id"
+  },
+  "services": {
+    "chart_service": "https://chartservice.duck.pictures",
+    "data_analysis": "http://0.0.0.0:5003",
+    "gemini": "https://chat.duck.pictures",
+    "resource_catalog": "http://0.0.0.0:5002"
+  }
+}
