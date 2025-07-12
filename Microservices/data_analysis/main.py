@@ -132,7 +132,7 @@ class DataAnalysis:
 
 if __name__ == '__main__':
     try:
-        res = requests.get("https://serviceservice.duck.pictures").json()
+        res = requests.get("http://localhost:5001").json()
         dataAnalysis = DataAnalysis(res)
 
         conf = {
@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
         cherrypy.config.update({
             'server.socket_host': '0.0.0.0',
-            'server.socket_port': 5082  # Specify your desired port here
+            'server.socket_port': 5003  # Specify your desired port here
         })
 
         cherrypy.tree.mount(dataAnalysis, '/', conf)
@@ -152,10 +152,10 @@ if __name__ == '__main__':
         cherrypy.engine.block()
     except Exception as e:
         print("ERROR OCCUREDD, DUMPING INFO...")
-        path = os.path.abspath('/app/logs/ERROR_dataanalisys.err')
-        with open(path, 'a') as file:
-            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-            file.write(f"Crashed at : {date}")
-            file.write(f"Unexpected error: {e}")
+        # path = os.path.abspath('/app/logs/ERROR_dataanalisys.err')
+        # with open(path, 'a') as file:
+        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        #     file.write(f"Crashed at : {date}")
+        #     file.write(f"Unexpected error: {e}")
         print("EXITING...")
         sys.exit(1) 
