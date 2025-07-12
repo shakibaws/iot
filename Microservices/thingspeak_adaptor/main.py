@@ -34,7 +34,7 @@ class ThingspeakAdaptor:
         # follow public ip changement for mqtt broker
         while True:
             time.sleep(60)
-            res = requests.get("http://serviceservice.duck.pictures/mqtt").text
+            res = requests.get("http://0.0.0.0:5001/mqtt").text
             res = res.replace('"', '')
             if res != broker:
                 print("Stopping simulation...")
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         go = False
         while not go:
             try:
-                service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
+                service_catalog = requests.get("http://0.0.0.0:5001/all").json()
                 print("Service get")
                 go = True
             except requests.exceptions.RequestException as e:
@@ -162,10 +162,11 @@ if __name__ == '__main__':
         logger.error("Stopping simulation...")
         adapter.stopSim()
         logger.error("ERROR OCCUREDD, DUMPING INFO...")
-        path = os.path.abspath('/app/logs/ERROR_thingspeakadaptor.err')
-        with open(path, 'a') as file:
-            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-            file.write(f"Crashed at : {date}")
-            file.write(f"Unexpected error: {e}")
+        # path = os.path.abspath('/app/logs/ERROR_thingspeakadaptor.err')
+        # with open(path, 'a') as file:
+        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        #     file.write(f"Crashed at : {date}")
+        #     file.write(f"Unexpected error: {e}")
+        print(e)
         logger.error("EXITING...")
         sys.exit(1)   
