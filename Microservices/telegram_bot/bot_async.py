@@ -376,15 +376,16 @@ async def vase_details(update: Update, context, device_id: str):
             vase = await res.json()
         
         channel_id = dev['channel_id']
-        
         if vase:
+            print(f"vase details: {vase}")
             async with aiohttp.ClientSession() as session:
                 response = await session.get(f"{data_analysis_service}/{str(device_id)}")
                 res = json.loads(await response.text())
-                temperature = res['temperature']
-                light_level = res['light_level']
-                watertank_level = res['watertank_level']
-                soil_moisture = res['soil_moisture']
+                print(f"response: {res}")
+                temperature = res.get('temperature', 0)
+                light_level = res.get('light_level', 0)
+                watertank_level = res.get('watertank_level', 0)
+                soil_moisture = res.get('soil_moisture', 0)
 
                 # Update the buttons with emojis and improve formatting
                 keyboard = [
