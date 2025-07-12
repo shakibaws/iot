@@ -16,7 +16,7 @@ import datetime
 import sys
 
 resource_catalog_address = ''
-service_expose_endpoint = 'http://serviceservice.duck.pictures'
+service_expose_endpoint = 'http://0.0.0.0:5001'
 vase_list = []
 device_list = []
 current_context = None
@@ -132,7 +132,7 @@ async def add_vase(update: Update, context):
     instructions = (
         "🛠️ *Follow these steps to add a new Smart Vase:*\n\n" +
         "1️⃣ *Turn on* the vase and your phone's Wi-Fi.\n" +
-        f"2️⃣ *Connect* to the 'SmartVase' network and click [here](http://192.168.4.1/?user_id={current_user['user_id']}).\n" +
+        f"2️⃣ *Connect* to the 'SmartVase' network and click [here](http://0.0.0.0:5004/?user_id={current_user['user_id']}).\n" +
         "3️⃣ *Reconnect* to the internet and check your vase list."
     )
     if update.callback_query:
@@ -174,12 +174,13 @@ async def get_user_vase_list(update: Update, context):
                 keyboard_list = []
                 print('User has some devices')
                 for dev in device_list:
-                    print(dev)
                     name = "🌸 Vase " + dev['device_id']
                     vase = find_device_in_list_via_device_id(dev['device_id'], vase_list)
                     if vase:
+                        print(f"vase found : {vase}")
                         name = f"🌿 {vase['vase_name']}"
                     callback_data = f'vase_info_{dev["device_id"]}'
+                   
                     keyboard_list.append([InlineKeyboardButton(name, callback_data=callback_data)])            
                 if update.callback_query:
                     message = update.callback_query.message
@@ -360,8 +361,9 @@ async def button(update: Update, context):
 def find_device_in_list_via_device_id(device_id, item_list):
     for item in item_list:
         if item['device_id'] == device_id:
-            return item  # Restituisce l'oggetto dispositivo se trovato
-    return None  # Restituisce None se non trovato
+            print(f"item found: {item}")
+            return item  
+    return None  
 
 async def vase_details(update: Update, context, device_id: str):
     try:
@@ -372,6 +374,7 @@ async def vase_details(update: Update, context, device_id: str):
             dev = await res.json()
             res = await session.get(f"{resource_catalog_address}/vaseByDevice/{device_id}")
             vase = await res.json()
+        
         channel_id = dev['channel_id']
         
         if vase:
@@ -615,8 +618,8 @@ if __name__ == '__main__':
     try:
         load_dotenv()
 
-        TOKEN = os.getenv("TOKEN")
-
+        # TOKEN = os.getenv("TOKEN")
+        TOKEN = "7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE"
         if not TOKEN:
             #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
             raise ValueError("TOKEN is missing from environment variables")
