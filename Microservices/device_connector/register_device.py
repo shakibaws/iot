@@ -79,27 +79,28 @@ class DeviceRegistrationService:
             max_device_num = 0
             for device in devices:
                 device_id = device.get("device_id", "")
-                if device_id.startswith("device_"):
+                if device_id.startswith("device") and len(device_id) > 6:
                     try:
-                        # Extract number from device_id like "device_1", "device_2", etc.
-                        device_num = int(device_id.split("_")[1])
+                        # Extract number from device_id like "device1", "device2", etc.
+                        device_num_str = device_id[6:]  # Remove "device" prefix
+                        device_num = int(device_num_str)
                         max_device_num = max(max_device_num, device_num)
-                    except (IndexError, ValueError):
+                    except ValueError:
                         # Skip devices with unexpected ID format
                         continue
             
-            next_device_id = f"device_{max_device_num + 1}"
+            next_device_id = f"device{max_device_num + 1}"
             self.logger.info(f"Next device ID will be: {next_device_id}")
             return next_device_id
             
         except requests.RequestException as e:
             self.logger.error(f"Error fetching devices list: {e}")
             # Fallback to default if we can't fetch the list
-            return "device_1"
+            return "device1"
         except Exception as e:
             self.logger.error(f"Unexpected error determining next device ID: {e}")
             # Fallback to default if something goes wrong
-            return "device_1"
+            return "device1"
 
     def register_device_with_catalog(self, user_id):
         """Register device with resource catalog"""
