@@ -27,7 +27,7 @@ load_dotenv()
 #It prevents unauthorized users from using the API
 
 
-API_KEY = os.getenv("API_KEY")
+API_KEY = "2b10lTgEgZpldkgnQzUJdIjcb"
 
 service_name = "image_recognition"
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
         }
         cherrypy.config.update({
         'server.socket_host': '0.0.0.0',
-            'server.socket_port': 8085  # Specify your desired port here
+            'server.socket_port': 5006  # Specify your desired port here
         })
         webService=API()
         cherrypy.tree.mount(webService, '/', conf)
@@ -153,10 +153,11 @@ if __name__ == '__main__':
         cherrypy.engine.block()
     except Exception as e:
         print("ERROR OCCUREDD, DUMPING INFO...")
-        path = os.path.abspath('/app/logs/ERROR_imagerecognition.err')
-        with open(path, 'a') as file:
-            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-            file.write(f"Crashed at : {date}")
-            file.write(f"Unexpected error: {e}")
+        # path = os.path.abspath('/app/logs/ERROR_imagerecognition.err')
+        # with open(path, 'a') as file:
+        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        #     file.write(f"Crashed at : {date}")
+        #     file.write(f"Unexpected error: {e}")
+        print(e)
         print("EXITING...")
         sys.exit(1) 
