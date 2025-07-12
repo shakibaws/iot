@@ -114,8 +114,8 @@ class CatalogExpose:
                     print("User exist")
                     url = "https://api.thingspeak.com/channels.json"
                     data = {
-                        'api_key': 'G1PY1LU9KSDV5LEB',
-                        'name': 'test_channel3',
+                        'api_key': 'GHTRZQWCOGMCHXHE',
+                        'name': device['device_id'],
                         'public_flag': 'true',  
                         'field1': 'temperature',
                         'field2': 'soil_moisture',
