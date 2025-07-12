@@ -12,7 +12,7 @@ class Gemini_service:
     exposed = True
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-pro', generation_config={"response_mime_type": "application/json"})
+        self.model = genai.GenerativeModel('gemini-2.0-flash', generation_config={"response_mime_type": "application/json"})
         self.logger = CustomerLogger.CustomLogger("gemini_service")
 
     @cherrypy.tools.json_in()
@@ -38,12 +38,10 @@ if __name__ == '__main__':
     try:
         load_dotenv()
 
-        API_KEY = os.getenv("API_KEY")
+        API_KEY = "AIzaSyAL4kZRXvdCh-rsbrki7iKTsDP_2wdQSDY"
 
-        service_name = "image_recognition"
 
         if not API_KEY:
-            #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
             raise ValueError("API_KEY is missing from environment variables")
         
         gemini = Gemini_service(API_KEY)
@@ -56,19 +54,19 @@ if __name__ == '__main__':
             }
         cherrypy.config.update({
             'server.socket_host': '0.0.0.0',
-            'server.socket_port': 5151  # Specify your desired port here
+            'server.socket_port': 5007  # Specify your desired port here
         })
         cherrypy.tree.mount(gemini, '/', conf)
         cherrypy.engine.start()
         cherrypy.engine.block()
     except Exception as e:
-        print(e)
         print("ERROR OCCUREDD, DUMPING INFO...")
-        path = os.path.abspath('/app/logs/ERROR_gemini.err')
-        with open(path, 'a') as file:
-            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-            file.write(f"Crashed at : {date}")
-            file.write(f"Unexpected error: {e}")
+        # path = os.path.abspath('/app/logs/ERROR_gemini.err')
+        # with open(path, 'a') as file:
+        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        #     file.write(f"Crashed at : {date}")
+        #     file.write(f"Unexpected error: {e}")
+        print(e)
         print("EXITING...")
         sys.exit(1) 
 
