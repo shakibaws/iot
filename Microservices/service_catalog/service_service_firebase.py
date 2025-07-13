@@ -69,11 +69,11 @@ if __name__ == '__main__':
         cherrypy.engine.block()
     except Exception as e:
         print("ERROR OCCUREDD, DUMPING INFO...")
-        path = os.path.abspath('./logs/ERROR_servicecatalog.err')
-        with open(path, 'a') as file:
-            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-            file.write(f"Crashed at : {date}")
-            file.write(f"Unexpected error: {e}")
-        print("EXITING...")
+        # path = os.path.abspath('./logs/ERROR_servicecatalog.err')
+        # with open(path, 'a') as file:
+        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        #     file.write(f"Crashed at : {date}")
+        #     file.write(f"Unexpected error: {e}")
         print(e)
+        print("EXITING...")
         sys.exit(1) 
