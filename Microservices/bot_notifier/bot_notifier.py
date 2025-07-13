@@ -45,7 +45,7 @@ class TelegramNotifier:
         # follow public ip changement for mqtt broker
         while True:
             time.sleep(60)
-            res = requests.get("http://serviceservice.duck.pictures/mqtt").text
+            res = requests.get("http://0.0.0.0:5001/mqtt").text
             res = res.replace('"', '')
             if res != broker:
                 print("Stopping simulation...")
@@ -65,8 +65,8 @@ class TelegramNotifier:
         asyncio.run_coroutine_threadsafe(self.notifier(data, telegram_chat), self.loop)
 
     async def notifier(self, data, telegram_chat):
-        if data.get("watertank"):  # Check if watertank_level is present and non-empty
-            name = data['watertank']
+        if data.get("watertank_level"):  # Check if watertank_level is present and non-empty
+            name = data['watertank_level']
             if self.watertank.get(telegram_chat, {}):
                 last_notified_time = self.watertank[telegram_chat].get('date')
                 # Parse or make sure 'date' is a datetime object
@@ -129,7 +129,8 @@ if __name__ == "__main__":
     try:
         load_dotenv()
 
-        TOKEN = os.getenv("TOKEN")
+        # TOKEN = os.getenv("TOKEN")
+        TOKEN = "7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE"
 
         if not TOKEN:
             #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
@@ -137,7 +138,7 @@ if __name__ == "__main__":
 
 
         #get al service_catalog
-        service_catalog = requests.get("http://serviceservice.duck.pictures/all").json()
+        service_catalog = requests.get("http://0.0.0.0:5001/all").json()
 
         broker = service_catalog["mqtt_broker"]["broker_address"]
         port = service_catalog["mqtt_broker"]["port"]
