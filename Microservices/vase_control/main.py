@@ -83,7 +83,7 @@ class vaseControl:
     
         # If the device is not configured yet (no vase)
         if not vase:
-            self.logger.error(f"Device {device_id} is not configured yet")
+            self.logger.error(f"Device {device_id} is not configured yet") 
             return
         else:
             user_id = vase["user_id"]
@@ -109,7 +109,8 @@ class vaseControl:
                                 if c['value'] and c['value'] >= 10:
                                     self.control.myPublish(publisher+"/"+"water_pump", {"target":1}) # wet the plant
                 elif i['n'] == "watertank_level":
-                    if i['value'] and int(i['value']) < 20:
+                    if i['value'] is not None and int(i['value']) < 20:
+                        print(f"low water level: {i['value']}")
                         self.control.myPublish(telegram_chat+"/alert", {"watertank_level": vase['vase_name']})
 
 if __name__ == "__main__":
@@ -151,10 +152,11 @@ if __name__ == "__main__":
         logger.error("Stopping simulation...")
         controller.stopSim()
         logger.error("ERROR OCCUREDD, DUMPING INFO...")
-        path = './logs/ERROR_vasecontrol.err'
-        with open(path, 'a') as file:
-            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-            file.write(f"Crashed at : {date}")
-            file.write(f"Unexpected error: {e}")
+        # path = './logs/ERROR_vasecontrol.err'
+        # with open(path, 'a') as file:
+        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        #     file.write(f"Crashed at : {date}")
+        #     file.write(f"Unexpected error: {e}")
+        print(e)
         logger.error("EXITING...")
         sys.exit(1)   
