@@ -128,7 +128,7 @@ if __name__ == '__main__':
         go = False
         while not go:
             try:
-                service_catalog = requests.get("http://0.0.0.0:5001/all").json()
+                service_catalog = requests.get("http://localhost:5001/all").json()
                 print("Service get")
                 go = True
             except requests.exceptions.RequestException as e:

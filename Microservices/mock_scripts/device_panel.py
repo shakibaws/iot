@@ -1,24 +1,22 @@
-#!/usr/bin/env python3
-"""
-IoT Device Data Generator Panel
-A simple customtkinter interface for generating fake IoT device data
-"""
-
 import customtkinter as ctk
 import json
 import random
 from datetime import datetime
+import requests
+from device_simulator import DeviceSimulator
 
-# Set appearance mode and color theme
+
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 class DeviceDataPanel:
-    def __init__(self):
+    def __init__(self,device_list):
+        self.device_list = device_list
         self.root = ctk.CTk()
         self.root.title("IoT Device Data Generator")
         self.root.geometry("600x700")
         self.root.resizable(False, False)
+        self.simulator : DeviceSimulator
         
         # Device data
         self.device_id = None
@@ -49,7 +47,7 @@ class DeviceDataPanel:
         self.device_var = ctk.StringVar(value="Select Device")
         self.device_dropdown = ctk.CTkOptionMenu(
             device_frame,
-            values=["Select Device", "Device 1", "Device 2", "Device 3"],
+            values=self.device_list,
             variable=self.device_var,
             command=self.on_device_change,
             width=250
@@ -161,6 +159,10 @@ class DeviceDataPanel:
         else:
             self.device_id = choice.split()[-1]  # Extract number from "Device X"
             self.log_message(f"Selected {choice}")
+            self.simulator = DeviceSimulator(choice)
+            self.simulator.start()
+            self.log_message(f"Simulation started for {choice}")
+
         
     def log_message(self, message):
         """Add message to log"""
@@ -248,8 +250,7 @@ class DeviceDataPanel:
         water = data['e'][3]['value']
         self.log_message(f"📊 Generated {data_type} data")
         self.log_message(f"📊 T={temp}°C, SM={soil}%, L={light}lux, WT={water}%")
-        self.log_message(f"📄 Data: {json.dumps(data, indent=2)}")
-        
+        self.simulator.publish_sensor_data(data)
 
             
     def run(self):
@@ -261,7 +262,17 @@ class DeviceDataPanel:
 
 def main():
     """Main function"""
-    app = DeviceDataPanel()
+    device_list = []
+    service_catalog_url = "http://localhost:5001"
+    response = requests.get(service_catalog_url)
+    resource_catalog = response.json()["services"]["resource_catalog"]
+    print(resource_catalog)
+    response = requests.get(f"{resource_catalog}/listDevice/")
+    for device in response.json():  
+        device_list.append(device["device_id"])
+    
+    print(device_list)
+    app = DeviceDataPanel(device_list)
     app.run()
 
 
