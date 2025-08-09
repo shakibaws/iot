@@ -529,7 +529,8 @@ async def handle_photo(update: Update, context: CallbackContext):
                             except json.JSONDecodeError as json_err:
                                 await update.message.reply_text('Failed to parse the server response.')
                                 raise json_err
-
+                            if isinstance(chat_response, list):
+                                chat_response = chat_response[0]
                             # Ensure that chat_response is a valid dictionary
                             if chat_response and isinstance(chat_response, dict):
                                 print("Creating vase")
