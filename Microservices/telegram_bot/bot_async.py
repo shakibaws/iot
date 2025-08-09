@@ -120,6 +120,7 @@ async def handle_main_actions(update: Update):
     keyboard = [
     [InlineKeyboardButton("🌱 Add a new Smart Vase", callback_data='add_vase')],
     [InlineKeyboardButton("📜 See the list of connected Smart Vases", callback_data='vase_list')],
+    [InlineKeyboardButton("🏥 Identify Plant Disease", callback_data='identify_disease')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -132,7 +133,7 @@ async def add_vase(update: Update, context):
     instructions = (
         "🛠️ *Follow these steps to add a new Smart Vase:*\n\n" +
         "1️⃣ *Turn on* the vase and your phone's Wi-Fi.\n" +
-        f"2️⃣ *Connect* to the 'SmartVase' network and click [here](http://localhost:5004/?user_id={current_user['user_id']}).\n" +
+        f"2️⃣ *Connect* to the 'SmartVase' network and click [here](http://0.0.0.0:5004/?user_id={current_user['user_id']}).\n" +
         "3️⃣ *Reconnect* to the internet and check your vase list."
     )
     if update.callback_query:
@@ -355,6 +356,8 @@ async def button(update: Update, context):
             # Extract device_id from callback_data
             device_id = query.data.split('_')[2]
             await vase_details(update, context, device_id)
+        elif query.data == 'identify_disease':
+            await handle_disease_identification_request(update, context)
     except Exception as e:
             logger.error("Exception on button():" + str(e))
       
@@ -497,6 +500,21 @@ async def handle_message(update: Update, context: CallbackContext):
 
 async def handle_photo(update: Update, context: CallbackContext):
     try:
+        # Check if user is waiting for a disease identification image
+        if context.user_data.get("waiting_for_disease_image"):
+            # Download the photo
+            photo_file = await update.message.photo[-1].get_file()
+            file_path = f"{photo_file.file_id}.jpg"
+            await photo_file.download_to_drive(file_path)
+            
+            # Store the file path in user data for later use
+            context.user_data["uploaded_photo_path"] = file_path
+            
+            # Handle the disease identification
+            await handle_plant_health_check(update, context)
+            return
+        
+        # Original plant identification logic
         service_catalog = requests.get(f"{service_expose_endpoint}/all").json()
         recommendation_service = service_catalog['services']['recommendation_service']
 
@@ -589,9 +607,110 @@ async def handle_photo(update: Update, context: CallbackContext):
 
         except Exception as e:
             raise e
+        finally:
+            # Clean up the temporary file for plant identification
+            if 'file_path' in locals() and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    logger.error(f"Error cleaning up file {file_path}: {str(e)}")
 
     except Exception as e:
         logger.error("Exception on handle_photo():" + str(e)) 
+
+async def handle_disease_identification_request(update: Update, context: CallbackContext):
+    """Handle the request to identify plant disease"""
+    try:
+        # Set a flag in user data to indicate we're waiting for a disease identification image
+        context.user_data["waiting_for_disease_image"] = True
+        
+        await update.callback_query.edit_message_text(
+            "🏥 *Plant Disease Identification*\n\n"
+            "Please upload a photo of your plant that you'd like me to check for diseases.\n\n"
+            "I'll analyze the image and provide you with health assessment and treatment recommendations.",
+            parse_mode='Markdown'
+        )
+    except Exception as e:
+        logger.error("Exception on handle_disease_identification_request():" + str(e))
+        await update.callback_query.edit_message_text("Sorry, there was an error. Please try again.")
+
+async def handle_plant_health_check(update: Update, context: CallbackContext):
+    """Handle plant health checking using the plant health service"""
+    try:
+        service_catalog = requests.get(f"{service_expose_endpoint}/all").json()
+        plant_health_service = service_catalog['services']['plant_health']
+        
+        file_path = context.user_data.get("uploaded_photo_path")
+        if not file_path:
+            await update.message.reply_text("No image found. Please upload an image first.")
+            return
+        
+        await update.message.reply_text("🏥 *Checking plant health...*", parse_mode='Markdown')
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                # Open the image file asynchronously
+                async with aiofiles.open(file_path, 'rb') as file:
+                    form = aiohttp.FormData()
+                    form.add_field('images', file, filename=file_path, content_type='image/jpeg')
+
+                    # Send the request to the plant health service
+                    async with session.post(plant_health_service, data=form) as response:
+                        if response.status == 200:
+                            try:
+                                health_response = json.loads(await response.text())
+                            except json.JSONDecodeError as json_err:
+                                await update.message.reply_text('Failed to parse the health assessment response.')
+                                raise json_err
+                            
+                            # Format the health response
+                            is_healthy = health_response.get('is_healthy', True)
+                            suggestions = health_response.get('suggestions', [])
+                            gemini_advice = health_response.get('gemini_advice', 'No specific advice available.')
+                            
+                            if is_healthy:
+                                message = (
+                                    f"✅ *Plant Health Assessment* ✅\n\n"
+                                    f"🎉 *Great news!* Your plant appears to be healthy.\n\n"
+                                    f"💡 *General Care Tips:*\n{gemini_advice}"
+                                )
+                            else:
+                                message = (
+                                    f"⚠️ *Plant Health Assessment* ⚠️\n\n"
+                                    f"🔍 *Health Issues Detected:*\n"
+                                )
+                                
+                                if suggestions:
+                                    for i, suggestion in enumerate(suggestions, 1):
+                                        name = suggestion.get('name', 'Unknown')
+                                        probability = suggestion.get('probability', 0)
+                                        message += f"  {i}. *{name}* (Probability: {probability:.1%})\n"
+                                
+                                message += f"\n💡 *Treatment Recommendations:*\n{gemini_advice}"
+                            
+                            await update.message.reply_text(message, parse_mode='Markdown')
+                        else:
+                            await update.message.reply_text('Failed to check plant health. Please try again.')
+
+        except Exception as e:
+            await update.message.reply_text(f'Error during health check: {str(e)}')
+            raise e
+
+    except Exception as e:
+        logger.error("Exception on handle_plant_health_check():" + str(e))
+        await update.message.reply_text("Sorry, there was an error checking your plant's health. Please try again.")
+    finally:
+        # Clean up the temporary file and reset the flag
+        file_path = context.user_data.get("uploaded_photo_path")
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                del context.user_data["uploaded_photo_path"]
+            except Exception as e:
+                logger.error(f"Error cleaning up file {file_path}: {str(e)}")
+        
+        # Reset the disease identification flag
+        context.user_data["waiting_for_disease_image"] = False
 
 def main(TOKEN):
     # Creiamo l'istanza dell'applicazione del bot
