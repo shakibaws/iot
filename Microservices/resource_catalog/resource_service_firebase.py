@@ -246,7 +246,7 @@ if __name__ == '__main__':
         }
         }
         cherrypy.config.update({
-            'server.socket_host': '0.0.0.0',
+            'server.socket_host': 'localhost',
             'server.socket_port': 5002  # Specify your desired port here
         })
         cherrypy.tree.mount(catalog, '/', conf)

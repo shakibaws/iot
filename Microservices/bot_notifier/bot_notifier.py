@@ -45,7 +45,7 @@ class TelegramNotifier:
         # follow public ip changement for mqtt broker
         while True:
             time.sleep(60)
-            res = requests.get("http://0.0.0.0:5001/mqtt").text
+            res = requests.get("http://localhost:5001/mqtt").text
             res = res.replace('"', '')
             if res != broker:
                 print("Stopping simulation...")
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
 
         #get al service_catalog
-        service_catalog = requests.get("http://0.0.0.0:5001/all").json()
+        service_catalog = requests.get("http://localhost:5001/all").json()
 
         broker = service_catalog["mqtt_broker"]["broker_address"]
         port = service_catalog["mqtt_broker"]["port"]

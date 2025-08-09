@@ -16,7 +16,7 @@ import datetime
 import sys
 
 resource_catalog_address = ''
-service_expose_endpoint = 'http://0.0.0.0:5001'
+service_expose_endpoint = 'http://localhost:5001'
 vase_list = []
 device_list = []
 current_context = None
@@ -132,7 +132,7 @@ async def add_vase(update: Update, context):
     instructions = (
         "🛠️ *Follow these steps to add a new Smart Vase:*\n\n" +
         "1️⃣ *Turn on* the vase and your phone's Wi-Fi.\n" +
-        f"2️⃣ *Connect* to the 'SmartVase' network and click [here](http://0.0.0.0:5004/?user_id={current_user['user_id']}).\n" +
+        f"2️⃣ *Connect* to the 'SmartVase' network and click [here](http://localhost:5004/?user_id={current_user['user_id']}).\n" +
         "3️⃣ *Reconnect* to the internet and check your vase list."
     )
     if update.callback_query:

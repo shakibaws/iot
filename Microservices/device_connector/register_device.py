@@ -14,7 +14,7 @@ class DeviceRegistrationService:
     
     def __init__(self, config_path="config.json"):
         self.config_path = config_path
-        self.service_catalog_url = "http://0.0.0.0:5001/all"
+        self.service_catalog_url = "http://localhost:5001/all"
         self.device_cfg = {}
         self.service_catalog = {}
         self.logger = CustomerLogger.CustomLogger("device_registration_service")
@@ -226,7 +226,7 @@ def main():
         }
         
         cherrypy.config.update({
-            'server.socket_host': '0.0.0.0',
+            'server.socket_host': 'localhost',
             'server.socket_port': 5004  # Choose appropriate port
         })
         
