@@ -12,7 +12,7 @@ firebase_admin.initialize_app(cred, {
 data = {
     "resource_catalog": {
         "deviceList": {
-            "DEV001": {
+            "device1": {
                 "device_id": "111890988",
                 "user_id": "111116871977302905989256955321167310217",
                 "device_status": "active",
@@ -27,7 +27,7 @@ data = {
             }
         },
         "vaseList": {
-            "VASE001": {
+            "vase1": {
                 "vase_id": "257801381876904984820639528779118245491",
                 "device_id": "0238402938",
                 "user_id": "239391674367824826438604428251723347224",
@@ -61,7 +61,7 @@ data = {
     },
     "service_catalog": {
         "mqtt_broker": {
-            "broker_address": "5.95.152.24",
+            "broker_address": "broker.hivemq.com",
             "broker_websocket": "broker.duck.pictures",
             "port": 1883,
             "port_websocket": 8080
@@ -72,9 +72,12 @@ data = {
             "topic_telegram_chat": "smartplant/telegram/telegram_chat_id"
         },
         "services": {
-            "chart_service": "https://chartservice.duck.pictures",
-            "data_analysis": "https://dataanalysis.duck.pictures",
-            "gemini": "https://chat.duck.pictures"
+            "chart_service": "http://localhost:5008",
+            "data_analysis": "http://localhost:5003",
+            "gemini": "http://localhost:5007",
+            "resource_catalog": "http://localhost:5002",
+            "recommendation_service": "http://localhost:5005",
+            "image_recognition": "http://localhost:5006"
         }
     }
 }
