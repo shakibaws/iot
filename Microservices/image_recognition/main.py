@@ -109,12 +109,11 @@ class API:
         try:
             json_result = json.loads(response.text)  #Converts the response text (which is in JSON format) into a Python dictionary.
             if 'results' in json_result:
-                
                 #creates a dictionary (ret) that stores the plant recognition result from the API response
                 ret ={
                     "result": {
                         "species": json_result['results'][0]['species']['scientificNameWithoutAuthor'],
-                        "common_name": json_result['results'][0]['species']['commonNames'][0],
+                        "common_name": json_result['results'][0]['species']['commonNames'],
                         "confidence": json_result['results'][0]['score'],
                     },
                     "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
