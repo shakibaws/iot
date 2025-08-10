@@ -572,6 +572,7 @@ async def handle_photo(update: Update, context: CallbackContext):
                                     'vase_status': 'active',
                                     'plant': {
                                         'plant_name': chat_response['plant_name'],
+                                        'plant_type': chat_response.get('plant_type', 'indoor'),
                                         'plant_schedule_water': chat_response['soil_moisture_min'],
                                         'plant_schedule_light_level': chat_response['hours_sun_suggested'],  # Use hours of sunlight suggestion
                                         'soil_moisture_min': chat_response['soil_moisture_min'],
@@ -585,10 +586,12 @@ async def handle_photo(update: Update, context: CallbackContext):
 
                                 # Send the new vase data to the resource catalog
                                 async with session.post(f"{resource_catalog_address}/vase", json=new_vase) as res:
+                                    print(f"res: {res} res.status: {res.status}")
                                     if res.status == 200:
                                         await update.message.reply_text(
                                             f"🌱 *Vase Added Successfully!* 🌱\n\n"
                                             f"*Plant Name*: {chat_response['plant_name']}\n\n"
+                                            f"*Plant Type*: {chat_response.get('plant_type', 'indoor')}\n\n"
                                             f"*Auto-detected Parameters:*\n"
                                             f"  - 🌡️ *Temperature Range*: {chat_response['temperature_min']}°C to {chat_response['temperature_max']}°C\n"
                                             f"  - 💧 *Soil Moisture*: {chat_response['soil_moisture_min']}% to {chat_response['soil_moisture_max']}%\n"
@@ -600,6 +603,25 @@ async def handle_photo(update: Update, context: CallbackContext):
 
                                     else:
                                         await update.message.reply_text('Failed to add the vase.')
+
+                                async with session.get(f"{resource_catalog_address}/listgroup") as res:
+                                    print(f"res: {res} res.status: {res.status}")
+                                    if res.status == 200:
+                                        group_list = await res.json()
+                                        print(f"group_list: {group_list}")
+                                        for group in group_list:
+                                            print(f"group: {group}")
+                                            if group['plant_type'] == chat_response.get('plant_type', 'indoor'):
+                                                print(f"group found: {group}")
+                                                await update.message.reply_text(
+                                                    f"🌱 *Join the community!* 🌱\n\n"
+                                                    f"Don't take care of your *{chat_response['plant_name']}* alone! 🌿\n\n"
+                                                    f"Join the community of [{group['name']}]({group['link']})! 🌿\n\n",
+                                                    parse_mode='Markdown'
+                                                )
+
+                                    else:
+                                        await update.message.reply_text('Failed to add the vase.')                                       
 
                         else:
                             print(await response.text())
