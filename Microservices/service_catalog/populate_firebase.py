@@ -26,7 +26,29 @@ data = {
                 "configurations": [{"watertank_height_cm": 15}]
             }
         },
-        "vaseList": {
+        "groupList": {
+            "cactus": {
+                "link": "https://t.me/+HdaohA-KX3U1NDE0",
+                "name": "Cactus Lovers",
+                "plant_type": "cactus"
+            },
+            "flower": {
+                "link": "https://t.me/+HdaohA-KX3U1NDE0",
+                "name": "Flower Lovers",
+                "plant_type": "flower"
+            },
+            "indoor": {
+                "link": "https://t.me/+NkwBi4GWUAw5MmM8",
+                "name": "Indoor Plant Lovers",
+                "plant_type": "indoor"
+            },
+            "outdoor": {
+                "link": "https://t.me/+HdaohA-KX3U1NDE0",
+                "name": "Outdoor Plant Lovers",
+                "plant_type": "outdoor"
+            }
+        },
+    "vaseList": {
             "vase1": {
                 "vase_id": "257801381876904984820639528779118245491",
                 "device_id": "0238402938",
