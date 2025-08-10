@@ -25,38 +25,39 @@ class CatalogExpose:
     @cherrypy.tools.json_out()
     def GET(self, *args, **kwargs):
         print(args)
-        if args[0] == 'listDevice':
+        if args[0].lower() == 'listdevice':
             return self.listDevice()
-        elif args[0] == 'listVase':
+        elif args[0].lower() == 'listvase':
             return self.listVase()
-        elif args[0] == 'listUser':
+        elif args[0].lower() == 'listuser':
             return self.listUser()
-        
-        elif args[0] == 'listDeviceByUser':
+        elif args[0].lower() == 'listgroup':
+            return self.listGroups()
+        elif args[0].lower() == 'listdevicebyuser':
             print("listDeviceByUser")
             u_id = args[1]
             result = self.firebase_ref.child('deviceList').order_by_child("user_id").equal_to(u_id).get().values()
             self.logger.info("GET request received: listDeviceByUser")
             return list(result)
         
-        elif args[0] == 'listVaseByUser':
+        elif args[0].lower() == 'listvasebyuser':
             print("listVaseByUser")
             u_id = args[1]
             result = self.firebase_ref.child('vaseList').order_by_child("user_id").equal_to(u_id).get().values()
             self.logger.info("GET request received: listDeviceByUser")
             return list(result)
 
-        elif args[0].startswith('device') and args[1]:
+        elif args[0].lower().startswith('device') and args[1]:
             d_id = args[1]
             result = self.firebase_ref.child('deviceList').order_by_child("device_id").equal_to(d_id).get().values()
             self.logger.info("GET request received: getDeviceById")
             return next(iter(result), None)
-        elif args[0].startswith('vaseByDevice') and args[1]:
+        elif args[0].lower().startswith('vasebydevice') and args[1]:
             d_id = args[1]
             result = self.firebase_ref.child('vaseList').order_by_child("device_id").equal_to(d_id).get().values()
             self.logger.info("GET request received: getVaseByDevice")
             return next(iter(result), None)
-        elif args[0].startswith('vase') and args[1]:
+        elif args[0].lower().startswith('vase') and args[1]:
             v_id = args[1]
             result = self.firebase_ref.child('vaseList').order_by_child("vase_id").equal_to(v_id).get().values()
             self.logger.info("GET request received: getVaseById")
@@ -66,7 +67,7 @@ class CatalogExpose:
             result = self.firebase_ref.child('userList').order_by_child("user_id").equal_to(u_id).get().values()
             self.logger.info("GET request received: getUserById")
             return next(iter(result), None)
-        elif args[0] == ('getData') and args[1] and kwargs['days']:
+        elif args[0].lower() == ('getdata') and args[1] and kwargs['days']:
             v_id = str(args[1])
             days = kwargs['days']
             result = self.firebase_ref.child('resourceData').child(v_id).get()
@@ -99,7 +100,7 @@ class CatalogExpose:
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
     def POST(self, *args, **kwargs):
-        if args[0] == 'device':
+        if args[0].lower() == 'device':
             self.logger.info("POST request received: addDevice")
             device = cherrypy.request.json
             this_time = datetime.datetime.now()
@@ -145,7 +146,7 @@ class CatalogExpose:
                         self.firebase_ref.child('deviceList').push(device)
                         self.logger.info("Device added successfully")
                         return {"message": "Device added successfully"}
-        elif args[0] == 'vase':
+        elif args[0].lower() == 'vase':
             self.logger.info("POST request received: addVase")
             vase = cherrypy.request.json
             uuid4 = uuid.uuid4()
@@ -163,7 +164,7 @@ class CatalogExpose:
             self.logger.info("Vase added successfully")
             return {"message": "Vase added successfully",
                     "id": this_id}
-        elif args[0] == 'user':
+        elif args[0].lower() == 'user':
             self.logger.info("POST request received: addUser")
             user = cherrypy.request.json
             uuid4 = uuid.uuid4()
@@ -175,7 +176,7 @@ class CatalogExpose:
             self.logger.info("User added successfully")
             return {"message": "User added successfully",
                     "id": this_id}
-        elif args[0] == 'postData':
+        elif args[0].lower() == 'postdata':
             self.logger.info("POST request received: data")
             data = cherrypy.request.json
             if args[1] and args[2] and data[args[2]]:
@@ -192,7 +193,7 @@ class CatalogExpose:
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
     def PUT(self, *args, **kwargs):
-        if args[0].startswith('device'):
+        if args[0].lower().startswith('device'):
             self.logger.info("PUT request received: updateDevice")
             device_id = args[1]
             device = cherrypy.request.json
@@ -202,7 +203,7 @@ class CatalogExpose:
             else:
                 self.logger.error("Device not found")
                 return {"message": "Device not found"}
-        elif args[0].startswith('vase'):
+        elif args[0].lower().startswith('vase'):
             self.logger.info("PUT request received: updateVase")
             vase_id = args[1]
             vase = cherrypy.request.json
@@ -214,7 +215,7 @@ class CatalogExpose:
             else:
                 self.logger.error("Vase not found")
                 return {"message": "Vase not found"}
-        elif args[0].startswith('user'):
+        elif args[0].lower().startswith('user'):
             self.logger.info("PUT request received: updateUser")
             user_id = args[1]
             user = cherrypy.request.json
@@ -234,6 +235,11 @@ class CatalogExpose:
         return list(self.firebase_ref.child('userList').get().values())
     def listVase(self):
         return list(self.firebase_ref.child('vaseList').get().values())
+    def listGroups(self):
+        print("listGroups called")
+        result = self.firebase_ref.child('groupList').get().values()
+        print(f"result: {result}")
+        return list(result)
 
 if __name__ == '__main__':
     try:
