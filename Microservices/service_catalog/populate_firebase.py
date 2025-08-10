@@ -13,7 +13,7 @@ data = {
     "resource_catalog": {
         "deviceList": {
             "device1": {
-                "device_id": "111890988",
+                "device_id": "device1",
                 "user_id": "111116871977302905989256955321167310217",
                 "device_status": "active",
                 "lastUpdate": "2025-02-21 11:00:37",
