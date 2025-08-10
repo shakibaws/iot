@@ -141,3 +141,17 @@ services:
     environment:
       - LOG_DIR=/app/logs
     restart: on-failure
+
+  admin_analytics:
+    build: ./Microservices/Admin Analytics service
+    container_name: admin_analytics
+    ports:
+      - "5020:5020"
+    depends_on:
+      - resource_catalog
+      - service_catalog
+    volumes:
+      - ./logs/admin_analytics:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+    restart: on-failure
