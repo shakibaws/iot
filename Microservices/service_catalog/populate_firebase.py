@@ -77,7 +77,9 @@ data = {
             "gemini": "http://localhost:5007",
             "resource_catalog": "http://localhost:5002",
             "recommendation_service": "http://localhost:5005",
-            "image_recognition": "http://localhost:5006"
+            "image_recognition": "http://localhost:5006",
+            "admin_analytics": "http://localhost:5010",
+            "plant_health": "http://localhost:5009"
         }
     }
 }
