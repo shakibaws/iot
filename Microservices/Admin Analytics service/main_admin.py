@@ -9,9 +9,11 @@ import json
 import CustomerLogger
 import sys
 import os
-from collections import Counter
+from collections import Counter, deque
 import threading
 import time
+import random
+from MyMQTT import MyMQTT
 
 class AdminDashboard:
     def __init__(self):
@@ -19,12 +21,21 @@ class AdminDashboard:
         self.service_catalog_endpoint = 'http://localhost:5001'  # Service catalog endpoint
         self.resource_catalog_address = ''
         
+        # MQTT configuration
+        self.mqtt_broker = ''
+        self.mqtt_port = 1883
+        self.mqtt_client = None
+        self.sensor_data_queue = deque(maxlen=100)  # Store last 100 sensor readings
+        
         # Initialize Dash app
         self.app = dash.Dash(__name__)
         self.app.title = "IoT Smart Vase Admin Dashboard"
         
-        # Get resource catalog endpoint from service catalog
-        self.get_resource_catalog_endpoint()
+        # Get service configuration
+        self.get_service_configuration()
+        
+        # Setup MQTT listener
+        self.setup_mqtt_listener()
         
         # Setup layout and callbacks
         self.setup_layout()
@@ -33,21 +44,154 @@ class AdminDashboard:
         # Start background data refresh
         self.start_background_refresh()
         
-    def get_resource_catalog_endpoint(self):
-        """Get the resource catalog endpoint from service catalog"""
+
+        
+    def get_service_configuration(self):
+        """Get service configuration from service catalog"""
         try:
             response = requests.get(f'{self.service_catalog_endpoint}/all')
             if response.status_code == 200:
-                services = response.json()
-                self.resource_catalog_address = services['services']['resource_catalog']
+                config = response.json()
+                self.resource_catalog_address = config['services']['resource_catalog']
+                self.mqtt_broker = config['mqtt_broker']['broker_address']
+                self.mqtt_port = config['mqtt_broker']['port']
+                self.sensor_topic = config['mqtt_topics']['topic_sensors']  # "smartplant/+/sensors"
                 self.logger.info(f"Resource catalog endpoint: {self.resource_catalog_address}")
+                self.logger.info(f"MQTT broker: {self.mqtt_broker}:{self.mqtt_port}")
             else:
                 self.logger.error("Failed to get service catalog")
                 self.resource_catalog_address = 'http://localhost:5002'  # Default fallback
+                self.mqtt_broker = 'broker.hivemq.com'  # Default fallback
+                self.sensor_topic = 'smartplant/+/sensors'
         except Exception as e:
-            self.logger.error(f"Error getting resource catalog endpoint: {str(e)}")
+            self.logger.error(f"Error getting service configuration: {str(e)}")
             self.resource_catalog_address = 'http://localhost:5002'  # Default fallback
+            self.mqtt_broker = 'broker.hivemq.com'  # Default fallback
+            self.sensor_topic = 'smartplant/+/sensors'
 
+    def setup_mqtt_listener(self):
+        """Setup MQTT client to listen for sensor data"""
+        try:
+            # Only setup MQTT if we have valid configuration
+            if not self.mqtt_broker or not self.sensor_topic:
+                self.logger.error("Missing MQTT configuration - broker or topic not set")
+                return
+                
+            client_id = f"admin_analytics_{random.randint(1000, 9999)}"
+            self.mqtt_client = MyMQTT(client_id, self.mqtt_broker, self.mqtt_port, self)
+            
+            self.logger.info(f"Setting up MQTT: broker={self.mqtt_broker}, port={self.mqtt_port}, topic={self.sensor_topic}")
+            
+            # Start MQTT in a separate thread
+            mqtt_thread = threading.Thread(target=self.start_mqtt_listener, daemon=True)
+            mqtt_thread.start()
+            
+            self.logger.info("MQTT listener setup completed")
+        except Exception as e:
+            self.logger.error(f"Error setting up MQTT listener: {str(e)}")
+
+    def start_mqtt_listener(self):
+        """Start MQTT listener in background thread"""
+        retry_count = 0
+        max_retries = 5
+        
+        while retry_count < max_retries:
+            try:
+                self.logger.info(f"Attempting MQTT connection (attempt {retry_count + 1}/{max_retries})")
+                self.mqtt_client.mySubscribe(self.sensor_topic)
+                self.mqtt_client.connect()
+                time.sleep(3)  # Allow connection to establish
+                self.mqtt_client.start()  # This calls loop_forever() - blocking
+                self.logger.info(f"MQTT listener started successfully, subscribed to: {self.sensor_topic}")
+                return  # Success, exit retry loop
+            except Exception as e:
+                retry_count += 1
+                self.logger.error(f"Error starting MQTT listener (attempt {retry_count}): {str(e)}")
+                if retry_count < max_retries:
+                    time.sleep(5)  # Wait before retry
+                else:
+                    self.logger.error("Failed to start MQTT listener after all retries")
+
+    def notify(self, topic, payload):
+        """MQTT message callback - called when sensor data is received"""
+        try:
+            self.logger.info(f"MQTT message received - Topic: {topic}")
+            
+            # Handle payload decoding
+            if isinstance(payload, bytes):
+                payload_str = payload.decode('utf-8')
+            else:
+                payload_str = str(payload)
+            
+            self.logger.info(f"MQTT payload: {payload_str}")
+            
+            # Parse the topic to extract device_id
+            # Topic format: "smartplant/device_id/sensors"
+            topic_parts = topic.split('/')
+            self.logger.info(f"Topic parts: {topic_parts}")
+            
+            if len(topic_parts) >= 3:
+                device_id = topic_parts[1]
+                message_type = topic_parts[2]
+                
+                self.logger.info(f"Parsed - Device ID: {device_id}, Message Type: {message_type}")
+                
+                if message_type == "sensors":
+                    try:
+                        # Parse the JSON payload
+                        data = json.loads(payload_str)
+                        self.logger.info(f"Parsed JSON data: {data}")
+                        
+                        # Get device information to find channel_id (async to not block MQTT)
+                        channel_id = 'Unknown'
+                        try:
+                            device_info = self.get_device_info(device_id)
+                            if device_info:
+                                channel_id = device_info.get('channel_id', 'Unknown')
+                        except Exception as device_err:
+                            self.logger.warning(f"Could not get device info for {device_id}: {device_err}")
+                        
+                        # Process sensor data
+                        sensor_reading = {
+                            'timestamp': datetime.datetime.now(),
+                            'device_id': device_id,
+                            'channel_id': channel_id,
+                            'data': data,
+                            'topic': topic
+                        }
+                        
+                        # Add to queue for recent activity display
+                        self.sensor_data_queue.append(sensor_reading)
+                        
+                        # Log the sensor data
+                        self.logger.info(f"✅ Sensor data processed and queued for device {device_id} - Queue size: {len(self.sensor_data_queue)}")
+                        
+                    except json.JSONDecodeError as json_err:
+                        self.logger.error(f"Failed to parse JSON payload: {json_err}")
+                        
+                else:
+                    self.logger.info(f"Ignoring non-sensor message: {message_type}")
+            else:
+                self.logger.warning(f"Invalid topic format: {topic}")
+                    
+        except Exception as e:
+            self.logger.error(f"Error processing MQTT message: {str(e)}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+
+    def get_device_info(self, device_id):
+        """Get device information including channel_id"""
+        try:
+            response = requests.get(f'{self.resource_catalog_address}/device/{device_id}', timeout=5)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return None
+        except Exception as e:
+            self.logger.error(f"Error getting device info for {device_id}: {str(e)}")
+            return None
+
+   
     def fetch_data(self):
         """Fetch data from resource catalog"""
         try:
@@ -133,7 +277,16 @@ class AdminDashboard:
             # Recent Activity
             html.Div([
                 html.H3("Recent Activity"),
-                html.Div(id="recent-activity")
+                html.Div([
+                    html.Div([
+                        html.H4("📊 Real-time Sensor Data"),
+                        html.Div(id="sensor-activity")
+                    ], className="activity-subsection"),
+                    html.Div([
+                        html.H4("👥 System Activity"),
+                        html.Div(id="system-activity")
+                    ], className="activity-subsection")
+                ], className="activity-grid")
             ], className="activity-section"),
             
             # Auto-refresh interval
@@ -161,7 +314,8 @@ class AdminDashboard:
              Output('device-status-chart', 'figure'),
              Output('top-users-chart', 'figure'),
              Output('plant-types-chart', 'figure'),
-             Output('recent-activity', 'children'),
+             Output('sensor-activity', 'children'),
+             Output('system-activity', 'children'),
              Output('last-update', 'children')],
             [Input('interval-component', 'n_intervals')]
         )
@@ -255,15 +409,66 @@ class AdminDashboard:
                 plant_types_fig = go.Figure()
                 plant_types_fig.update_layout(title="Plant Types Distribution - No Data")
             
-            # Recent activity
-            recent_activities = []
+            # Sensor activity from MQTT data
+            sensor_activities = []
+            recent_sensor_data = list(self.sensor_data_queue)[-10:]  # Last 10 sensor readings
+            
+            # Debug logging
+            self.logger.info(f"Dashboard update - Queue size: {len(self.sensor_data_queue)}, Recent data: {len(recent_sensor_data)}")
+            
+            for reading in reversed(recent_sensor_data):  # Most recent first
+                timestamp = reading['timestamp'].strftime('%H:%M:%S')
+                device_id = reading['device_id']
+                channel_id = reading['channel_id']
+                
+                # Parse sensor data
+                sensor_values = []
+                if 'e' in reading['data']:
+                    for sensor in reading['data']['e']:
+                        name = sensor.get('n', 'Unknown')
+                        value = sensor.get('value', 'N/A')
+                        
+                        # Format sensor name and value with appropriate icons
+                        if name == 'temperature':
+                            sensor_values.append(f"🌡️ {value}°C")
+                        elif name == 'soil_moisture':
+                            sensor_values.append(f"💧 {value}%")
+                        elif name == 'light_level':
+                            sensor_values.append(f"☀️ {value}lx")
+                        elif name == 'watertank_level':
+                            sensor_values.append(f"🚰 {value}%")
+                        else:
+                            sensor_values.append(f"📊 {name}: {value}")
+                
+                sensor_str = " | ".join(sensor_values) if sensor_values else "No data"
+                
+                sensor_activities.append(html.Div([
+                    html.Span("📡 ", style={'marginRight': '5px'}),
+                    html.Span(f"{device_id}", style={'color': '#e74c3c', 'fontWeight': 'bold'}),
+                    html.Span(f" (Ch:{channel_id}) ", style={'color': '#95a5a6', 'fontSize': '10px'}),
+                    html.Br(),
+                    html.Span(sensor_str, style={'color': '#2c3e50', 'fontSize': '12px'}),
+                    html.Span(f" - {timestamp}", style={'color': '#7f8c8d', 'fontSize': '10px', 'float': 'right'})
+                ], style={'marginBottom': '8px', 'padding': '5px', 'border': '1px solid #ecf0f1', 'borderRadius': '3px'}))
+            
+            if not sensor_activities:
+                # Add debug information if no sensor data
+                debug_info = []
+                debug_info.append(html.P("No sensor data received yet", style={'color': '#95a5a6', 'fontStyle': 'italic'}))
+                debug_info.append(html.P(f"MQTT Broker: {self.mqtt_broker}", style={'fontSize': '10px', 'color': '#95a5a6'}))
+                debug_info.append(html.P(f"Sensor Topic: {self.sensor_topic}", style={'fontSize': '10px', 'color': '#95a5a6'}))
+                debug_info.append(html.P(f"Queue Size: {len(self.sensor_data_queue)}", style={'fontSize': '10px', 'color': '#95a5a6'}))
+                sensor_activities = debug_info
+            
+            # System activity
+            system_activities = []
             
             # Sort by lastUpdate if available
             recent_users = sorted(users, key=lambda x: x.get('lastUpdate', ''), reverse=True)[:3]
             recent_vases = sorted(vases, key=lambda x: x.get('lastUpdate', ''), reverse=True)[:3]
             
             for user in recent_users:
-                recent_activities.append(html.Div([
+                system_activities.append(html.Div([
                     html.Span("👤 ", style={'marginRight': '5px'}),
                     html.Span(f"New user registered", style={'color': '#3498db'}),
                     html.Span(f" - {user.get('lastUpdate', 'Unknown time')}", 
@@ -274,29 +479,29 @@ class AdminDashboard:
                 plant_name = "Unknown"
                 if isinstance(vase.get('plant'), dict):
                     plant_name = vase.get('plant', {}).get('plant_name', 'Unknown')
-                recent_activities.append(html.Div([
+                system_activities.append(html.Div([
                     html.Span("🌱 ", style={'marginRight': '5px'}),
                     html.Span(f"New vase added: {plant_name}", style={'color': '#2ecc71'}),
                     html.Span(f" - {vase.get('lastUpdate', 'Unknown time')}", 
                              style={'color': '#7f8c8d', 'fontSize': '12px'})
                 ], style={'marginBottom': '5px'}))
             
-            if not recent_activities:
-                recent_activities = [html.P("No recent activity")]
+            if not system_activities:
+                system_activities = [html.P("No recent system activity")]
             
             # Last update time
             last_update = f"Last updated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             
             return (total_users, total_vases, total_devices, active_devices,
                    users_vases_fig, device_status_fig, top_users_fig, plant_types_fig,
-                   recent_activities, last_update)
+                   sensor_activities, system_activities, last_update)
 
     def start_background_refresh(self):
         """Start background data refresh"""
         def refresh_data():
             while True:
                 try:
-                    self.get_resource_catalog_endpoint()
+                    self.get_service_configuration()
                     time.sleep(300)  # Refresh service catalog every 5 minutes
                 except Exception as e:
                     self.logger.error(f"Background refresh error: {str(e)}")
@@ -310,136 +515,12 @@ class AdminDashboard:
         self.logger.info(f"Starting Admin Dashboard on {host}:{port}")
         self.app.run_server(host=host, port=port, debug=debug)
 
-# Custom CSS styling
-CSS_STYLES = """
-/* Dashboard Styles */
-body {
-    font-family: 'Arial', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f8f9fa;
-}
-
-.header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 2rem;
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.header-title {
-    margin: 0;
-    font-size: 2.5rem;
-    font-weight: bold;
-}
-
-.header-subtitle {
-    margin: 0.5rem 0 0 0;
-    font-size: 1.2rem;
-    opacity: 0.9;
-}
-
-.last-update {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    opacity: 0.8;
-}
-
-.stats-container {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 0 1rem;
-}
-
-.stat-item {
-    flex: 1;
-}
-
-.stat-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    text-align: center;
-    transition: transform 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-}
-
-.stat-card h3 {
-    margin: 0;
-    font-size: 2.5rem;
-    font-weight: bold;
-}
-
-.stat-card p {
-    margin: 0.5rem 0 0 0;
-    color: #7f8c8d;
-    font-size: 1rem;
-}
-
-.users-card h3 { color: #3498db; }
-.vases-card h3 { color: #2ecc71; }
-.devices-card h3 { color: #e74c3c; }
-.active-card h3 { color: #f39c12; }
-
-.charts-row {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 0 1rem;
-}
-
-.chart-container {
-    flex: 1;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    padding: 1rem;
-}
-
-.activity-section {
-    margin: 2rem 1rem;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    padding: 1.5rem;
-}
-
-.activity-section h3 {
-    margin-top: 0;
-    color: #2c3e50;
-}
-
-@media (max-width: 768px) {
-    .stats-container,
-    .charts-row {
-        flex-direction: column;
-    }
-    
-    .header-title {
-        font-size: 2rem;
-    }
-    
-    .header-subtitle {
-        font-size: 1rem;
-    }
-}
-"""
 
 if __name__ == '__main__':
     try:
         # Create assets directory for CSS
         assets_dir = os.path.join(os.path.dirname(__file__), 'assets')
         os.makedirs(assets_dir, exist_ok=True)
-        
-        # Write CSS file
-        with open(os.path.join(assets_dir, 'styles.css'), 'w') as f:
-            f.write(CSS_STYLES)
         
         # Create and run dashboard
         dashboard = AdminDashboard()

@@ -102,10 +102,44 @@ body {
     color: #2c3e50;
 }
 
+.activity-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.activity-subsection {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.activity-subsection h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.activity-subsection:first-child {
+    border-left-color: #e74c3c;
+}
+
+.activity-subsection:last-child {
+    border-left-color: #2ecc71;
+}
+
 @media (max-width: 768px) {
     .stats-container,
     .charts-row {
         flex-direction: column;
+    }
+    
+    .activity-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
     .header-title {
