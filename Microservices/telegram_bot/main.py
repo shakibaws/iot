@@ -16,6 +16,7 @@ import datetime
 import sys
 
 resource_catalog_address = ''
+telegramgroups_address = ''
 service_expose_endpoint = 'http://localhost:5001'
 vase_list = []
 device_list = []
@@ -91,7 +92,7 @@ async def login(update: Update, context: CallbackContext):
 
 
 async def handle_endpoints():
-    global resource_catalog_address, service_expose_endpoint
+    global resource_catalog_address, telegramgroups_address, service_expose_endpoint
     logger.info("Handling endpoints to get service catalog")
     try:
         async with aiohttp.ClientSession() as session:
@@ -99,7 +100,9 @@ async def handle_endpoints():
                 if response.status == 200:
                     json_response =json.loads(await response.text())
                     resource_catalog_address = json_response['services']['resource_catalog']
+                    telegramgroups_address = json_response['services'].get('telegram_groups')
                     logger.info(f"Successfully retrieved resource catalog address: {resource_catalog_address}")
+                    logger.info(f"Successfully retrieved telegramgroups address: {telegramgroups_address}")
                 else:
                     logger.error(f"Error performing get /all on service catalog. Status: {response.status}")
     except Exception as e:
@@ -656,25 +659,25 @@ async def handle_photo(update: Update, context: CallbackContext):
                                         logger.error(f"Failed to create vase. Status: {res.status}")
                                         await update.message.reply_text('Failed to add the vase.')
 
-                                async with session.get(f"{resource_catalog_address}/listgroup") as res:
-                                    print(f"res: {res} res.status: {res.status}")
+                                # Get telegram group for plant type using the telegramgroups microservice
+                                plant_type = chat_response.get('plant_type', 'indoor')
+                                async with session.get(f"{telegramgroups_address}/{plant_type}") as res:
+                                    print(f"Telegram groups service response: {res.status}")
                                     if res.status == 200:
-                                        group_list = await res.json()
-                                        print(f"group_list: {group_list}")
-                                        for group in group_list:
-                                            print(f"group: {group}")
-                                            if group['plant_type'] == chat_response.get('plant_type', 'indoor'):
-                                                print(f"group found: {group}")
-                                                await update.message.reply_text(
-                                                    f"🌱 *Join the community!* 🌱\n\n"
-                                                    f"Don't take care of your *{chat_response['plant_name']}* alone! 🌿\n\n"
-                                                    f"Join the community of [{group['name']}]({group['link']})! 🌿\n\n",
-                                                    parse_mode='Markdown'
-                                                )
-
+                                        group = await res.json()
+                                        print(f"Found group: {group}")
+                                        await update.message.reply_text(
+                                            f"🌱 *Join the community!* 🌱\n\n"
+                                            f"Don't take care of your *{chat_response['plant_name']}* alone! 🌿\n\n"
+                                            f"Join the community of [{group['name']}]({group['link']})! 🌿\n\n",
+                                            parse_mode='Markdown'
+                                        )
+                                    elif res.status == 404:
+                                        logger.info(f"No telegram group found for plant type: {plant_type}")
+                                        # Continue without error - not having a community group is not critical
                                     else:
-                                        logger.error(f"Failed to get group list. Status: {res.status}")
-                                        await update.message.reply_text('Failed to add the vase.')                                       
+                                        logger.error(f"Failed to get telegram group. Status: {res.status}")
+                                        # Continue without error - this is not critical to vase creation                                       
 
                         else:
                             print(await response.text())

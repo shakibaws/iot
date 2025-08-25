@@ -17,6 +17,7 @@
     "image_recognition": "http://localhost:5006",
     "plant_health": "http://localhost:5009",
     "recommendation_service": "http://localhost:5005",
-    "resource_catalog": "http://localhost:5002"
+    "resource_catalog": "http://localhost:5002",
+    "telegram_groups": "http://localhost:5011"
   }
 }
