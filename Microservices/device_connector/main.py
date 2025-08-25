@@ -1,324 +1,249 @@
-from wlan_connect import Connector
-from simple_mqtt import myMqtt
-import utime
+#!/usr/bin/env python3
+
+import cherrypy
+import json
+import requests
 import time
-import urequests
-import ujson
-import machine
-import onewire, ds18x20
-import random
-import dht
-import gc
 import os
+import sys
+import datetime
+import CustomerLogger
+
+class DeviceRegistrationService:
+    exposed = True
     
-
-def df():
-    s = os.statvfs('//')
-    return ('{0} MB'.format((s[0]*s[3])/1048576))
-
-def free(full=False):
-    gc.collect() # free up memory
-    F = gc.mem_free()
-    A = gc.mem_alloc()
-    T = F+A
-    P = '{0:.2f}%'.format(F/T*100)
-    if not full: return P
-    else : return ('Total:{0} Free:{1} ({2})'.format(T,F,P))
-
-class IoTDevice:
-    def __init__(self):
-
-        ##
-        ### board init
-        #machine.freq(240000000, min_freq=10000000)
-        print(machine.freq())
-        ##
-
-        self.go = False
-        self.pin_sensors = {}
-        self.pin_actuators = {}
+    def __init__(self, config_path="config.json"):
+        self.config_path = config_path
+        self.service_catalog_url = "http://localhost:5001/all"
         self.device_cfg = {}
         self.service_catalog = {}
-        self.mqqtclient = None
-        self.sub_topic = ""
-        self.pub_topic = ""
-
-        self.service_catalog_url = "http://serviceservice.duck.pictures/all"
+        self.logger = CustomerLogger.CustomLogger("device_registration_service")
         
-        self.c = Connector()
+        # Load device configuration on startup
+        self.load_config()
 
-    def actuate(self, topic, msg):
-        # check update packet
-        if "update" in topic:
-            new_cfg = ujson.loads(msg)
-            with open("config.json", "w") as file:
-                self.device_cfg["device"] = new_cfg
-                ujson.dump(self.device_cfg, file)
-                file.close()
-                self.deinit()
+    def load_config(self):
+        """Load device configuration from config.json"""
+        try:
+            with open(self.config_path, "r") as file:
+                self.device_cfg = json.load(file)
+                self.logger.info(f"Loaded device configuration from {self.config_path}")
+                return True
+        except FileNotFoundError:
+            self.logger.error(f"Config file {self.config_path} not found")
+            return False
+        except json.JSONDecodeError:
+            self.logger.error(f"Invalid JSON in {self.config_path}")
+            return False
 
-        # check what to actuate(topic) and how(json msg)
-        actuator = topic.split("/")[3]
-        command = ujson.loads(msg)["target"]
-        if actuator == "water_pump":
-            
-            self.pin_actuators[actuator].value(command)  # activate pump for 2 seconds
-            time.sleep(2)
-            self.pin_actuators[actuator].value(0)
-            # let the water flow
-            time.sleep(180)       
-        else:
-            self.pin_actuators[actuator].value(command)
-
-    def get_sensor(self):
-        """ 
-        {
-            'bn': device_id,
-            'e':
-            [
-                {'n': 'temperature', 'value': '', 'timestamp': '', 'unit': 'C'},
-                {'n': 'soil_moisture', 'value': '', 'timestamp': '', 'unit': '%'}
-                {'n': 'light_level', 'value': '', 'timestamp': '', 'unit': 'lumen'},
-                {'n': 'watertank_level', 'value': '', 'timestamp': '', 'unit': '%'}
-            ]
-        } 
-        """
-        def _measure_perc(trigger, echo):
+    def get_service_catalog(self):
+        """Get service catalog from the service catalog URL"""
+        retries = 5
+        for attempt in range(retries):
             try:
-                # Ensure trigger and echo are valid objects
-                if not hasattr(trigger, 'on') or not hasattr(trigger, 'off'):
-                    raise ValueError("Invalid trigger object. Ensure it has 'on' and 'off' methods.")
-                if not hasattr(echo, 'value'):
-                    raise ValueError("Invalid echo object. Ensure it has a 'value' method or property.")
-
-                # Get the max height from the configuration
-                max_height = None
-                configurations = self.device_cfg.get("device", {}).get("configurations", [])
-                for config in configurations:
-                    if "watertank_height_cm" in config:
-                        max_height = config["watertank_height_cm"]
-                        break
-                    #for future adds of other configurations 
-                if max_height is None:
-                    raise ValueError("Max height not configured in 'device_cfg'.")
-                if not isinstance(max_height, (int, float)) or max_height <= 0:
-                    raise ValueError("Max height must be a positive number.")
-
-                # Send a 10µs pulse to the trigger pin
-                trigger.off()
-                time.sleep_us(2)
-                trigger.on()
-                time.sleep_us(10)
-                trigger.off()
-
-                # Measure the time the echo pin is HIGH
-                duration = machine.time_pulse_us(echo, 1, 30000)  # Timeout after 30ms
-                if duration < 0:
-                    print("Out of range: No echo received or object too far.")
-                    return None
-
-                # Calculate the distance in cm
-                distance = (duration * 0.0343) / 2
-                if distance > max_height:
-                    print(f"Measured distance ({distance} cm) exceeds max height ({max_height} cm).")
-                    return None
-
-                # Calculate the percentage based on max height
-                percentage = (1 - (distance / max_height)) * 100
-
-                # Return as an integer percentage
-                return int(percentage)
-            except ValueError as e:
-                print(f"Error: {e}")
-                return None
-            except Exception as e:
-                print(f"Unexpected error: {e}")
-                return None
-
-
-        message = {
-            'bn': self.device_cfg["device"]["device_id"],
-            'e': []
-        }
-        for name, p in self.pin_sensors.items():
-            stock = {'n': name, 'value': 0, 'timestamp': '', 'unit': ''}
-            value = 0
-            if name == "temperature":
-                #stock["value"] = random.randint(15,30) # random value(to be removed)
-                stock["unit"] = 'C'
-                p['ds_sensor'].convert_temp()
-                time.sleep(1)
-                value = p['ds_sensor'].read_temp(p['rom'])
-            elif name == "soil_moisture":
-                #stock["value"] = random.randint(10,90) # random value(to be removed)
-                #lower is the value wetter is the soil
-                stock["unit"] = '%'
-                value = (1-(p.read()/4095))*100
-            elif name == "light_level":
-                #stock["value"] = random.randint(100,1000) # random value(to be removed)
-                stock["unit"] = 'lux'
-                value = p.read()/4095*1000
-            elif name == "watertank_level":
-                #stock["value"] = random.randint(0,100) # random value(to be removed)
-                stock["unit"] = '%'
-                value = _measure_perc(p[0]["out"], p[1]["in"])
-            else:
-                stock["unit"] = 'N/D'
-                value = p.read()
-            stock['value']=value
-            message["e"].append(stock)
-
-        self.mqqtclient.publishJson(self.pub_topic, message)
-
-    def init(self):
-
-        ### try to connect to wifi
-        status = self.c.connect()
-        while not status:
-            print("Connection problem")
-            time.sleep(5)
-            status = self.c.connect()
-
-        ### if first boot get/post on resource catalog
-        if machine.reset_cause() == machine.DEEPSLEEP_RESET:
-            # deepsleep
-            ### read from file local copy
-            with open("config.json", "r") as file:
-                self.device_cfg = ujson.load(file)
-            with open("service_catalog.json", "r") as file:
-                self.service_catalog = ujson.load(file)
-        else:
-            # hard reset | first boot
-            ### try to get service catalog
-            while True:
-                try:
-                    print("GET service catalog")
-                    res = urequests.get(self.service_catalog_url)
-                    self.service_catalog = ujson.loads(res.text)
-                    with open("service_catalog.json", 'w+') as file:
-                        ujson.dump(self.service_catalog, file)
-                    break
-                except OSError as e:
-                    print(f"Error {e}. Retrying in 5 seconds...")
+                self.logger.info(f"Getting service catalog (attempt {attempt + 1}/{retries})")
+                response = requests.get(self.service_catalog_url, timeout=10)
+                response.raise_for_status()
+                self.service_catalog = response.json()
+                self.logger.info("Retrieved service catalog successfully")
+                
+                # Save service catalog locally for future use
+                with open("service_catalog.json", "w") as file:
+                    json.dump(self.service_catalog, file, indent=2)
+                self.logger.info("Saved service catalog locally")
+                return True
+                
+            except requests.RequestException as e:
+                if attempt < retries - 1:
+                    self.logger.error(f"Error getting service catalog: {e}. Retrying in 5 seconds...")
                     time.sleep(5)
-            ##
+                else:
+                    self.logger.error(f"Failed to get service catalog after {retries} attempts: {e}")
+                    return False
+        return False
 
-            ### subscribe new device(post) to resource catalog
-            user_id = ""
-            with open("user_id.dat", "r") as file:
-                user_id = file.read()
-            with open("config.json", "r") as file:
-                self.device_cfg = ujson.load(file)
-                self.device_cfg["device"]["user_id"] = user_id
-                file.close()
-                resource_catalog_url = self.service_catalog["services"]["resource_catalog"]
-                retries = 5
-                for attempt in range(retries):
+    def get_next_device_id(self):
+        """Get the next available device ID by querying existing devices"""
+        try:
+            resource_catalog_url = self.service_catalog["services"]["resource_catalog"]
+            list_devices_url = f"{resource_catalog_url}/listDevice"
+            
+            self.logger.info("Fetching existing devices to determine next device ID")
+            response = requests.get(list_devices_url, timeout=10)
+            response.raise_for_status()
+            
+            devices = response.json()
+            self.logger.info(f"Found {len(devices)} existing devices")
+            
+            # Find the highest device ID number
+            max_device_num = 0
+            for device in devices:
+                device_id = device.get("device_id", "")
+                if device_id.startswith("device") and len(device_id) > 6:
                     try:
-                        print("POST resource catalog")
-                        res = urequests.post(resource_catalog_url+"/device", json=self.device_cfg["device"])
-                        break
-                    except OSError as e:
-                        if attempt < retries - 1:
-                            print(f"Error {e}. Retrying in 5 seconds...")
-                            time.sleep(5)
-                        else:
-                            raise
-            ##
+                        # Extract number from device_id like "device1", "device2", etc.
+                        device_num_str = device_id[6:]  # Remove "device" prefix
+                        device_num = int(device_num_str)
+                        max_device_num = max(max_device_num, device_num)
+                    except ValueError:
+                        # Skip devices with unexpected ID format
+                        continue
+            
+            next_device_id = f"device{max_device_num + 1}"
+            self.logger.info(f"Next device ID will be: {next_device_id}")
+            return next_device_id
+            
+        except requests.RequestException as e:
+            self.logger.error(f"Error fetching devices list: {e}")
+            # Fallback to default if we can't fetch the list
+            return "device1"
+        except Exception as e:
+            self.logger.error(f"Unexpected error determining next device ID: {e}")
+            # Fallback to default if something goes wrong
+            return "device1"
 
-        #### set pinout
-        print("Setting pinout")
-        for i in self.device_cfg["pinout"]["sensors"]:
-            if i['name'] == 'temperature':
-                # DS18B20 dallas sensor
-                ds_pin = machine.Pin(i['pin'])
-                ds_sensor = ds18x20.DS18X20(onewire.OneWire(ds_pin))
-                roms = ds_sensor.scan()
-                print('Found DS devices: ', roms)
-                if roms:
-                    self.pin_sensors[i['name']] = {'rom': roms[0], 'ds_sensor': ds_sensor}
-            elif i['name'] == 'watertank_level':
-                pin_out = machine.Pin(i['pin'][1], machine.Pin.OUT)
-                pin_in = machine.Pin(i['pin'][0], machine.Pin.IN)
-                self.pin_sensors[i['name']] = [{"out": pin_out},{"in" : pin_in}]
-            else:
-                adc = machine.ADC(machine.Pin(i['pin']))
-                adc.atten(machine.ADC.ATTN_11DB)
-                self.pin_sensors[i['name']] = adc
+    def register_device_with_catalog(self, user_id):
+        """Register device with resource catalog"""
+        # Generate next device ID
+        next_device_id = self.get_next_device_id()
         
-        for i in self.device_cfg["pinout"]["actuators"]:
-            self.pin_actuators[i['name']] = machine.Pin(i['pin'], machine.Pin.OUT)
-        ##
+        # Add user_id and auto-generated device_id to device configuration
+        device_info = self.device_cfg["device"].copy()
+        device_info["user_id"] = user_id
+        device_info["device_id"] = next_device_id  # Override with auto-generated ID
         
-        #### connect to mqtt
-        print("Connecting mqtt")
-        client_id = f"device_connector_{self.device_cfg['device']['device_id']}"
-        broker = self.service_catalog["mqtt_broker"]["broker_address"]
-        print(broker)
-        port = self.service_catalog["mqtt_broker"]["port"]
-        self.pub_topic = self.service_catalog["mqtt_topics"]["topic_sensors"]
-        self.pub_topic = self.pub_topic.replace("+", self.device_cfg["device"]["device_id"])
-        self.sub_topic = self.service_catalog["mqtt_topics"]["topic_actuators"]
-        self.sub_topic = self.sub_topic.replace("device_id", self.device_cfg["device"]["device_id"]) + "/+"
+        # Get resource catalog URL
+        try:
+            resource_catalog_url = self.service_catalog["services"]["resource_catalog"]
+            register_url = f"{resource_catalog_url}/device"
+            self.logger.info(f"Registering device at: {register_url}")
+        except KeyError:
+            self.logger.error("resource_catalog service not found in service catalog")
+            return False, "Resource catalog service not found"
+
+        # Register device with retry logic
+        retries = 5
+        for attempt in range(retries):
+            try:
+                self.logger.info(f"Registering device (attempt {attempt + 1}/{retries})")
+                response = requests.post(register_url, json=device_info, timeout=10)
+                response.raise_for_status()
+                
+                self.logger.info("Device registered successfully!")
+                self.logger.info(f"Device ID: {device_info['device_id']}, User ID: {user_id}")
+                
+                # Get response data
+                response_data = {}
+                if response.text:
+                    try:
+                        response_data = response.json()
+                    except json.JSONDecodeError:
+                        response_data = {"response_text": response.text}
+                
+                return True, {
+                    "device_id": device_info["device_id"],
+                    "user_id": user_id,
+                    "status_code": response.status_code,
+                    "response_data": response_data
+                }
+                
+            except requests.RequestException as e:
+                if attempt < retries - 1:
+                    self.logger.error(f"Error registering device: {e}. Retrying in 5 seconds...")
+                    time.sleep(5)
+                else:
+                    self.logger.error(f"Failed to register device after {retries} attempts: {e}")
+                    return False, f"Failed to register device: {e}"
+        return False, "Registration failed after all retries"
+
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.response_headers(headers=[('Access-Control-Allow-Origin', '*'),
+                                                ('Access-Control-Allow-Methods', 'POST, OPTIONS, GET'),
+                                                ('Access-Control-Allow-Headers', 'Content-Type')])
+    def GET(self, *args, **kwargs):
+        """Handle GET requests for device registration"""
+        self.logger.info("GET request received for device registration")
         
-        self.mqqtclient = myMqtt(client_id, broker, port, self.actuate)
-        self.mqqtclient.connect()
-        time.sleep(2)
-        self.mqqtclient.subscribe(self.sub_topic)
-        ##
-
-        machine.freq(80000000)
-        print(machine.freq())
-        self.go = True
-
-    def loop(self):
-        # not really a loop
-        while True:
-            print(free())
-            print(df())
-            if not self.c.isconnected():  # if connection goes down
-                for i in range(5):
-                    if not self.c.isconnected():
-                        self.c.connect()
-                        time.sleep(20)
-                self.init()
-            # take sensor input and publish
-            self.get_sensor()
-            time.sleep(2)
-            # Non-blocking wait for message
-            self.mqqtclient.check_message()
-            time.sleep(5) # let some time to actuate the message
-
-            self.deinit()
-
-            # set RTC.ALARM0 to fire after 60 seconds (waking the device)
-            # put the device to sleep
-            print("RTC timer set for 60 seconds")
-            print("Entering deep sleep...")
-            machine.deepsleep(60000)
-
-
-    def deinit(self):
-        self.go = False
-        self.mqqtclient.disconnect()
+        # Check if user_id is provided as query parameter
+        user_id = kwargs.get('user_id')
+        if not user_id:
+            self.logger.error("Missing user_id parameter")
+            raise cherrypy.HTTPError(400, "Missing user_id parameter")
         
-    def run(self):
-        self.init()
-        self.loop()
+        # Validate user_id
+        user_id = user_id.strip()
+        if not user_id:
+            self.logger.error("Empty user_id parameter")
+            raise cherrypy.HTTPError(400, "Empty user_id parameter")
+        
+        # Load configuration if not already loaded
+        if not self.device_cfg:
+            if not self.load_config():
+                self.logger.error("Failed to load device configuration")
+                raise cherrypy.HTTPError(500, "Failed to load device configuration")
+        
+        # Get service catalog
+        if not self.get_service_catalog():
+            self.logger.error("Failed to get service catalog")
+            raise cherrypy.HTTPError(500, "Failed to get service catalog")
+        
+        # Register device
+        success, result = self.register_device_with_catalog(user_id)
+        
+        if success:
+            self.logger.info(f"Device registration completed successfully for user: {user_id}")
+            return {
+                "status": "success",
+                "message": "Device registered successfully",
+                "data": result
+            }
+        else:
+            self.logger.error(f"Device registration failed for user: {user_id}")
+            raise cherrypy.HTTPError(500, f"Device registration failed: {result}")
 
-device = IoTDevice()
-try:
-    device.run()
-except Exception as e:
-    # dumping exception to file
-    print("Timestamp:")
-    dateTimeObj = utime.localtime()
-    Dyear, Dmonth, Dday, Dhour, Dmin, Dsec, Dweekday, Dyearday = (dateTimeObj)
-    Ddateandtime = "{:02d}/{:02d}/{} {:02d}:{:02d}"
-    datestr = Ddateandtime.format(Dday, Dmonth, Dyear, Dhour, Dmin,)
-    print(datestr)
-    resource_data = f"Free memory %: {free()}, free space : {df()}"
-    print(f"ERROR CRASH{e}")
-    with open("crash_dump.err", 'w')as file:
-        file.write(f"Timestamp: {datestr}\nERROR ON DEVICE.RUN: {e}, resource -> {resource_data}")
-    machine.reset() # hard reset
+    
+    def OPTIONS(self, *args, **kwargs):
+        """Handle OPTIONS requests for CORS"""
+        pass
+
+def main():
+    """Main function to start the CherryPy server"""
+    try:
+        # Change to script directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(script_dir)
+        
+        # Create device registration service
+        device_registration = DeviceRegistrationService()
+        
+        # CherryPy configuration
+        conf = {
+            '/': {
+                'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+                'tools.sessions.on': True,
+                'tools.response_headers.on': True,
+            }
+        }
+        
+        cherrypy.config.update({
+            'server.socket_host': 'localhost',
+            'server.socket_port': 5004  # Choose appropriate port
+        })
+        
+        cherrypy.tree.mount(device_registration, '/', conf)
+        cherrypy.engine.start()
+        cherrypy.engine.block()
+        
+    except Exception as e:
+        print("ERROR OCCURRED, DUMPING INFO...")
+        path = os.path.abspath('./logs/ERROR_deviceregistration.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}\n")
+            file.write(f"Unexpected error: {e}\n")
+        print(e)
+        print("EXITING...")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main() 

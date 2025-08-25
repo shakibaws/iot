@@ -28,6 +28,7 @@ logger = CustomerLogger.CustomLogger(service_name="telegram_bot")
 #lets the bot handle many users and requests concurrently 
 #without spawning threads or freezing while waiting for network responses
 async def start(update: Update, context: CallbackContext) -> None:
+    logger.info(f"Start command received from chat_id: {update.message.chat_id}")
     welcome_message = await update.message.reply_text(
         "*Welcome to the Smart Vase bot assistance!*\n"
         "🌱 *Identify your plant*, get suggestions, and so much more! Let's get started 🚀.",
@@ -40,9 +41,11 @@ async def start(update: Update, context: CallbackContext) -> None:
     await handle_endpoints()
     if not await is_logged_in(update, context):
         print("login")
+        logger.info("User not logged in, proceeding to login")
         await login(update, context)
     else:
         print("handle main actions")
+        logger.info("User already logged in, handling main actions")
         await handle_main_actions(update)
 
 
@@ -52,16 +55,18 @@ async def is_logged_in(update: Update, context: CallbackContext):
 
     print(
         f'is user logged in: {isLoggedIn} loggin_user={current_user} \n chat_id={update.message.chat_id}')
+    logger.info(f"Login check - isLoggedIn: {isLoggedIn}, chat_id: {update.message.chat_id}")
     return isLoggedIn
 
 
 async def login(update: Update, context: CallbackContext):
     global resource_catalog_address
+    logger.info(f"Login attempt for chat_id: {update.message.chat_id}")
     
     async with aiohttp.ClientSession() as session:
         async with session.get(f'{resource_catalog_address}/listUser') as response:
             if response.status == 200:
-                
+                logger.info("Successfully retrieved user list from resource catalog")
                 users_list =json.loads(await response.text())
                 for user in users_list:
                     if user['telegram_chat_id'] == update.message.chat_id:
@@ -79,22 +84,26 @@ async def login(update: Update, context: CallbackContext):
                         break
                 if context.user_data["current_user"] == None:
                     print('User not found')
-                    logger.info("new user registered")
+                    logger.info("User not found in database, proceeding to signup")
                     await signup(update, context)
+            else:
+                logger.error(f"Failed to retrieve user list. Status: {response.status}")
 
 
 async def handle_endpoints():
     global resource_catalog_address, service_expose_endpoint
+    logger.info("Handling endpoints to get service catalog")
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(f'{service_expose_endpoint}/all') as response:
                 if response.status == 200:
                     json_response =json.loads(await response.text())
                     resource_catalog_address = json_response['services']['resource_catalog']
+                    logger.info(f"Successfully retrieved resource catalog address: {resource_catalog_address}")
                 else:
-                    logger.error("Error performing get /all on service catalog:" + response)
+                    logger.error(f"Error performing get /all on service catalog. Status: {response.status}")
     except Exception as e:
-        logger.error(" Exception in handle_endpoints():"+e)
+        logger.error(f"Exception in handle_endpoints(): {str(e)}")
 
 
 """ def remove_message(update: Update, context: CallbackContext,message, is_query: bool = False):
@@ -105,18 +114,21 @@ async def handle_endpoints():
 # Signup function
 async def signup(update: Update, context):
     global resource_catalog_address
+    logger.info(f"Signup attempt for chat_id: {update.message.chat_id}")
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(f'{resource_catalog_address}/user', json={'telegram_chat_id': update.message.chat_id}) as response:
                 if response.status == 200:
+                    logger.info("User signup successful, proceeding to login")
                     await login(update, context)
                 else:
-                     logger.error("Error performing login:" + response)
+                     logger.error(f"Error performing signup. Status: {response.status}")
     except Exception as e:
-        logger.error(" Exception in signup():" + str(e))
+        logger.error(f"Exception in signup(): {str(e)}")
 
 
 async def handle_main_actions(update: Update):
+    logger.info("Displaying main actions menu")
     keyboard = [
     [InlineKeyboardButton("🌱 Add a new Smart Vase", callback_data='add_vase')],
     [InlineKeyboardButton("📜 See the list of connected Smart Vases", callback_data='vase_list')],
@@ -130,6 +142,7 @@ async def handle_main_actions(update: Update):
 
 async def add_vase(update: Update, context):
     current_user = context.user_data.get("current_user")
+    logger.info(f"Add vase request from user_id: {current_user['user_id'] if current_user else 'unknown'}")
     instructions = (
         "🛠️ *Follow these steps to add a new Smart Vase:*\n\n" +
         "1️⃣ *Turn on* the vase and your phone's Wi-Fi.\n" +
@@ -148,6 +161,7 @@ async def get_user_vase_list(update: Update, context):
     current_user = context.user_data.get("current_user")
     vase_list = context.user_data.get("vase_list")
     device_list = context.user_data.get("device_list")
+    logger.info(f"Getting vase list for user_id: {current_user['user_id'] if current_user else 'unknown'}")
     try:
         async with aiohttp.ClientSession() as session:
             if update.callback_query:
@@ -159,27 +173,33 @@ async def get_user_vase_list(update: Update, context):
             device_list_response = await session.get(f"{resource_catalog_address}/listDeviceByUser/{current_user['user_id']}")
             if vase_list_response.status == 200:
                 vase_list = await vase_list_response.json()
+                logger.info(f"Successfully retrieved vase list for user")
             else: 
-                logger.error("error on vase_list in get_user_vase_list(): "+ device_list_response)
+                logger.error(f"Error on vase_list in get_user_vase_list(). Status: {vase_list_response.status}")
                 await message.reply_text("Something went wrong...", reply_markup=reply_markup, parse_mode='Markdown')
                 return
 
             if device_list_response.status == 200:
                 device_list = await device_list_response.json()
+                logger.info(f"Successfully retrieved device list for user")
             else:
-                logger.error("error on device_list in get_user_vase_list(): "+ device_list_response)
+                logger.error(f"Error on device_list in get_user_vase_list(). Status: {device_list_response.status}")
                 await message.reply_text("Something went wrong...", reply_markup=reply_markup, parse_mode='Markdown')
                 return
             # Generate response based on the retrieved devices
             if device_list:
                 keyboard_list = []
                 print('User has some devices')
+                logger.info(f"User has {len(device_list)} devices")
                 for dev in device_list:
                     name = "🌸 Vase " + dev['device_id']
                     vase = find_device_in_list_via_device_id(dev['device_id'], vase_list)
                     if vase:
                         print(f"vase found : {vase}")
+                        logger.info(f"Vase found for device {dev['device_id']}: {vase['vase_name']}")
                         name = f"🌿 {vase['vase_name']}"
+                    else:
+                        logger.info(f"No vase configuration found for device {dev['device_id']}")
                     callback_data = f'vase_info_{dev["device_id"]}'
                    
                     keyboard_list.append([InlineKeyboardButton(name, callback_data=callback_data)])            
@@ -190,6 +210,7 @@ async def get_user_vase_list(update: Update, context):
                 reply_markup = InlineKeyboardMarkup(keyboard_list)
                 await message.reply_text("*Here are your connected vases:*", reply_markup=reply_markup, parse_mode='Markdown')
             else:
+                logger.info("User has no devices connected")
                 keyboard = [[InlineKeyboardButton("🔄 Refresh my Vase List", callback_data='vase_list')]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 if update.callback_query:
@@ -202,10 +223,11 @@ async def get_user_vase_list(update: Update, context):
                     parse_mode='Markdown'
                 ) 
     except Exception as e:
-        logger.error("Exception on get_user_vase_list():" + str(e))
+        logger.error(f"Exception on get_user_vase_list(): {str(e)}")
 
 # Show graph for a vase
 async def show_graph(name: str, field_number: int, channel_id: str, days: int, context, update: Update):
+    logger.info(f"Generating chart for {name}, channel_id: {channel_id}, days: {days}")
     service_catalog = requests.get(f"{service_expose_endpoint}/all").json()
     chart_service = service_catalog['services']['chart_service']
 
@@ -218,6 +240,7 @@ async def show_graph(name: str, field_number: int, channel_id: str, days: int, c
             async with session.get(chart_url, timeout=60) as response:
                 if response.status == 200:
                     image_data = await response.read()
+                    logger.info(f"Successfully generated chart for {name}")
                     await update.callback_query.message.reply_photo(photo=image_data, caption=f"{name} chart\nYou can see the {name} chart here:\n {live_chart})")
                 else:
                     #logger.error("error while getting chart:" + response)
@@ -232,6 +255,7 @@ async def show_graph(name: str, field_number: int, channel_id: str, days: int, c
 # Handle button presses
 async def button(update: Update, context):
     query = update.callback_query
+    logger.info(f"Button pressed: {query.data}")
     try:
         await query.answer()
 
@@ -253,6 +277,8 @@ async def button(update: Update, context):
             if x=="week":
                 days=7
 
+            logger.info(f"Chart request for {parameter_type}, channel_id: {channel_id}, time period: {x} ({days} days)")
+
             if parameter_type == 'temperature':
                 await show_graph("temperature", 1, channel_id, days, context, update)
             elif parameter_type == 'light':
@@ -267,6 +293,7 @@ async def button(update: Update, context):
             parameter_type = query.data.split('_')[1]
             channel_id = query.data.split('_')[2]
             print(parameter_type)
+            logger.info(f"Details request for {parameter_type}, channel_id: {channel_id}")
             keyboard = [
                     [
                     InlineKeyboardButton(
@@ -287,6 +314,7 @@ async def button(update: Update, context):
         elif query.data.startswith('edit_vase_'):
             device_id = query.data.split('_')[2]
             context.user_data["global_device_id"] = device_id
+            logger.info(f"Edit vase request for device_id: {device_id}")
             keyboard = [
                 [InlineKeyboardButton("🌸 Vase Name", callback_data='edit_params_vasename')],
                 [InlineKeyboardButton("☀️ Min Hours of Light", callback_data='edit_params_hourssun')],
@@ -348,27 +376,34 @@ async def button(update: Update, context):
                     )
         elif query.data == 'add_vase':
             context.user_data["global_device_id"] = ""
+            logger.info("Add vase button pressed")
             await add_vase(update, context)
         elif query.data == 'vase_list':
             context.user_data["global_device_id"] = ""
+            logger.info("Vase list button pressed")
             await get_user_vase_list(update, context)
         elif query.data.startswith('vase_info_'):
             # Extract device_id from callback_data
             device_id = query.data.split('_')[2]
+            logger.info(f"Vase info request for device_id: {device_id}")
             await vase_details(update, context, device_id)
         elif query.data == 'identify_disease':
+            logger.info("Disease identification request")
             await handle_disease_identification_request(update, context)
     except Exception as e:
-            logger.error("Exception on button():" + str(e))
+            logger.error(f"Exception on button(): {str(e)}")
       
 def find_device_in_list_via_device_id(device_id, item_list):
     for item in item_list:
         if item['device_id'] == device_id:
             print(f"item found: {item}")
+            logger.info(f"Device found in list: {device_id}")
             return item  
+    logger.info(f"Device not found in list: {device_id}")
     return None  
 
 async def vase_details(update: Update, context, device_id: str):
+    logger.info(f"Getting vase details for device_id: {device_id}")
     try:
         service_catalog = requests.get(f"{service_expose_endpoint}/all").json()
         data_analysis_service = service_catalog['services']['data_analysis']
@@ -381,10 +416,12 @@ async def vase_details(update: Update, context, device_id: str):
         channel_id = dev['channel_id']
         if vase:
             print(f"vase details: {vase}")
+            logger.info(f"Vase configuration found: {vase['vase_name']}")
             async with aiohttp.ClientSession() as session:
                 response = await session.get(f"{data_analysis_service}/{str(device_id)}")
                 res = json.loads(await response.text())
                 print(f"response: {res}")
+                logger.info(f"Data analysis response received for device {device_id}")
                 temperature = res.get('temperature', 0)
                 light_level = res.get('light_level', 0)
                 watertank_level = res.get('watertank_level', 0)
@@ -437,7 +474,8 @@ async def vase_details(update: Update, context, device_id: str):
 
             await update.callback_query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
         
-        else:            
+        else:
+            logger.info(f"No vase configuration found for device {device_id}, prompting for configuration")
             keyboard = [
                 [InlineKeyboardButton("✅ Yes", callback_data=f'configure_{device_id}'), 
                 InlineKeyboardButton("❌ No", callback_data='vase_list')]]
@@ -451,9 +489,11 @@ async def vase_details(update: Update, context, device_id: str):
         logger.error("Exception on get_user_vase_list():" + str(e))
 
 async def handle_message(update: Update, context: CallbackContext):
+    logger.info(f"Message received: {update.message.text[:50]}...")
     if context.user_data["param_to_edit"] and context.user_data["global_device_id"]:
         param = context.user_data["param_to_edit"]
         device_id = context.user_data["global_device_id"]
+        logger.info(f"Editing parameter '{param}' for device_id: {device_id}")
         if update.callback_query:
             message = update.callback_query.message
         else:
@@ -497,11 +537,14 @@ async def handle_message(update: Update, context: CallbackContext):
                         await message.reply_text(text="Temperature updated successfully")
         # clear user related param
         del context.user_data["param_to_edit"]
+        logger.info(f"Parameter '{param}' updated successfully for device_id: {device_id}")
 
 async def handle_photo(update: Update, context: CallbackContext):
+    logger.info("Photo received from user")
     try:
         # Check if user is waiting for a disease identification image
         if context.user_data.get("waiting_for_disease_image"):
+            logger.info("Processing photo for disease identification")
             # Download the photo
             photo_file = await update.message.photo[-1].get_file()
             file_path = f"{photo_file.file_id}.jpg"
@@ -517,8 +560,10 @@ async def handle_photo(update: Update, context: CallbackContext):
         # Original plant identification logic
         service_catalog = requests.get(f"{service_expose_endpoint}/all").json()
         recommendation_service = service_catalog['services']['recommendation_service']
+        logger.info(f"Processing photo for plant identification using service: {recommendation_service}")
 
         if not context.user_data["global_device_id"]:
+            logger.warning("Photo uploaded without selecting a vase first")
             await update.message.reply_text("Make sure to select a vase before trying to upload.")
             return
         
@@ -539,12 +584,15 @@ async def handle_photo(update: Update, context: CallbackContext):
                     # Send the request to the server
                     async with session.post(recommendation_service, data=form) as response:
                         if response.status == 200:
+                            logger.info("Image successfully uploaded to recommendation service")
                             await update.message.reply_text('Image uploaded to server successfully!')
 
                             # Parse the response JSON
                             try:
                                 chat_response =json.loads(await response.text())
+                                logger.info("Successfully parsed recommendation service response")
                             except json.JSONDecodeError as json_err:
+                                logger.error(f"Failed to parse recommendation service response: {str(json_err)}")
                                 await update.message.reply_text('Failed to parse the server response.')
                                 raise json_err
                             if isinstance(chat_response, list):
@@ -552,6 +600,7 @@ async def handle_photo(update: Update, context: CallbackContext):
                             # Ensure that chat_response is a valid dictionary
                             if chat_response and isinstance(chat_response, dict):
                                 print("Creating vase")
+                                logger.info("Creating new vase configuration from plant identification")
                                 
                                 # Check if required keys are present
                                 required_keys = [
@@ -561,6 +610,7 @@ async def handle_photo(update: Update, context: CallbackContext):
                                 missing_keys = [key for key in required_keys if key not in chat_response]
                                 if missing_keys:
                                     print(f"Missing keys in response: {missing_keys}")
+                                    logger.error(f"Missing keys in recommendation response: {missing_keys}")
                                     await update.message.reply_text(f'Missing data in response: {", ".join(missing_keys)}')
                                     return
 
@@ -588,6 +638,7 @@ async def handle_photo(update: Update, context: CallbackContext):
                                 async with session.post(f"{resource_catalog_address}/vase", json=new_vase) as res:
                                     print(f"res: {res} res.status: {res.status}")
                                     if res.status == 200:
+                                        logger.info(f"Successfully created vase for plant: {chat_response['plant_name']}")
                                         await update.message.reply_text(
                                             f"🌱 *Vase Added Successfully!* 🌱\n\n"
                                             f"*Plant Name*: {chat_response['plant_name']}\n\n"
@@ -602,6 +653,7 @@ async def handle_photo(update: Update, context: CallbackContext):
                                         )
 
                                     else:
+                                        logger.error(f"Failed to create vase. Status: {res.status}")
                                         await update.message.reply_text('Failed to add the vase.')
 
                                 async with session.get(f"{resource_catalog_address}/listgroup") as res:
@@ -621,10 +673,12 @@ async def handle_photo(update: Update, context: CallbackContext):
                                                 )
 
                                     else:
+                                        logger.error(f"Failed to get group list. Status: {res.status}")
                                         await update.message.reply_text('Failed to add the vase.')                                       
 
                         else:
                             print(await response.text())
+                            logger.error(f"Failed to upload image to recommendation service. Status: {response.status}")
                             await update.message.reply_text('Failed to upload the image.')
 
         except Exception as e:
@@ -638,10 +692,11 @@ async def handle_photo(update: Update, context: CallbackContext):
                     logger.error(f"Error cleaning up file {file_path}: {str(e)}")
 
     except Exception as e:
-        logger.error("Exception on handle_photo():" + str(e)) 
+        logger.error(f"Exception on handle_photo(): {str(e)}") 
 
 async def handle_disease_identification_request(update: Update, context: CallbackContext):
     """Handle the request to identify plant disease"""
+    logger.info("Disease identification request initiated")
     try:
         # Set a flag in user data to indicate we're waiting for a disease identification image
         context.user_data["waiting_for_disease_image"] = True
@@ -653,17 +708,20 @@ async def handle_disease_identification_request(update: Update, context: Callbac
             parse_mode='Markdown'
         )
     except Exception as e:
-        logger.error("Exception on handle_disease_identification_request():" + str(e))
+        logger.error(f"Exception on handle_disease_identification_request(): {str(e)}")
         await update.callback_query.edit_message_text("Sorry, there was an error. Please try again.")
 
 async def handle_plant_health_check(update: Update, context: CallbackContext):
     """Handle plant health checking using the plant health service"""
+    logger.info("Plant health check initiated")
     try:
         service_catalog = requests.get(f"{service_expose_endpoint}/all").json()
         plant_health_service = service_catalog['services']['plant_health']
+        logger.info(f"Using plant health service: {plant_health_service}")
         
         file_path = context.user_data.get("uploaded_photo_path")
         if not file_path:
+            logger.warning("No image found for plant health check")
             await update.message.reply_text("No image found. Please upload an image first.")
             return
         
@@ -679,9 +737,12 @@ async def handle_plant_health_check(update: Update, context: CallbackContext):
                     # Send the request to the plant health service
                     async with session.post(plant_health_service, data=form) as response:
                         if response.status == 200:
+                            logger.info("Successfully received plant health assessment")
                             try:
                                 health_response = json.loads(await response.text())
+                                logger.info("Successfully parsed plant health response")
                             except json.JSONDecodeError as json_err:
+                                logger.error(f"Failed to parse plant health response: {str(json_err)}")
                                 await update.message.reply_text('Failed to parse the health assessment response.')
                                 raise json_err
                             
@@ -691,12 +752,14 @@ async def handle_plant_health_check(update: Update, context: CallbackContext):
                             gemini_advice = health_response.get('gemini_advice', 'No specific advice available.')
                             
                             if is_healthy:
+                                logger.info("Plant health assessment: Plant appears healthy")
                                 message = (
                                     f"✅ *Plant Health Assessment* ✅\n\n"
                                     f"🎉 *Great news!* Your plant appears to be healthy.\n\n"
                                     f"💡 *General Care Tips:*\n{gemini_advice}"
                                 )
                             else:
+                                logger.info(f"Plant health assessment: Issues detected. Suggestions count: {len(suggestions)}")
                                 message = (
                                     f"⚠️ *Plant Health Assessment* ⚠️\n\n"
                                     f"🔍 *Health Issues Detected:*\n"
@@ -707,11 +770,13 @@ async def handle_plant_health_check(update: Update, context: CallbackContext):
                                         name = suggestion.get('name', 'Unknown')
                                         probability = suggestion.get('probability', 0)
                                         message += f"  {i}. *{name}* (Probability: {probability:.1%})\n"
+                                        logger.info(f"Health issue detected: {name} (Probability: {probability:.1%})")
                                 
                                 message += f"\n💡 *Treatment Recommendations:*\n{gemini_advice}"
                             
                             await update.message.reply_text(message, parse_mode='Markdown')
                         else:
+                            logger.error(f"Failed to check plant health. Status: {response.status}")
                             await update.message.reply_text('Failed to check plant health. Please try again.')
 
         except Exception as e:
@@ -719,7 +784,7 @@ async def handle_plant_health_check(update: Update, context: CallbackContext):
             raise e
 
     except Exception as e:
-        logger.error("Exception on handle_plant_health_check():" + str(e))
+        logger.error(f"Exception on handle_plant_health_check(): {str(e)}")
         await update.message.reply_text("Sorry, there was an error checking your plant's health. Please try again.")
     finally:
         # Clean up the temporary file and reset the flag
@@ -735,47 +800,41 @@ async def handle_plant_health_check(update: Update, context: CallbackContext):
         context.user_data["waiting_for_disease_image"] = False
 
 def main(TOKEN):
-    # Creiamo l'istanza dell'applicazione del bot
-
-
-    #get al service_catalog
+    logger.info("Starting Telegram bot application")
     token = TOKEN
 
     application = Application.builder().token(token).concurrent_updates(True).build()
+    logger.info("Application built successfully")
 
-    # Aggiungiamo i gestori per i comandi e i callback
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("vase_list", get_user_vase_list))
     application.add_handler(CommandHandler("add_vase", add_vase))
     application.add_handler(CallbackQueryHandler(button))
-    application.add_handler(MessageHandler(filters.PHOTO, handle_photo))  # Nota: filters è ora minuscolo in v20+
+    application.add_handler(MessageHandler(filters.PHOTO, handle_photo))  
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-
-    # Avviamo il polling in modo asincrono
-    #application.initialize()
-    application.run_polling()  # Cambia rispetto alla versione sincrona
-    #application.idle()
+    logger.info("All handlers registered successfully")
+    application.run_polling() 
 
 if __name__ == '__main__':
-    #asyncio.run(main())
     try:
+        logger.info("Loading environment variables")
         load_dotenv()
 
-        # TOKEN = os.getenv("TOKEN")
-        TOKEN = "7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE"
+        TOKEN = os.getenv("TOKEN")
         if not TOKEN:
-            #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
+            logger.error("TOKEN is missing from environment variables")
             raise ValueError("TOKEN is missing from environment variables")
+        logger.info("Environment variables loaded successfully")
         main(TOKEN)
     except Exception as e:
         print(e)
+        logger.error(f"Critical error during startup: {str(e)}")
         print("ERROR OCCUREDD, DUMPING INFO...")
-        '''
-        path = os.path.abspath('/app/logs/ERROR_telegrambot.err')
+        path = os.path.abspath('./logs/ERROR_telegrambot.err')
         with open(path, 'a') as file:
             date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             file.write(f"Crashed at : {date}")
             file.write(f"Unexpected error: {e}")
-        '''
+        
         print("EXITING...")
         sys.exit(1) 

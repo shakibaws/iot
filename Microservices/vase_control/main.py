@@ -3,10 +3,8 @@ from MyMQTT import *
 import time
 import requests
 import CustomerLogger
-import os
 import sys
 import random
-import asyncio
 import threading
 
 service_name="vase_control"
@@ -135,15 +133,11 @@ if __name__ == "__main__":
         controller = vaseControl(clientID, broker, port, topicSensors, topicActuators, topic_telegram_chat, resource_catalog)
         # thread to check new addres for public ip
         t_addr = threading.Thread(target=controller.checkNewAddress, args=(broker,))
-        # thread to restart script to avoid problem with mqtt not receiving message
-        ##t_timer = threading.Thread(target=controller.timerRestart)
 
         t_addr.start()
-        ##t_timer.start()
 
         controller.startSim()
 
-        # if exit the loop_forever
         
         raise RuntimeError
 
@@ -152,11 +146,11 @@ if __name__ == "__main__":
         logger.error("Stopping simulation...")
         controller.stopSim()
         logger.error("ERROR OCCUREDD, DUMPING INFO...")
-        # path = './logs/ERROR_vasecontrol.err'
-        # with open(path, 'a') as file:
-        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-        #     file.write(f"Crashed at : {date}")
-        #     file.write(f"Unexpected error: {e}")
+        path = './logs/ERROR_vasecontrol.err'
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
         print(e)
         logger.error("EXITING...")
         sys.exit(1)   

@@ -7,24 +7,30 @@ import requests
 import sys
 import datetime
 import os
+import CustomerLogger
 
 class DataAnalysis:
     exposed = True
 
     def __init__(self, catalog):
         self.catalog = catalog
+        self.logger = CustomerLogger.CustomLogger("data_analysis")
 
     @cherrypy.tools.json_out()
     def GET(self, *args, **kwargs):
+        self.logger.info("GET request received")
         if args:
             device_id = args[0].lower()
+            self.logger.info(f"Processing data analysis for device: {device_id}")
             # Since CherryPy is synchronous, we need to run the async function using an event loop.
             #This allows you to use an async function (get_from_thingspeak) inside a normal synchronous function
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             vase_data = loop.run_until_complete(self.get_from_thingspeak(device_id))
+            self.logger.info("Data analysis completed successfully")
             return vase_data
         else:
+            self.logger.error("GET request received without arguments")
             raise cherrypy.HTTPError(404, "Arguments missing!")
 
     async def get_from_thingspeak(self, device_id):
@@ -45,6 +51,7 @@ class DataAnalysis:
             channel = dev['channel_id']
         
         if not channel or not vase:
+            self.logger.error(f"Device or vase not found for device_id: {device_id}")
             return {"error": "Device or vase not found"}
 
         #it prepares a dictionary vase_data 
@@ -120,13 +127,13 @@ class DataAnalysis:
         async with aiohttp.ClientSession() as session:
             async with session.get(self.catalog['services']['resource_catalog']+'/getData/'+str(vase['vase_id'])+"?days=14") as resp:
                 res = await resp.json()
-                print(res)
+                self.logger.info(f"Water pump data retrieved: {res}")
                 if res and res['water_pump']:
                     vase_data["watered_times"] = len(res['water_pump'])
                 else:
                     vase_data["watered_times"] = 0
         
-        print(vase_data)
+        self.logger.info(f"Final vase data analysis: {vase_data}")
         return vase_data
 
 
@@ -152,10 +159,10 @@ if __name__ == '__main__':
         cherrypy.engine.block()
     except Exception as e:
         print("ERROR OCCUREDD, DUMPING INFO...")
-        # path = os.path.abspath('/app/logs/ERROR_dataanalisys.err')
-        # with open(path, 'a') as file:
-        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-        #     file.write(f"Crashed at : {date}")
-        #     file.write(f"Unexpected error: {e}")
+        path = os.path.abspath('./logs/ERROR_dataanalisys.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
         print("EXITING...")
         sys.exit(1) 

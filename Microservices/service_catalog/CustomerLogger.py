@@ -7,7 +7,7 @@ class CustomLogger:
         self.logger = logging.getLogger(service_name)
         self.logger.setLevel(logging.DEBUG)
         # Ensure the log directory exists
-        log_dir = os.getenv('LOG_DIR', './logs') # get dir from env
+        log_dir = os.getenv('LOG_DIR', './logs') 
         os.makedirs(log_dir, exist_ok=True)
         
         # Create file handler
@@ -28,3 +28,9 @@ class CustomLogger:
 
     def error(self, message):
         self.logger.error(message, extra={'user_id': self.user_id or 'N/A'})
+
+    def warning(self, message):
+        self.logger.warning(message, extra={'user_id': self.user_id or 'N/A'})
+
+    def debug(self, message):
+        self.logger.debug(message, extra={'user_id': self.user_id or 'N/A'})

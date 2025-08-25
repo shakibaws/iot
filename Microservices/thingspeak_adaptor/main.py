@@ -146,11 +146,8 @@ if __name__ == '__main__':
         adapter = ThingspeakAdaptor(clientID,broker,port,topicSensors,resource_catalog)
         # thread to check new addres for public ip
         t_addr = threading.Thread(target=adapter.checkNewAddress, args=(broker,))
-        # thread to restart script to avoid problem with mqtt not receiving message
-        #t_timer = threading.Thread(target=adapter.timerRestart)
-
+       
         t_addr.start()
-        #t_timer.start()
 
         adapter.startSim() # blocking
     
@@ -162,11 +159,11 @@ if __name__ == '__main__':
         logger.error("Stopping simulation...")
         adapter.stopSim()
         logger.error("ERROR OCCUREDD, DUMPING INFO...")
-        # path = os.path.abspath('/app/logs/ERROR_thingspeakadaptor.err')
-        # with open(path, 'a') as file:
-        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-        #     file.write(f"Crashed at : {date}")
-        #     file.write(f"Unexpected error: {e}")
+        path = os.path.abspath('./logs/ERROR_thingspeakadaptor.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
         print(e)
         logger.error("EXITING...")
         sys.exit(1)   

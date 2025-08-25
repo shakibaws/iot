@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import sys
 import random
 import threading
+import CustomerLogger
 
 class TelegramNotifier:
     def __init__(self, clientID, broker, port, topic_sub, token):
@@ -18,6 +19,7 @@ class TelegramNotifier:
         self.light = {}
         self.bot = Bot(token=token)
         self._message_arrived = False
+        self.logger = CustomerLogger.CustomLogger("bot_notifier")
         # Create a single event loop for the application
         self.loop = asyncio.new_event_loop()
         # Start a thread that runs the event loop
@@ -36,6 +38,7 @@ class TelegramNotifier:
             self._message_arrived = False
             time.sleep(300)
             if not self._message_arrived:
+                self.logger.warning("Timer expired, no messages received in 5 minutes, restarting service")
                 print("Stopping simulation...")
                 self.stopSim()
                 print("Timer expired, restarting...")
@@ -48,6 +51,7 @@ class TelegramNotifier:
             res = requests.get("http://localhost:5001/mqtt").text
             res = res.replace('"', '')
             if res != broker:
+                self.logger.warning(f"New MQTT broker address detected: {res} (was: {broker}), restarting service")
                 print("Stopping simulation...")
                 self.stopSim()
                 print("New address detected, restarting...")
@@ -56,7 +60,7 @@ class TelegramNotifier:
     def notify(self, topic, payload):
         self._message_arrived = True
         data = json.loads(payload)
-        print(f"Message received on topic: {topic}, {data}")
+        self.logger.info(f"Message received on topic: {topic}, data: {data}")
         # "topic_sensors": "smartplant/+/sensors",
         # "topic_actuators": "smartplant/device_id/actuators"
         telegram_chat = topic.split('/')[2]
@@ -79,11 +83,13 @@ class TelegramNotifier:
                     if time_difference.total_seconds() > 2 * 60 * 60:
                         # Send the message if more than 2 hours have passed
                         await self.bot.send_message(chat_id=telegram_chat, text=f"Watertank almost empty of vase {name}")
+                        self.logger.info(f"Sent watertank alert to chat {telegram_chat} for vase {name}")
                         # Update the last notification time to now
                         self.watertank[telegram_chat]['date'] = current_time
             else:
                 # If no previous notification date, send the message and store the time
                 await self.bot.send_message(chat_id=telegram_chat, text=f"Watertank almost empty of vase {name}")
+                self.logger.info(f"Sent initial watertank alert to chat {telegram_chat} for vase {name}")
                 # Set the last notification time
                 self.watertank[telegram_chat] = {'date': datetime.datetime.now()}
         elif data.get("light"):
@@ -95,24 +101,30 @@ class TelegramNotifier:
                     time_difference = current_time - last_notified_time
                     if time_difference.total_seconds() > 2 * 60 * 60:
                         await self.bot.send_message(chat_id=telegram_chat, text=f"Low light for vase {name}")
+                        self.logger.info(f"Sent low light alert to chat {telegram_chat} for vase {name}")
                         self.light[telegram_chat]['date'] = current_time
             else:
                 await self.bot.send_message(chat_id=telegram_chat, text=f"Low light for vase {name}")
+                self.logger.info(f"Sent initial low light alert to chat {telegram_chat} for vase {name}")
                 self.light[telegram_chat] = {'date': datetime.datetime.now()}
         else:
-            print("Unknown sensor")
+            self.logger.warning(f"Unknown sensor data received: {data}")
 
     def startSim(self):
+        self.logger.info("Starting bot notifier service")
         print("connecting mqtt...")
         self.mqtt.connect()
         time.sleep(1)
+        self.logger.info(f"Subscribing to topic: {self.topic_sub}")
         print(f"Subscribing to : {self.topic_sub}")
         self.mqtt.mySubscribe(self.topic_sub)
         time.sleep(1)
+        self.logger.info("Starting MQTT loop")
         print("Start loop_forever")
         self.mqtt.start()
     
     def stopSim(self):
+        self.logger.info("Stopping bot notifier service")
         self.mqtt.unsubscribe()
         self.mqtt.stop()
         # Stop the event loop properly
@@ -129,22 +141,26 @@ if __name__ == "__main__":
     try:
         load_dotenv()
 
-        # TOKEN = os.getenv("TOKEN")
-        TOKEN = "7058374905:AAFJc4qnJjW5TdDyTViyjW_R6PzcSqR22CE"
+        TOKEN = os.getenv("TOKEN")
 
         if not TOKEN:
-            #log_to_loki("info", "POST request received", service_name=service_name, user_id=user_id, request_id=request_id)
             raise ValueError("TOKEN is missing from environment variables")
+        
+        # Initialize logger for main section
+        logger = CustomerLogger.CustomLogger("bot_notifier")
+        logger.info("Bot notifier service starting up")
 
 
         #get al service_catalog
         service_catalog = requests.get("http://localhost:5001/all").json()
+        logger.info("Service catalog retrieved successfully")
 
         broker = service_catalog["mqtt_broker"]["broker_address"]
         port = service_catalog["mqtt_broker"]["port"]
         topic_sub = service_catalog['mqtt_topics']['topic_telegram_chat']
         token = TOKEN
 
+        logger.info(f"Initializing bot notifier with broker: {broker}:{port}, topic: {topic_sub}")
         bot_notification = TelegramNotifier(clientID,broker,port,str(topic_sub).replace('telegram_chat_id', '+')+'/alert', token)
         # thread to check new addres for public ip
         t_addr = threading.Thread(target=bot_notification.checkNewAddress, args=(broker,))
@@ -163,13 +179,11 @@ if __name__ == "__main__":
         print("Stopping simulation...")
         bot_notification.stopSim()
         print("ERROR OCCUREDD, DUMPING INFO...")
-        ''' 
-        path = os.path.abspath('/app/logs/ERROR_botnotifier.err')
+        path = os.path.abspath('./logs/ERROR_botnotifier.err')
         with open(path, 'a') as file:
             date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             file.write(f"Crashed at : {date}")
             file.write(f"Unexpected error: {e}")
-        '''
         print (e)
         print("EXITING...")
         sys.exit(1)   

@@ -62,18 +62,18 @@ if __name__ == '__main__':
         }
         cherrypy.config.update({
             'server.socket_host': 'localhost',
-            'server.socket_port': 5001  # Specify your desired port here
+            'server.socket_port': 5001  
         })
         cherrypy.tree.mount(serviceCatalog, '/', conf)
         cherrypy.engine.start()
         cherrypy.engine.block()
     except Exception as e:
         print("ERROR OCCUREDD, DUMPING INFO...")
-        # path = os.path.abspath('./logs/ERROR_servicecatalog.err')
-        # with open(path, 'a') as file:
-        #     date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-        #     file.write(f"Crashed at : {date}")
-        #     file.write(f"Unexpected error: {e}")
+        path = os.path.abspath('./logs/ERROR_servicecatalog.err')
+        with open(path, 'a') as file:
+            date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            file.write(f"Crashed at : {date}")
+            file.write(f"Unexpected error: {e}")
         print(e)
         print("EXITING...")
         sys.exit(1) 

@@ -261,7 +261,6 @@ class DeviceDataPanel:
 
 
 def main():
-    """Main function"""
     device_list = []
     service_catalog_url = "http://localhost:5001"
     response = requests.get(service_catalog_url)

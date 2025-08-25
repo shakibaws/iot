@@ -7,7 +7,7 @@ class CustomLogger:
         self.logger = logging.getLogger(service_name)
         self.logger.setLevel(logging.DEBUG)
         # Ensure the log directory exists
-        log_dir = os.getenv('LOG_DIR', './logs') # get dir from env
+        log_dir = os.getenv('LOG_DIR', './logs')
         os.makedirs(log_dir, exist_ok=True)
         if not self.logger.hasHandlers():
 

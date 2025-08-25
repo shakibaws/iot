@@ -1,6 +1,6 @@
 {
   "mqtt_broker": {
-    "broker_address": "5.95.152.24",
+    "broker_address": "broker.hivemq.com",
     "broker_websocket": "broker.duck.pictures",
     "port": 1883,
     "port_websocket": 8080
@@ -11,10 +11,11 @@
     "topic_telegram_chat": "smartplant/telegram/telegram_chat_id"
   },
   "services": {
-    "chart_service": "https://chartservice.duck.pictures",
+    "chart_service": "http://localhost:5008",
     "data_analysis": "http://localhost:5003",
     "gemini": "http://localhost:5007",
     "image_recognition": "http://localhost:5006",
+    "plant_health": "http://localhost:5009",
     "recommendation_service": "http://localhost:5005",
     "resource_catalog": "http://localhost:5002"
   }

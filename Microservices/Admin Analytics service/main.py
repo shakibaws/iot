@@ -528,7 +528,7 @@ if __name__ == '__main__':
         
     except Exception as e:
         print("ERROR OCCURRED, DUMPING INFO...")
-        path = os.path.abspath('/app/logs/ERROR_admin_analytics.err')
+        path = os.path.abspath('./logs/ERROR_admin_analytics.err')
         try:
             with open(path, 'a') as file:
                 date = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")

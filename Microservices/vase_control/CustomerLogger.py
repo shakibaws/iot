@@ -8,8 +8,7 @@ class CustomLogger:
         self.logger.setLevel(logging.DEBUG)
         # Ensure the log directory exists
         # Use local logs directory if /app is not writable (running locally)
-        default_log_dir = '/app/logs' if os.path.exists('/app') and os.access('/app', os.W_OK) else './logs'
-        log_dir = os.getenv('LOG_DIR', default_log_dir)
+        log_dir = os.getenv('LOG_DIR', './logs') 
         os.makedirs(log_dir, exist_ok=True)
         
         if not self.logger.hasHandlers():
