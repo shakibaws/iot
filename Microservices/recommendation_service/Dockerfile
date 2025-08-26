@@ -11,7 +11,7 @@ COPY . /app
 RUN pip install --no-cache-dir -r python_libraries.txt
 
 # Expose the port the app runs on
-EXPOSE 5001
+EXPOSE 5005
 
 # Run the application
-CMD ["python", "main_async.py"]
+CMD ["python", "main.py"]
