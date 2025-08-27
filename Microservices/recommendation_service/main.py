@@ -97,7 +97,7 @@ class API:
 
 if __name__ == '__main__':
     try:
-        res = requests.get("http://localhost:5001/all").json()
+        res = requests.get("http://service_catalog:5001/all").json()
 
         conf = {
             '/':{
@@ -107,8 +107,8 @@ if __name__ == '__main__':
             }
         }
         cherrypy.config.update({
-        'server.socket_host': 'localhost',
-            'server.socket_port': 5005 
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 5005
         })
         
         webService = API(res['services']['image_recognition'], res['services']['gemini']+'/chat')

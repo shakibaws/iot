@@ -264,7 +264,8 @@ def main():
     device_list = []
     service_catalog_url = "http://localhost:5001"
     response = requests.get(service_catalog_url)
-    resource_catalog = response.json()["services"]["resource_catalog"]
+    # resource_catalog = response.json()["services"]["resource_catalog"]
+    resource_catalog = "http://localhost:5002"
     print(resource_catalog)
     response = requests.get(f"{resource_catalog}/listDevice/")
     for device in response.json():  

@@ -142,6 +142,45 @@ services:
       - LOG_DIR=/app/logs
     restart: on-failure
 
+  device_connector:
+    build: ./Microservices/device_connector
+    container_name: device_connector
+    ports:
+      - "5004:5004"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/device_connector:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+    restart: on-failure
+
+  telegram_groups:
+    build: ./Microservices/telegram_groups
+    container_name: telegram_groups
+    ports:
+      - "5011:5011"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/telegram_groups:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+    restart: on-failure
+
+  plant_health:
+    build: ./Microservices/plant_health
+    container_name: plant_health
+    ports:
+      - "5009:5009"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/plant_health:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+    restart: on-failure
+
   admin_analytics:
     build: ./Microservices/admin_service
     container_name: admin_analytics

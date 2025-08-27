@@ -14,7 +14,7 @@ class TelegramGroupsExpose:
 
     def __init__(self):
         self.logger = CustomerLogger.CustomLogger("telegramgroups")
-        self.service_catalog_address = 'http://localhost:5001'
+        self.service_catalog_address = 'http://service_catalog:5001'
         self.resource_catalog_address = ''
         
         # Get resource catalog address from service catalog
@@ -111,8 +111,8 @@ if __name__ == '__main__':
         }
         
         cherrypy.config.update({
-            'server.socket_host': 'localhost',
-            'server.socket_port': 5011  
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 5011
         })
         
         cherrypy.tree.mount(telegramgroups_service, '/', conf)

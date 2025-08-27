@@ -139,7 +139,7 @@ class DataAnalysis:
 
 if __name__ == '__main__':
     try:
-        res = requests.get("http://localhost:5001").json()
+        res = requests.get("http://service_catalog:5001").json()
         dataAnalysis = DataAnalysis(res)
 
         conf = {
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         }
 
         cherrypy.config.update({
-            'server.socket_host': 'localhost',
+            'server.socket_host': '0.0.0.0',
             'server.socket_port': 5003  # Specify your desired port here
         })
 
