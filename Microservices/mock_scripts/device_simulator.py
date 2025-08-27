@@ -35,19 +35,19 @@ class DeviceSimulator:
         self.sensor_topic = f"smartplant/{device_id}/sensors"
         self.actuator_topic = f"smartplant/{device_id}/actuators/+"
         
-        print(f"✅ Device {device_id} initialized")
-        print(f"📡 Broker: {broker}:{port}")
+        print(f"Device {device_id} initialized")
+        print(f"Broker: {broker}:{port}")
     
     def notify(self, topic, payload):
         """Handle incoming MQTT messages (required by MyMQTT)"""
         try:
             data = json.loads(payload.decode())
             if "water_pump" in topic and data.get("target") == 1:
-                print("💧 Water pump activated!")
+                print("Water pump activated!")
                 self.soil_moisture = min(90, self.soil_moisture + 25)
                 self.watertank_level = max(0, self.watertank_level - 5)
         except Exception as e:
-            print(f"❌ Error processing message: {e}")
+            print(f"Error processing message: {e}")
     
    
     
@@ -55,13 +55,13 @@ class DeviceSimulator:
         """Publish sensor data using MyMQTT"""
         # data = self.generate_sensor_data()
         self.client.myPublish(self.sensor_topic, data)
-        print(f"📊 T={data['e'][0]['value']}°C, SM={data['e'][1]['value']}%, "
+        print(f"T={data['e'][0]['value']}°C, SM={data['e'][1]['value']}%, "
               f"L={data['e'][2]['value']}lux, WT={data['e'][3]['value']}%")
     
     def start(self):
         """Start the device simulator"""
-        print(f"🚀 Starting simulation for device: {self.device_id}")
-        print("📥 Subscribing to actuator commands...")
+        print(f"Starting simulation for device: {self.device_id}")
+        print("Subscribing to actuator commands...")
         
         # Subscribe to actuator commands
         self.client.mySubscribe(self.actuator_topic)
@@ -69,8 +69,8 @@ class DeviceSimulator:
         # Connect to broker
         self.client.connect()
         
-        print("📊 Publishing sensor data every 60 seconds...")
-        print("💧 Listening for water pump commands...")
+        print("Publishing sensor data every 60 seconds...")
+        print("Listening for water pump commands...")
         print("Press Ctrl+C to stop")
         
         try:
@@ -82,9 +82,9 @@ class DeviceSimulator:
 
                 
         except KeyboardInterrupt:
-            print("\n🛑 Stopping simulator...")
+            print("\nStopping simulator...")
             self.client.stop()
-            print("✅ Stopped")
+            print("Stopped")
 
 
 # def main():
