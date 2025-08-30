@@ -107,6 +107,10 @@ class TelegramNotifier:
                 await self.bot.send_message(chat_id=telegram_chat, text=f"Low light for vase {name}")
                 self.logger.info(f"Sent initial low light alert to chat {telegram_chat} for vase {name}")
                 self.light[telegram_chat] = {'date': datetime.datetime.now()}
+        elif data.get("water_pump"):
+            name = data["water_pump"]
+            await self.bot.send_message(chat_id=telegram_chat, text=f"{name} was thirsty, we are now watering it 💧💧")
+            self.logger.info(f"Sent water pump alert to chat {telegram_chat} for vase {name}")
         else:
             self.logger.warning(f"Unknown sensor data received: {data}")
 

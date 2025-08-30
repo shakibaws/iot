@@ -1,4 +1,5 @@
 import datetime
+import json
 from MyMQTT import *
 import time
 import requests
@@ -88,24 +89,30 @@ class vaseControl:
             user = requests.get(self.resource_catalog+'/user/'+user_id).json()
             telegram_chat = self.topic_telegram_chat.replace("telegram_chat_id", str(user["telegram_chat_id"]))
             self.logger.info(f"Analyzing data from {device_id}")
-            for i in data['e']:    
+            #  smartplant/device2/sensors, b'{"bn": "device_device2", "e": [{"n": "temperature", "value": 29.6, "unit": "C"}, {"n": "soil_moisture", "value": 28.4, "unit": "%"}, {"n": "light_level", "value": 261, "unit": "lux"}, {"n": "watertank_level", "value": 62.0, "unit": "%"}]}
+        
+            for i in data['e']: 
                 if i['n'] == 'light_level':
                     # to be analyze later with thingspeak data
-                    pass
+                    continue
                 elif i['n'] == "temperature":
                     # to be analyze later with thingspeak data
-                    pass
+                    continue
                     """ if i['value'] < vase["plant"]["temperature_min"]:
                         self.control.myPublish(telegram_chat+"/alert", {"temperature":"low"})
                     elif i['value'] > vase["plant"]["temperature_max"]:
                         self.control.myPublish(telegram_chat+"/alert", {"temperature":"high"}) """
                 elif i['n'] == "soil_moisture":
+                    self.logger.info(f"Analyzing soil moisture: {i['value']}")
+                    self.logger.info(f"Vase soil moisture min: {vase['plant']['soil_moisture_min']}")
                     if i['value'] and int(i['value']) < int(vase["plant"]["soil_moisture_min"]):
                         # check if watertank is not empty
                         for c in data['e']:
                             if c['n'] == "watertank_level":
                                 if c['value'] and c['value'] >= 10:
+                                    self.logger.info(publisher+"/"+"water_pump")
                                     self.control.myPublish(publisher+"/"+"water_pump", {"target":1}) # wet the plant
+                                    self.control.myPublish(telegram_chat+"/alert", {"water_pump": vase['vase_name']})
                 elif i['n'] == "watertank_level":
                     if i['value'] is not None and int(i['value']) < 20:
                         print(f"low water level: {i['value']}")

@@ -81,8 +81,8 @@ class DataAnalysis:
                 res = await resp.json()
                 if len(res["feeds"]) > 0:
                     data = res['feeds']
-                    num_feeds = int(len(data) * 0.10)  # 10% of total feeds
-
+                    # num_feeds = int(len(data) * 0.10)  # 10% of total feeds
+                    num_feeds = int(len(data)) #Using all feeds for testing
                     # Extract and sort data fields
                     temperature = np.sort(np.array([float(feed['field1']) for feed in data if feed['field1']]))
                     light_level = np.sort(np.array([float(feed['field3']) for feed in data if feed['field3']]))
@@ -92,18 +92,28 @@ class DataAnalysis:
                     watered_times = np.size(watered_array)
                     vase_data["watered_times"] = watered_times """
 
-                    # Temperature alerts
-                    # !!TO-DO --> second overwrite the first
-                    if np.average(temperature[:num_feeds]) < int(vase["plant"]["temperature_min"]):
+                    # Temperature alerts - using recent data (last 10% of feeds)
+                    recent_temp_avg = np.average(temperature[:num_feeds])
+                    if recent_temp_avg < int(vase["plant"]["temperature_min"]):
                         vase_data["temperature_alert"] = "low"
-                    if np.average(temperature[-num_feeds:]) > int(vase["plant"]["temperature_max"]):
+                    elif recent_temp_avg > int(vase["plant"]["temperature_max"]):
                         vase_data["temperature_alert"] = "high"
+                    else:
+                        vase_data["temperature_alert"] = ""
 
-                    # Soil moisture alerts
-                    if np.average(soil_moisture[:num_feeds]) < int(vase["plant"]["soil_moisture_min"]):
+                    self.logger.info(f"Temperature alerts: {vase_data['temperature_alert']}")
+                    self.logger.info(f"Temperature: {recent_temp_avg}")
+                    self.logger.info(f"Temperature min: {vase['plant']['temperature_min']}")
+                    self.logger.info(f"Temperature max: {vase['plant']['temperature_max']}")
+
+                    # Soil moisture alerts - using recent data (last 10% of feeds)
+                    recent_moisture_avg = np.average(soil_moisture[-num_feeds:])
+                    if recent_moisture_avg < int(vase["plant"]["soil_moisture_min"]):
                         vase_data["soil_moisture_alert"] = "low"
-                    if np.average(soil_moisture[-num_feeds:]) > int(vase["plant"]["soil_moisture_max"]):
+                    elif recent_moisture_avg > int(vase["plant"]["soil_moisture_max"]):
                         vase_data["soil_moisture_alert"] = "high"
+                    else:
+                        vase_data["soil_moisture_alert"] = "normal"
 
                     # Light level alerts
                     num_light = num_feeds*10 * int(vase["plant"]["hours_sun_min"]) / 24

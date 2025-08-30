@@ -34,22 +34,8 @@ class PlantHealthAssistant:
             # Check if CherryPy has already parsed the multipart data
             if hasattr(cherrypy.request, 'params') and 'images' in cherrypy.request.params:
                 uploaded_file = cherrypy.request.params['images']
-                self.logger.info("Found file in cherrypy.request.params")
-            elif hasattr(cherrypy.request, 'body_params') and 'images' in cherrypy.request.body_params:
-                uploaded_file = cherrypy.request.body_params['images']
-                self.logger.info("Found file in cherrypy.request.body_params")
-            else:
-                # Try to access the raw body if it hasn't been consumed
-                try:
-                    raw_body = cherrypy.request.body.read()
-                    if raw_body:
-                        uploaded_file = io.BytesIO(raw_body)
-                        self.logger.info("Using raw body")
-                    else:
-                        self.logger.error("Raw body is empty")
-                except Exception as e:
-                    self.logger.error(f"Could not read raw body: {str(e)}")
-            
+                self.logger.info("Found image in cherrypy.request.params")
+          
             if not uploaded_file:
                 self.logger.error("No image file provided")
                 raise cherrypy.HTTPError(400, "No image file provided")
