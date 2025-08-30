@@ -8,10 +8,10 @@ WORKDIR /app
 COPY . /app
 
 # Install dependencies
-RUN pip install --no-cache-dir -r python_libraries.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port the app runs on
-EXPOSE 5001
+EXPOSE 5008
 
 # Run the application
-CMD ["python", "main_plot_async_mt.py"]
+CMD ["python", "main.py"]

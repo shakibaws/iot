@@ -34,7 +34,7 @@ class ThingspeakAdaptor:
         # follow public ip changement for mqtt broker
         while True:
             time.sleep(60)
-            res = requests.get("http://localhost:5001/mqtt").text
+            res = requests.get("http://service_catalog:5001/mqtt").text
             res = res.replace('"', '')
             if res != broker:
                 print("Stopping simulation...")
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         go = False
         while not go:
             try:
-                service_catalog = requests.get("http://localhost:5001/all").json()
+                service_catalog = requests.get("http://service_catalog:5001/all").json()
                 print("Service get")
                 go = True
             except requests.exceptions.RequestException as e:

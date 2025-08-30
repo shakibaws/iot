@@ -48,7 +48,7 @@ class TelegramNotifier:
         # follow public ip changement for mqtt broker
         while True:
             time.sleep(60)
-            res = requests.get("http://localhost:5001/mqtt").text
+            res = requests.get("http://service_catalog:5001/mqtt").text
             res = res.replace('"', '')
             if res != broker:
                 self.logger.warning(f"New MQTT broker address detected: {res} (was: {broker}), restarting service")
@@ -107,6 +107,10 @@ class TelegramNotifier:
                 await self.bot.send_message(chat_id=telegram_chat, text=f"Low light for vase {name}")
                 self.logger.info(f"Sent initial low light alert to chat {telegram_chat} for vase {name}")
                 self.light[telegram_chat] = {'date': datetime.datetime.now()}
+        elif data.get("water_pump"):
+            name = data["water_pump"]
+            await self.bot.send_message(chat_id=telegram_chat, text=f"{name} was thirsty, we are now watering it 💧💧")
+            self.logger.info(f"Sent water pump alert to chat {telegram_chat} for vase {name}")
         else:
             self.logger.warning(f"Unknown sensor data received: {data}")
 
@@ -152,7 +156,7 @@ if __name__ == "__main__":
 
 
         #get al service_catalog
-        service_catalog = requests.get("http://localhost:5001/all").json()
+        service_catalog = requests.get("http://service_catalog:5001/all").json()
         logger.info("Service catalog retrieved successfully")
 
         broker = service_catalog["mqtt_broker"]["broker_address"]
@@ -176,8 +180,6 @@ if __name__ == "__main__":
         raise RuntimeError
 
     except Exception as e:
-        print("Stopping simulation...")
-        bot_notification.stopSim()
         print("ERROR OCCUREDD, DUMPING INFO...")
         path = os.path.abspath('./logs/ERROR_botnotifier.err')
         with open(path, 'a') as file:

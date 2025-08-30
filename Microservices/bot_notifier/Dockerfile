@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r python_libraries.txt
 EXPOSE 5001
 
 # Run the application
-CMD ["python", "bot_notifier.py"]
+CMD ["python", "main.py"]

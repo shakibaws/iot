@@ -26,7 +26,7 @@ services:
     build: ./Microservices/chart_service
     container_name: chart_service
     ports:
-      - "5300:5300"
+      - "5008:5008"
     depends_on:
       - resource_catalog
     volumes:
@@ -39,7 +39,7 @@ services:
     build: ./Microservices/data_analysis
     container_name: data_analysis
     ports:
-      - "5082:5082"
+      - "5003:5003"
     depends_on:
       - resource_catalog
     volumes:
@@ -52,7 +52,7 @@ services:
     build: ./Microservices/gemini
     container_name: gemini
     ports:
-      - "5151:5151"
+      - "5007:5007"
     volumes:
       - ./logs/gemini:/app/logs
     environment:
@@ -63,7 +63,7 @@ services:
     build: ./Microservices/image_recognition
     container_name: image_recognition
     ports:
-      - "8085:8085"
+      - "5006:5006"
     depends_on:
       - resource_catalog
     volumes:
@@ -76,7 +76,7 @@ services:
     build: ./Microservices/recommendation_service
     container_name: recommendation_service
     ports:
-      - "8081:8081"
+      - "5005:5005"
     depends_on:
       - resource_catalog
     volumes:
@@ -89,7 +89,7 @@ services:
     build: ./Microservices/resource_catalog
     container_name: resource_catalog
     ports:
-      - "5000:5000"
+      - "5002:5002"
     depends_on:
       - service_catalog
     volumes:
@@ -102,7 +102,7 @@ services:
     build: ./Microservices/service_catalog
     container_name: service_catalog
     ports:
-      - "8082:8082"
+      - "5001:5001"
     volumes:
       - ./logs/service_catalog:/app/logs
     environment:
@@ -142,11 +142,50 @@ services:
       - LOG_DIR=/app/logs
     restart: on-failure
 
+  device_connector:
+    build: ./Microservices/device_connector
+    container_name: device_connector
+    ports:
+      - "5004:5004"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/device_connector:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+    restart: on-failure
+
+  telegram_groups:
+    build: ./Microservices/telegram_groups
+    container_name: telegram_groups
+    ports:
+      - "5011:5011"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/telegram_groups:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+    restart: on-failure
+
+  plant_health:
+    build: ./Microservices/plant_health
+    container_name: plant_health
+    ports:
+      - "5009:5009"
+    depends_on:
+      - resource_catalog
+    volumes:
+      - ./logs/plant_health:/app/logs
+    environment:
+      - LOG_DIR=/app/logs
+    restart: on-failure
+
   admin_analytics:
-    build: ./Microservices/Admin Analytics service
+    build: ./Microservices/admin_service
     container_name: admin_analytics
     ports:
-      - "5020:5020"
+      - "5010:5010"
     depends_on:
       - resource_catalog
       - service_catalog

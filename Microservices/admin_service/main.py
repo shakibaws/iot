@@ -18,7 +18,7 @@ from MyMQTT import MyMQTT
 class AdminDashboard:
     def __init__(self):
         self.logger = CustomerLogger.CustomLogger("admin_analytics", "admin_user")
-        self.service_catalog_endpoint = 'http://localhost:5001'  # Service catalog endpoint
+        self.service_catalog_endpoint = 'http://service_catalog:5001'  # Service catalog endpoint
         self.resource_catalog_address = ''
         
         # MQTT configuration
@@ -47,7 +47,6 @@ class AdminDashboard:
 
         
     def get_service_configuration(self):
-        """Get service configuration from service catalog"""
         try:
             response = requests.get(f'{self.service_catalog_endpoint}/all')
             if response.status_code == 200:
@@ -60,13 +59,13 @@ class AdminDashboard:
                 self.logger.info(f"MQTT broker: {self.mqtt_broker}:{self.mqtt_port}")
             else:
                 self.logger.error("Failed to get service catalog")
-                self.resource_catalog_address = 'http://localhost:5002'  # Default fallback
-                self.mqtt_broker = 'broker.hivemq.com'  # Default fallback
+                self.resource_catalog_address = 'http://resource_catalog:5002' 
+                self.mqtt_broker = 'broker.hivemq.com' 
                 self.sensor_topic = 'smartplant/+/sensors'
         except Exception as e:
             self.logger.error(f"Error getting service configuration: {str(e)}")
-            self.resource_catalog_address = 'http://localhost:5002'  # Default fallback
-            self.mqtt_broker = 'broker.hivemq.com'  # Default fallback
+            self.resource_catalog_address = 'http://resource_catalog:5002'  
+            self.mqtt_broker = 'broker.hivemq.com' 
             self.sensor_topic = 'smartplant/+/sensors'
 
     def setup_mqtt_listener(self):
@@ -510,7 +509,7 @@ class AdminDashboard:
         refresh_thread = threading.Thread(target=refresh_data, daemon=True)
         refresh_thread.start()
 
-    def run(self, host='localhost', port=5010, debug=False):
+    def run(self, host='0.0.0.0', port=5010, debug=False):
         """Run the Dash application"""
         self.logger.info(f"Starting Admin Dashboard on {host}:{port}")
         self.app.run_server(host=host, port=port, debug=debug)

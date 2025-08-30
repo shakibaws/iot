@@ -17,7 +17,7 @@ import sys
 
 resource_catalog_address = ''
 telegramgroups_address = ''
-service_expose_endpoint = 'http://localhost:5001'
+service_expose_endpoint = 'http://service_catalog:5001'
 vase_list = []
 device_list = []
 current_context = None

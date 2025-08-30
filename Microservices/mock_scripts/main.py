@@ -116,7 +116,7 @@ class DeviceDataPanel:
         # Generate Custom Data Button
         self.custom_btn = ctk.CTkButton(
             buttons_frame,
-            text="📊 Generate Custom Data",
+            text="Generate Custom Data",
             command=self.generate_custom_data,
             height=40,
             font=ctk.CTkFont(size=14, weight="bold")
@@ -126,7 +126,7 @@ class DeviceDataPanel:
         # Generate Random Data Button
         self.random_btn = ctk.CTkButton(
             buttons_frame,
-            text="🎲 Generate Random Data",
+            text="Generate Random Data",
             command=self.generate_random_data,
             height=40,
             font=ctk.CTkFont(size=14, weight="bold")
@@ -175,7 +175,7 @@ class DeviceDataPanel:
     def generate_custom_data(self):
         """Generate data with custom values"""
         if not self.device_id:
-            self.log_message("❌ Please select a device first")
+            self.log_message("Please select a device first")
             return
             
         try:
@@ -187,13 +187,13 @@ class DeviceDataPanel:
             
             # Validate ranges
             if not (0 <= soil_moisture <= 100):
-                self.log_message("❌ Soil moisture must be between 0-100%")
+                self.log_message("Soil moisture must be between 0-100%")
                 return
             if not (0 <= watertank_level <= 100):
-                self.log_message("❌ Water tank level must be between 0-100%")
+                self.log_message("Water tank level must be between 0-100%")
                 return
             if light_level < 0:
-                self.log_message("❌ Light level must be positive")
+                self.log_message("Light level must be positive")
                 return
                 
             data = {
@@ -209,12 +209,12 @@ class DeviceDataPanel:
             self.publish_data(data, "custom")
             
         except ValueError:
-            self.log_message("❌ Please enter valid numeric values")
+            self.log_message("Please enter valid numeric values")
             
     def generate_random_data(self):
         """Generate data with random values"""
         if not self.device_id:
-            self.log_message("❌ Please select a device first")
+            self.log_message("Please select a device first")
             return
             
         # Generate realistic random values
@@ -248,14 +248,14 @@ class DeviceDataPanel:
         soil = data['e'][1]['value']
         light = data['e'][2]['value']
         water = data['e'][3]['value']
-        self.log_message(f"📊 Generated {data_type} data")
-        self.log_message(f"📊 T={temp}°C, SM={soil}%, L={light}lux, WT={water}%")
+        self.log_message(f"Generated {data_type} data")
+        self.log_message(f"T={temp}°C, SM={soil}%, L={light}lux, WT={water}%")
         self.simulator.publish_sensor_data(data)
 
             
     def run(self):
         """Start the application"""
-        self.log_message("🚀 IoT Device Data Generator started")
+        self.log_message("IoT Device Data Generator started")
         self.log_message("Select a device and enter parameters to generate data")
         self.root.mainloop()
 
@@ -264,7 +264,8 @@ def main():
     device_list = []
     service_catalog_url = "http://localhost:5001"
     response = requests.get(service_catalog_url)
-    resource_catalog = response.json()["services"]["resource_catalog"]
+    # resource_catalog = response.json()["services"]["resource_catalog"]
+    resource_catalog = "http://localhost:5002"
     print(resource_catalog)
     response = requests.get(f"{resource_catalog}/listDevice/")
     for device in response.json():  
